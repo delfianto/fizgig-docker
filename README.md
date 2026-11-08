@@ -1,7 +1,8 @@
 # Fizgig
 
-Fizgig in a browser, with explicit selections from a ComfyUI model manifest,
-read-only shared weights and offline Python workers. Image/container: `fizgig`.
+Fizgig in a browser, with an authenticated [MCP companion](docs/mcp.md), explicit
+selections from a ComfyUI model manifest, read-only shared weights and offline
+training workers. Image/container: `fizgig`.
 Source project: [`delfianto/fizgig-docker`](https://github.com/delfianto/fizgig-docker).
 Deployment belongs in the separate Compose
 repository at `ai/fizgig`; credentials, runtime catalogues and weights stay there
@@ -93,6 +94,7 @@ remain upstream's, with no weakened state-dict checks.
 | `FIZGIG_MODEL_CATALOG` | Deployment's selection file |
 | `FIZGIG_MANIFEST_ROOT`, `FIZGIG_MODELS_ROOT` | Defaults `/catalog`, `/models` |
 | Port `8081` | Authenticated upstream browser UI/API |
+| Port `8083` | MCP `/mcp`, using the existing Fizgig password as bearer authentication |
 
 A site `.pth` hook installs the offline policy in the web server and every Python
 subprocess, including explicit download helpers. Missing tokenizers, captioners,
@@ -110,11 +112,11 @@ Choose the training device and avoid overlapping large GPU jobs.
 ## Development
 
 ```sh
-uv sync --locked
-uv run python -m unittest discover -s tests -v
+uv sync --locked --extra mcp
+uv run --extra mcp python -m unittest discover -s tests -v
 ```
 
-The standard-library tests use tiny synthetic headers, never real tensors.
+Tests use tiny synthetic headers and fake HTTP/MCP transports, never real tensors.
 CI also imports the actual upstream web server and checks model preference keys
 inside the built image. Perform an authenticated HTTP smoke test and model
 preflight on the deployment host before starting training.

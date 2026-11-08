@@ -16,7 +16,10 @@ RUN test "${#UPSTREAM_COMMIT}" -eq 40 \
     && test "$(git rev-parse HEAD)" = "$UPSTREAM_COMMIT" \
     && UV_NO_CACHE=1 python3 uv_install_deps.py requirements.txt /opt/venv \
     && rm -rf /root/.cache /workspace/.cache/uv
-COPY src/fizgig_local /opt/fizgig-local/fizgig_local
+COPY docker/mcp-requirements.txt /tmp/mcp-requirements.txt
+RUN python3 -m venv /opt/fizgig-mcp \
+    && /opt/fizgig-mcp/bin/pip install --no-cache-dir -r /tmp/mcp-requirements.txt
+COPY src /opt/fizgig-local
 COPY docker/fizgig-local.pth /tmp/fizgig-local.pth
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN python3 -c 'import pathlib,site,shutil; shutil.copy("/tmp/fizgig-local.pth", pathlib.Path(site.getsitepackages()[0]) / "fizgig-local.pth")' \
@@ -34,5 +37,6 @@ WORKDIR /workspace
 # Catch upstream preference/registry changes before publishing; no model loads.
 RUN python3 -c 'from fizgig.web import server; from fizgig.families.registry import get; assert callable(server.main); assert {f.pref_key for f in get("krea2").model_files} >= {"krea2_raw_dit", "krea2_vae", "krea2_text_encoder"}'
 EXPOSE 8081
+EXPOSE 8083
 ENTRYPOINT ["/entrypoint.sh"]
 CMD []
