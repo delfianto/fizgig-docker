@@ -90,14 +90,16 @@ remain upstream's, with no weakened state-dict checks.
 | `/datasets` | Shared Toolkit datasets; writable for captions/preparation |
 | `/toolkit-models` | Retained Toolkit model assets, read-only |
 | `FIZGIG_PASSWORD` | Required login secret, at least 12 characters; never logged |
-| `FIZGIG_OFFLINE=1` | Default; disables outbound Python connections except loopback/Unix sockets |
+| `FIZGIG_OFFLINE=1` | Default; disables outbound connections from upstream UI/training Python except loopback/Unix sockets |
 | `FIZGIG_MODEL_CATALOG` | Deployment's selection file |
 | `FIZGIG_MANIFEST_ROOT`, `FIZGIG_MODELS_ROOT` | Defaults `/catalog`, `/models` |
 | Port `8081` | Authenticated upstream browser UI/API |
 | Port `8083` | MCP `/mcp`, using the existing Fizgig password as bearer authentication |
 
-A site `.pth` hook installs the offline policy in the web server and every Python
-subprocess, including explicit download helpers. Missing tokenizers, captioners,
+A site `.pth` hook in the training environment installs the offline policy in the
+web server and its upstream Python workers, including explicit download helpers.
+The MCP companion uses a separate environment and calls only the loopback UI API.
+Missing tokenizers, captioners,
 mask models or other assets fail locally. It is a runtime policy, not a security
 sandbox. Remote helpers and online features require an intentional deployment
 change to `FIZGIG_OFFLINE=0` and the corresponding HF offline variables. Incoming
