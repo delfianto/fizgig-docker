@@ -1,0 +1,2 @@
+/opt/fizgig-local
+import fizgig_local.offline; fizgig_local.offline.install()

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "external_roots": {"toolkit": "/toolkit-models"},
+  "active": ["krea-lustify", "anima-anisee", "sdxl-base"],
+  "bundles": {
+    "krea-lustify": {
+      "family": "krea2",
+      "description": "Existing Lustify RAW ConvRot model with Toolkit's compatible FP8 encoder",
+      "preferences": {
+        "krea2_raw_dit": {"family": "krea2", "id": "lustify-v10-raw"},
+        "krea2_vae": {"family": "shared", "path": "vae/qwen-image-vae-bf16.safetensors"},
+        "krea2_text_encoder": {"external": "toolkit", "path": "clip/qwen3-vl-4b-fp8-scaled.safetensors", "size_bytes": 5242467968}
+      }
+    },
+    "anima-anisee": {
+      "family": "anima",
+      "description": "Existing AniSee V2 Aesthetic BF16 and shared Qwen components",
+      "preferences": {
+        "anima_dit": {"family": "anima", "id": "anisee-v2-aesthetic"},
+        "anima_vae": {"family": "shared", "path": "vae/qwen-image-vae-bf16.safetensors"},
+        "anima_text_encoder": {"family": "shared", "path": "clip/qwen3-06b-base.safetensors"}
+      }
+    },
+    "sdxl-base": {
+      "family": "sdxl",
+      "description": "Existing complete SDXL Base V1.0 checkpoint; embedded VAE and encoders",
+      "preferences": {"sdxl_checkpoint": {"family": "sdxl", "id": "sdxl-base-v1.0"}}
+    }
+  }
+}
