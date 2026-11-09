@@ -9,3 +9,6 @@ export * from "./BaseInput.vue";
 
 export { default as BaseSelect } from "./BaseSelect.vue";
 export * from "./BaseSelect.vue";
+
+export { default as BaseToggle } from "./BaseToggle.vue";
+export * from "./BaseToggle.vue";

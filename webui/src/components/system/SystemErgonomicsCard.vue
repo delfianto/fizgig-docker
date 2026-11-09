@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Sliders } from "lucide-vue-next";
-import { BasePillGroup } from "@/components/common";
+import { BasePillGroup, BaseToggle } from "@/components/common";
 import { useSystemStore } from "@/stores/system";
 
 const systemStore = useSystemStore();
@@ -45,16 +45,11 @@ const systemStore = useSystemStore();
           @update:model-value="(val) => (systemStore.density = val as 'default' | 'compact')"
         />
 
-        <label
-          class="flex h-8.5 cursor-pointer items-center gap-2 rounded-lg border border-hairline bg-base-300/50 px-3 text-xs select-none hover:border-primary/40 transition"
+        <div
+          class="flex h-8.5 items-center gap-2 rounded-lg border border-hairline bg-base-300/50 px-3 text-xs select-none hover:border-primary/40 transition"
         >
-          <input
-            v-model="systemStore.explainMode"
-            type="checkbox"
-            class="toggle toggle-xs toggle-primary"
-          />
-          <span>Show Explain Prose</span>
-        </label>
+          <BaseToggle v-model="systemStore.explainMode" size="compact" label="Show Explain Prose" />
+        </div>
       </div>
     </div>
   </section>

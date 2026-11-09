@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { type LossDataPoint } from "@shared/types";
+import BaseToggle from "@/components/common/BaseToggle.vue";
 
 const props = defineProps<{
   points: LossDataPoint[];
@@ -233,10 +234,7 @@ function onMouseLeave(): void {
     <!-- Chart Control Strip -->
     <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
       <div class="flex items-center gap-3">
-        <label class="flex cursor-pointer items-center gap-1.5 text-subtle">
-          <input v-model="showSmooth" type="checkbox" class="toggle toggle-xs toggle-primary" />
-          <span>Smooth</span>
-        </label>
+        <BaseToggle v-model="showSmooth" size="compact" label="Smooth" />
 
         <div v-if="showSmooth" class="flex items-center gap-2 pl-0.5">
           <input
@@ -253,20 +251,9 @@ function onMouseLeave(): void {
           </span>
         </div>
 
-        <label class="flex cursor-pointer items-center gap-1.5 text-subtle">
-          <input v-model="logScale" type="checkbox" class="toggle toggle-xs toggle-primary" />
-          <span>Log scale</span>
-        </label>
-
-        <label class="flex cursor-pointer items-center gap-1.5 text-subtle">
-          <input v-model="clipOutliers" type="checkbox" class="toggle toggle-xs toggle-primary" />
-          <span>Clip spikes</span>
-        </label>
-
-        <label class="flex cursor-pointer items-center gap-1.5 text-subtle">
-          <input v-model="showLr" type="checkbox" class="toggle toggle-xs toggle-primary" />
-          <span>LR marker</span>
-        </label>
+        <BaseToggle v-model="logScale" size="compact" label="Log scale" />
+        <BaseToggle v-model="clipOutliers" size="compact" label="Clip spikes" />
+        <BaseToggle v-model="showLr" size="compact" label="LR marker" />
       </div>
 
       <!-- Lowest Smoothed Loss Pill -->
