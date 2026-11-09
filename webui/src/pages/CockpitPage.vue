@@ -164,7 +164,7 @@ onUnmounted(() => {
             @click="activeSubView = 'live'"
           >
             <Activity class="h-3.5 w-3.5" />
-            <span>Cockpit</span>
+            <span>Monitor</span>
           </button>
 
           <button
