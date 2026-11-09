@@ -237,7 +237,7 @@ const activeToggleCount = computed(() => {
                 <div
                   v-for="r in toggleRows"
                   :key="r.key"
-                  class="rounded-lg border px-3 py-2.5 transition-colors flex items-center justify-between min-h-[52px]"
+                  class="rounded-lg border px-3 py-2.5 transition-colors flex items-center justify-between min-h-13"
                   :class="[
                     composerStore.draftValues[r.key] === true ||
                     composerStore.draftValues[r.key] === 'true' ||
