@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { HelpCircle, Info, Lightbulb, RotateCcw } from "lucide-vue-next";
 import { type SchemaRow } from "@shared/types";
 import BaseToggle from "@/components/common/BaseToggle.vue";
+import { formatDecimal } from "@/utils";
 import { useComposerStore } from "@/stores/composer";
 import { useSystemStore } from "@/stores/system";
 
@@ -47,15 +48,7 @@ function resolveMatchingChoice(val: unknown, choices?: string[]): string {
 }
 
 function formatDecimalValue(val: unknown): string {
-  if (val === undefined || val === null || val === "") return "";
-  const str = String(val).trim();
-  if (/^[+-]?\d+(\.\d+)?e[+-]?\d+$/i.test(str)) {
-    const num = Number(str);
-    if (!Number.isNaN(num)) {
-      return num.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 8 });
-    }
-  }
-  return str;
+  return formatDecimal(val, "");
 }
 
 const selectedChoice = computed(() => {

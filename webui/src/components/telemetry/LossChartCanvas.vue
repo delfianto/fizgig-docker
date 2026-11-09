@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { type LossDataPoint } from "@shared/types";
 import BaseToggle from "@/components/common/BaseToggle.vue";
+import { formatLearnRate } from "@/utils";
 
 const props = defineProps<{
   points: LossDataPoint[];
@@ -397,7 +398,7 @@ function onMouseLeave(): void {
           <strong class="text-primary">{{ hoveredPoint.smoothed.toFixed(4) }}</strong>
         </span>
         <span v-if="showLr && hoveredPoint.lr">
-          LR <strong class="text-warning">{{ hoveredPoint.lr.toExponential(2) }}</strong>
+          LR <strong class="text-warning">{{ formatLearnRate(hoveredPoint.lr) }}</strong>
         </span>
       </div>
 

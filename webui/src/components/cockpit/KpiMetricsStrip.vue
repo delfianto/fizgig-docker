@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { type HistoricalRun, type LossDataPoint, type RunProgress } from "@shared/types";
+import { formatLearnRate, formatLoss } from "@/utils";
 
 const props = defineProps<{
   progress: RunProgress | null;
@@ -46,10 +47,10 @@ const speedDisplay = computed(() => {
 
 const lossDisplay = computed(() => {
   if (props.progress?.loss) {
-    return props.progress.loss;
+    return formatLoss(props.progress.loss);
   }
   if (props.lowestLossPoint) {
-    return props.lowestLossPoint.loss.toFixed(4);
+    return formatLoss(props.lowestLossPoint.loss);
   }
   return "—";
 });
@@ -59,12 +60,11 @@ const gradNormDisplay = computed(() => {
 });
 
 const learnRateDisplay = computed(() => {
-  return (
-    props.progress?.lr ||
-    props.inspectingHistoricalRun?.values?.LEARNING_RATE ||
-    props.runValues?.LEARNING_RATE ||
-    "—"
-  );
+  const raw =
+    props.progress?.lr ??
+    props.inspectingHistoricalRun?.values?.LEARNING_RATE ??
+    props.runValues?.LEARNING_RATE;
+  return formatLearnRate(raw);
 });
 </script>
 

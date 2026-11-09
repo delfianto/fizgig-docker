@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Sparkles } from "lucide-vue-next";
+import { formatLearnRate } from "@/utils";
 import { useComposerStore } from "@/stores/composer";
 
 defineProps<{
@@ -8,18 +9,6 @@ defineProps<{
 }>();
 
 const composerStore = useComposerStore();
-
-function formatDecimalValue(val: unknown): string {
-  if (val === undefined || val === null || val === "") return "";
-  const str = String(val).trim();
-  if (/^[+-]?\d+(\.\d+)?e[+-]?\d+$/i.test(str)) {
-    const num = Number(str);
-    if (!Number.isNaN(num)) {
-      return num.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 8 });
-    }
-  }
-  return str;
-}
 </script>
 
 <template>
@@ -64,7 +53,7 @@ function formatDecimalValue(val: unknown): string {
           {{
             composerStore.draftValues.ADAPTIVE_LR
               ? "Adaptive"
-              : formatDecimalValue(composerStore.draftValues.LEARNING_RATE || "0.0001")
+              : formatLearnRate(composerStore.draftValues.LEARNING_RATE || "0.0001")
           }}
         </span>
       </div>
