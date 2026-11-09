@@ -57,7 +57,7 @@ function onSelectDataset(path: string): void {
 
 <template>
   <section
-    class="rounded-xl border border-hairline bg-base-300/80 p-2.5 space-y-1.5 h-145.5 flex flex-col justify-between"
+    class="rounded-xl border border-hairline bg-base-300/80 p-2.5 space-y-1.5 h-90 flex flex-col justify-between"
   >
     <!-- Header -->
     <div class="flex items-center justify-between border-b border-hairline pb-1.5 shrink-0">
@@ -93,9 +93,9 @@ function onSelectDataset(path: string): void {
         </div>
       </div>
 
-      <!-- Scrollable list: flex-1 up to 425px showing full 8 rows cleanly -->
+      <!-- Scrollable list: flex-1 showing datasets cleanly -->
       <div
-        class="flex-1 min-h-90 max-h-106.25 overflow-y-auto rounded-lg border border-hairline bg-base-200/50 p-1 scrollbar-thin flex flex-col"
+        class="flex-1 min-h-36 overflow-y-auto rounded-lg border border-hairline bg-base-200/50 p-1 scrollbar-thin flex flex-col"
       >
         <!-- Centered Empty State in Both Directions -->
         <div
