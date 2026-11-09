@@ -57,7 +57,7 @@ function onSelectDataset(path: string): void {
 
 <template>
   <section
-    class="rounded-xl border border-hairline bg-base-300/80 p-2.5 space-y-1.5 h-90 flex flex-col justify-between"
+    class="rounded-xl border border-hairline bg-base-300/80 p-2.5 space-y-1.5 flex flex-col justify-between"
   >
     <!-- Header -->
     <div class="flex items-center justify-between border-b border-hairline pb-1.5 shrink-0">
