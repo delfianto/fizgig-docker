@@ -41,7 +41,7 @@ async function handleResume(): Promise<void> {
     </div>
     <button
       type="button"
-      class="btn btn-xs btn-primary gap-1.5 font-semibold cursor-pointer"
+      class="btn btn-sm h-7.5 rounded-md btn-primary px-3 text-xs font-semibold gap-1.5 cursor-pointer shadow-xs"
       :disabled="busyAction !== null"
       @click="handleResume"
     >

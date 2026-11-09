@@ -97,37 +97,51 @@ async function runFindReplace(dryRun: boolean): Promise<void> {
       <div class="flex items-center gap-2">
         <div class="relative">
           <Search
-            class="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-base-content/40"
+            class="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-base-content/40"
           />
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Filter filename or caption..."
-            class="input input-xs input-bordered bg-base-300/60 pl-8 w-56 text-xs"
+            class="input input-sm h-8.5 rounded-lg border-hairline-strong bg-base-100 pl-8.5 w-60 text-xs focus:border-primary focus:outline-none"
           />
         </div>
 
-        <div class="join">
+        <div
+          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
+        >
           <button
             type="button"
-            class="btn btn-xs join-item cursor-pointer"
-            :class="filterMode === 'all' ? 'btn-neutral' : 'btn-ghost'"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
+            :class="
+              filterMode === 'all'
+                ? 'bg-neutral text-neutral-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
+            "
             @click="filterMode = 'all'"
           >
             All ({{ entries.length }})
           </button>
           <button
             type="button"
-            class="btn btn-xs join-item cursor-pointer"
-            :class="filterMode === 'uncaptioned' ? 'btn-neutral' : 'btn-ghost'"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
+            :class="
+              filterMode === 'uncaptioned'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
+            "
             @click="filterMode = 'uncaptioned'"
           >
             Uncaptioned
           </button>
           <button
             type="button"
-            class="btn btn-xs join-item cursor-pointer"
-            :class="filterMode === 'dirty' ? 'btn-warning' : 'btn-ghost'"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
+            :class="
+              filterMode === 'dirty'
+                ? 'bg-warning text-warning-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
+            "
             @click="filterMode = 'dirty'"
           >
             Unsaved ({{ dirtyPaths.size }})
@@ -138,7 +152,7 @@ async function runFindReplace(dryRun: boolean): Promise<void> {
       <button
         v-if="dirtyPaths.size > 0"
         type="button"
-        class="btn btn-xs btn-primary cursor-pointer gap-1"
+        class="btn btn-sm h-8.5 rounded-lg btn-primary cursor-pointer gap-1.5 px-3.5 text-xs font-semibold shadow-xs"
         @click="emit('save-all-dirty')"
       >
         <Save class="h-3.5 w-3.5" />
@@ -159,16 +173,16 @@ async function runFindReplace(dryRun: boolean): Promise<void> {
           v-model="triggerWord"
           type="text"
           placeholder="e.g. jeje, ohwx"
-          class="input input-xs input-bordered bg-base-300/60 font-mono text-xs w-36"
+          class="input input-sm h-8 rounded-md border-base-300 bg-base-100 font-mono text-xs w-40 focus:border-primary focus:outline-none"
           @keyup.enter="checkTriggerTokens"
         />
         <button
           type="button"
-          class="btn btn-xs btn-outline border-base-300 cursor-pointer"
+          class="btn btn-sm h-8 rounded-md btn-ghost border border-base-300 hover:border-primary px-3 text-xs font-semibold gap-1.5 cursor-pointer"
           :disabled="checkingTrigger"
           @click="checkTriggerTokens"
         >
-          <Sparkles class="h-3 w-3 text-primary" />
+          <Sparkles class="h-3.5 w-3.5 text-primary" />
           <span>Inspect Tokens</span>
         </button>
         <span v-if="triggerResult" class="truncate font-mono text-[11px] text-info">
@@ -185,27 +199,27 @@ async function runFindReplace(dryRun: boolean): Promise<void> {
           v-model="findText"
           type="text"
           placeholder="Find text..."
-          class="input input-xs input-bordered bg-base-300/60 text-xs w-32"
+          class="input input-sm h-8 rounded-md border-base-300 bg-base-100 text-xs w-36 focus:border-primary focus:outline-none"
         />
         <input
           v-model="replaceText"
           type="text"
           placeholder="Replace with..."
-          class="input input-xs input-bordered bg-base-300/60 text-xs w-32"
+          class="input input-sm h-8 rounded-md border-base-300 bg-base-100 text-xs w-36 focus:border-primary focus:outline-none"
         />
         <button
           type="button"
-          class="btn btn-xs btn-ghost border border-base-300 cursor-pointer"
+          class="btn btn-sm h-8 rounded-md btn-ghost border border-base-300 hover:border-base-content/30 px-3 text-xs font-semibold cursor-pointer"
           @click="runFindReplace(true)"
         >
           Dry Run
         </button>
         <button
           type="button"
-          class="btn btn-xs btn-secondary cursor-pointer gap-1"
+          class="btn btn-sm h-8 rounded-md btn-secondary px-3 text-xs font-semibold gap-1.5 cursor-pointer shadow-xs"
           @click="runFindReplace(false)"
         >
-          <Replace class="h-3 w-3" />
+          <Replace class="h-3.5 w-3.5" />
           <span>Apply</span>
         </button>
         <span v-if="dryRunPreview" class="font-mono text-[11px] text-warning">

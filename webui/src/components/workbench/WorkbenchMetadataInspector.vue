@@ -18,7 +18,7 @@ const emit = defineEmits<{
         </h2>
         <button
           type="button"
-          class="btn btn-xs btn-outline border-base-300 cursor-pointer"
+          class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-100 hover:border-primary text-xs font-semibold px-2.5 cursor-pointer transition"
           :disabled="loading"
           @click="emit('reload')"
         >

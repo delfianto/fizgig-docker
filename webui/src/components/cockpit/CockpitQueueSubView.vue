@@ -21,20 +21,20 @@ const runStore = useRunStore();
           <button
             v-if="!runStore.run?.web_queue?.held"
             type="button"
-            class="btn btn-sm btn-ghost border border-warning/40 bg-warning/10 text-warning"
+            class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-warning/40 bg-warning/10 text-warning px-3 text-xs font-semibold gap-1.5 cursor-pointer"
             @click="runStore.holdQueue()"
           >
             <Pause class="h-3.5 w-3.5" />
-            Hold Queue Dispatch
+            <span>Hold Queue Dispatch</span>
           </button>
           <button
             v-else
             type="button"
-            class="btn btn-sm btn-primary"
+            class="btn btn-sm h-8.5 rounded-lg btn-primary px-3 text-xs font-semibold gap-1.5 cursor-pointer shadow-xs"
             @click="runStore.startQueue()"
           >
             <Play class="h-3.5 w-3.5" />
-            Release Hold &amp; Start Queue
+            <span>Release Hold &amp; Start Queue</span>
           </button>
         </div>
       </div>
@@ -78,7 +78,7 @@ const runStore = useRunStore();
           <div class="flex items-center gap-1.5">
             <button
               type="button"
-              class="btn btn-xs btn-ghost border border-hairline"
+              class="btn btn-sm h-7.5 w-7.5 p-0 rounded-md btn-ghost border border-hairline cursor-pointer flex items-center justify-center"
               :disabled="idx === 0"
               title="Move run up in queue"
               @click="runStore.moveQueueItem(item.id, -1)"
@@ -87,7 +87,7 @@ const runStore = useRunStore();
             </button>
             <button
               type="button"
-              class="btn btn-xs btn-ghost border border-hairline"
+              class="btn btn-sm h-7.5 w-7.5 p-0 rounded-md btn-ghost border border-hairline cursor-pointer flex items-center justify-center"
               :disabled="idx === (runStore.run?.web_queue?.items?.length ?? 1) - 1"
               title="Move run down in queue"
               @click="runStore.moveQueueItem(item.id, 1)"
@@ -96,7 +96,7 @@ const runStore = useRunStore();
             </button>
             <button
               type="button"
-              class="btn btn-xs btn-ghost border border-error/30 text-error hover:bg-error/15"
+              class="btn btn-sm h-7.5 w-7.5 p-0 rounded-md btn-ghost border border-error/30 text-error hover:bg-error/15 cursor-pointer flex items-center justify-center"
               title="Remove from queue"
               @click="runStore.removeQueueItem(item.id)"
             >

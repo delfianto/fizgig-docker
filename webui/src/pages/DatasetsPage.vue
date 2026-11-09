@@ -131,19 +131,29 @@ onMounted(async () => {
         class="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 bg-base-200/40 px-4 py-2.5"
       >
         <div class="flex items-center gap-3">
-          <div class="join">
+          <div
+            class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
+          >
             <button
               type="button"
-              class="btn btn-xs join-item cursor-pointer"
-              :class="activeSubTab === 'captions' ? 'btn-primary' : 'btn-ghost'"
+              class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
+              :class="
+                activeSubTab === 'captions'
+                  ? 'bg-primary text-primary-content shadow-xs'
+                  : 'btn-ghost text-subtle hover:text-base-content'
+              "
               @click="activeSubTab = 'captions'"
             >
-              Caption Studio
+              <span>Caption Studio</span>
             </button>
             <button
               type="button"
-              class="btn btn-xs join-item cursor-pointer gap-1"
-              :class="activeSubTab === 'prep' ? 'btn-primary' : 'btn-ghost'"
+              class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
+              :class="
+                activeSubTab === 'prep'
+                  ? 'bg-primary text-primary-content shadow-xs'
+                  : 'btn-ghost text-subtle hover:text-base-content'
+              "
               @click="activeSubTab = 'prep'"
             >
               <Scissors class="h-3.5 w-3.5" />

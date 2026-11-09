@@ -55,7 +55,7 @@ function renderMiniSparkline(vals?: number[]): string {
           v-model="historySearch"
           type="text"
           placeholder="Filter by LoRA name, model family, or dataset..."
-          class="input input-sm w-72 border-hairline-strong bg-base-100 text-xs"
+          class="input input-sm h-8.5 w-72 rounded-lg border-hairline-strong bg-base-100 text-xs focus:border-primary focus:outline-none"
         />
       </div>
 
@@ -122,20 +122,20 @@ function renderMiniSparkline(vals?: number[]): string {
 
             <button
               type="button"
-              class="btn btn-xs btn-ghost border border-hairline bg-base-200"
+              class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-200 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer"
               @click="emit('inspect', item)"
             >
               <Activity class="h-3.5 w-3.5 text-primary" />
-              Inspect Loss &amp; Samples
+              <span>Inspect Loss &amp; Samples</span>
             </button>
 
             <button
               type="button"
-              class="btn btn-xs btn-ghost border border-hairline bg-base-200"
+              class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-200 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer"
               @click="emit('clone', item)"
             >
               <Copy class="h-3.5 w-3.5" />
-              Clone to Composer
+              <span>Clone to Composer</span>
             </button>
           </div>
         </div>

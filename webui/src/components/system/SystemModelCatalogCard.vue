@@ -45,7 +45,7 @@ function resolveSpecLabel(spec: unknown): string {
       </div>
       <button
         type="button"
-        class="btn btn-xs btn-ghost border border-base-300 cursor-pointer"
+        class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-100 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
         @click="systemStore.fetchLocalBundles()"
       >
         <RefreshCw class="h-3.5 w-3.5" />

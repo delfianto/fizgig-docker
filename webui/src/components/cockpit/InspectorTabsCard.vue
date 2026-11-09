@@ -45,14 +45,16 @@ watch(bottomTab, (tab) => {
     <div
       class="flex items-center justify-between border-b border-hairline bg-base-200 px-3 py-1.5 text-xs"
     >
-      <div class="join rounded-md border border-hairline bg-base-300 p-0.5">
+      <div
+        class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
+      >
         <button
           type="button"
-          class="btn btn-xs join-item border-0 gap-1.5 px-3"
+          class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
           :class="
             bottomTab === 'checkpoints'
-              ? 'bg-primary text-primary-content font-bold'
-              : 'btn-ghost text-subtle'
+              ? 'bg-primary text-primary-content shadow-xs'
+              : 'btn-ghost text-subtle hover:text-base-content'
           "
           @click="bottomTab = 'checkpoints'"
         >
@@ -62,11 +64,11 @@ watch(bottomTab, (tab) => {
 
         <button
           type="button"
-          class="btn btn-xs join-item border-0 gap-1.5 px-3"
+          class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
           :class="
             bottomTab === 'console'
-              ? 'bg-primary text-primary-content font-bold'
-              : 'btn-ghost text-subtle'
+              ? 'bg-primary text-primary-content shadow-xs'
+              : 'btn-ghost text-subtle hover:text-base-content'
           "
           @click="
             bottomTab = 'console';
@@ -79,11 +81,11 @@ watch(bottomTab, (tab) => {
 
         <button
           type="button"
-          class="btn btn-xs join-item border-0 gap-1.5 px-3"
+          class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
           :class="
             bottomTab === 'spec'
-              ? 'bg-primary text-primary-content font-bold'
-              : 'btn-ghost text-subtle'
+              ? 'bg-primary text-primary-content shadow-xs'
+              : 'btn-ghost text-subtle hover:text-base-content'
           "
           @click="bottomTab = 'spec'"
         >
@@ -128,7 +130,7 @@ watch(bottomTab, (tab) => {
           </span>
           <a
             :href="downloadUrl(ckpt.path)"
-            class="btn btn-sm btn-ghost border border-hairline bg-base-200 hover:border-primary text-xs"
+            class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-200 hover:border-primary text-xs font-semibold px-2.5 gap-1.5"
           >
             <Download class="h-3.5 w-3.5 text-primary" />
             <span>Download</span>

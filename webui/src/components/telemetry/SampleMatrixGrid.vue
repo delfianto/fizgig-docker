@@ -229,47 +229,49 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-1.5">
         <!-- 3-Way View Switcher: Matrix | Carousel | Stream -->
-        <div class="join border border-hairline bg-base-300 p-0.5 rounded-md">
+        <div
+          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
+        >
           <button
             type="button"
-            class="btn btn-xs join-item border-0 gap-1"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
             :class="
               viewMode === 'matrix'
-                ? 'bg-primary text-primary-content font-bold'
-                : 'btn-ghost text-subtle'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             title="Structured Epoch × Prompt Matrix"
             @click="viewMode = 'matrix'"
           >
-            <Columns class="h-3 w-3" />
+            <Columns class="h-3.5 w-3.5" />
             <span class="hidden sm:inline">Matrix</span>
           </button>
           <button
             type="button"
-            class="btn btn-xs join-item border-0 gap-1"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
             :class="
               viewMode === 'carousel'
-                ? 'bg-primary text-primary-content font-bold'
-                : 'btn-ghost text-subtle'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             title="Carousel Spotlight — Clean inspection for multi-prompt batches without scrollbars"
             @click="viewMode = 'carousel'"
           >
-            <GalleryHorizontal class="h-3 w-3" />
+            <GalleryHorizontal class="h-3.5 w-3.5" />
             <span class="hidden sm:inline">Carousel</span>
           </button>
           <button
             type="button"
-            class="btn btn-xs join-item border-0 gap-1"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
             :class="
               viewMode === 'chronological'
-                ? 'bg-primary text-primary-content font-bold'
-                : 'btn-ghost text-subtle'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             title="Chronological Stream (Newest First)"
             @click="viewMode = 'chronological'"
           >
-            <Grid class="h-3 w-3" />
+            <Grid class="h-3.5 w-3.5" />
             <span class="hidden sm:inline">Stream</span>
           </button>
         </div>
@@ -277,23 +279,25 @@ onUnmounted(() => {
         <!-- Live Prompts Override Drawer Trigger -->
         <button
           type="button"
-          class="btn btn-xs btn-ghost border border-hairline bg-base-300 hover:border-primary/50"
+          class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-hairline bg-base-300 hover:border-primary/50 px-3 text-xs font-semibold gap-1.5 cursor-pointer transition"
           title="Safely view or override the active run's live sample prompts"
           @click="emit('openOverrideDrawer')"
         >
-          <Sparkles class="h-3 w-3 text-primary" />
+          <Sparkles class="h-3.5 w-3.5 text-primary" />
           <span class="hidden md:inline">Live Prompts…</span>
         </button>
 
         <!-- Pane Sizing Controls (Split | 2/3 Wide | Collapse) -->
-        <div class="join border border-hairline bg-base-300 p-0.5 rounded-md">
+        <div
+          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
+        >
           <button
             type="button"
-            class="btn btn-xs join-item border-0"
+            class="btn btn-sm h-7.5 join-item border-0 px-2 rounded-md transition cursor-pointer"
             :class="
               paneMode === 'split'
-                ? 'bg-primary/20 text-primary font-bold'
-                : 'btn-ghost text-subtle'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             title="Standard Split View (~50/50 balance with telemetry)"
             @click="emit('setPaneMode', 'split')"
@@ -302,9 +306,11 @@ onUnmounted(() => {
           </button>
           <button
             type="button"
-            class="btn btn-xs join-item border-0"
+            class="btn btn-sm h-7.5 join-item border-0 px-2 rounded-md transition cursor-pointer"
             :class="
-              paneMode === 'wide' ? 'bg-primary/20 text-primary font-bold' : 'btn-ghost text-subtle'
+              paneMode === 'wide'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             title="Expand Preview Pane to 2/3 of screen width"
             @click="emit('setPaneMode', 'wide')"
@@ -313,7 +319,7 @@ onUnmounted(() => {
           </button>
           <button
             type="button"
-            class="btn btn-xs join-item border-0 btn-ghost text-subtle hover:text-error"
+            class="btn btn-sm h-7.5 join-item border-0 btn-ghost text-subtle hover:text-error px-2 rounded-md transition cursor-pointer"
             title="Collapse Preview Pane to focus fully on Telemetry"
             @click="emit('setPaneMode', 'collapsed')"
           >
@@ -349,11 +355,11 @@ onUnmounted(() => {
           </span>
           <button
             type="button"
-            class="btn btn-xs shrink-0"
+            class="btn btn-sm h-7.5 rounded-md shrink-0 px-3 text-xs font-semibold cursor-pointer transition"
             :class="
               selectedPromptFilter === 'all'
-                ? 'btn-neutral text-base-content border-hairline-strong font-bold'
-                : 'btn-ghost text-subtle'
+                ? 'bg-neutral text-neutral-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             @click="selectedPromptFilter = 'all'"
           >
@@ -363,11 +369,11 @@ onUnmounted(() => {
             v-for="col in promptColumns"
             :key="col.index"
             type="button"
-            class="btn btn-xs shrink-0 truncate max-w-50"
+            class="btn btn-sm h-7.5 rounded-md shrink-0 truncate max-w-50 px-3 text-xs font-semibold cursor-pointer transition"
             :class="
               selectedPromptFilter === col.index
-                ? 'btn-primary font-bold shadow-xs'
-                : 'btn-ghost text-subtle'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             :title="col.text"
             @click="selectedPromptFilter = col.index"
@@ -471,10 +477,12 @@ onUnmounted(() => {
           <!-- Epoch Stepper -->
           <div class="flex items-center gap-2">
             <span class="text-xs font-semibold text-muted uppercase tracking-wider">Epoch:</span>
-            <div class="join border border-hairline bg-base-300">
+            <div
+              class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
+            >
               <button
                 type="button"
-                class="btn btn-xs join-item border-0"
+                class="btn btn-sm h-7.5 join-item border-0 px-2 rounded-md transition cursor-pointer"
                 :disabled="epochsList.indexOf(carouselEpoch) >= epochsList.length - 1"
                 title="Previous / Older Epoch (←)"
                 @click="stepCarouselEpoch(-1)"
@@ -482,7 +490,7 @@ onUnmounted(() => {
                 <ChevronLeft class="h-3.5 w-3.5" />
               </button>
               <span
-                class="font-mono-num join-item flex items-center bg-base-300 px-2.5 text-xs font-bold text-base-content"
+                class="font-mono-num join-item flex items-center bg-base-300 px-3 text-xs font-bold text-base-content"
               >
                 Ep {{ carouselEpoch }}
                 <span v-if="carouselEpoch === 0" class="ml-1 text-[10px] text-subtle font-normal"
@@ -496,7 +504,7 @@ onUnmounted(() => {
               </span>
               <button
                 type="button"
-                class="btn btn-xs join-item border-0"
+                class="btn btn-sm h-7.5 join-item border-0 px-2 rounded-md transition cursor-pointer"
                 :disabled="epochsList.indexOf(carouselEpoch) <= 0"
                 title="Next / Newer Epoch (→)"
                 @click="stepCarouselEpoch(1)"
@@ -512,16 +520,16 @@ onUnmounted(() => {
               v-for="col in promptColumns"
               :key="col.index"
               type="button"
-              class="btn btn-xs gap-1"
+              class="btn btn-sm h-7.5 rounded-md gap-1.5 px-3 text-xs font-semibold cursor-pointer transition"
               :class="
                 carouselPromptIdx === col.index
-                  ? 'btn-primary font-bold shadow-xs'
-                  : 'btn-ghost text-subtle border border-hairline'
+                  ? 'bg-primary text-primary-content shadow-xs'
+                  : 'btn-ghost text-subtle border border-hairline hover:text-base-content'
               "
               :title="col.text"
               @click="carouselPromptIdx = col.index"
             >
-              <span class="font-mono-num">P{{ col.index + 1 }}</span>
+              <span class="font-mono-num font-bold">P{{ col.index + 1 }}</span>
               <span class="hidden lg:inline truncate max-w-30">{{ col.text }}</span>
             </button>
           </div>
@@ -599,11 +607,11 @@ onUnmounted(() => {
             <button
               v-if="carouselCurrentSample"
               type="button"
-              class="btn btn-xs shrink-0"
+              class="btn btn-sm h-7.5 rounded-md shrink-0 px-2.5 text-xs font-semibold cursor-pointer gap-1.5 transition"
               :class="
                 carouselComparePinned?.path === carouselCurrentSample.path
-                  ? 'btn-primary'
-                  : 'btn-ghost border border-hairline'
+                  ? 'btn-primary shadow-xs'
+                  : 'btn-ghost border border-hairline hover:border-base-content/30'
               "
               title="Pin this image to crossfade against other epochs"
               @click="
@@ -725,20 +733,20 @@ onUnmounted(() => {
         <div
           class="flex items-center justify-between border-b border-hairline bg-base-200 px-4 py-2.5 text-xs"
         >
-          <div class="flex items-center gap-3">
-            <span class="font-mono-num text-sm font-semibold text-base-content">
+          <div class="flex items-center gap-2">
+            <span class="font-mono-num text-sm font-semibold text-base-content mr-1">
               Epoch {{ selectedSample.epoch }} · Prompt {{ promptIdx(selectedSample) + 1 }}
             </span>
             <button
               type="button"
-              class="btn btn-xs btn-ghost border border-hairline"
+              class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline px-2.5 text-xs font-semibold cursor-pointer transition hover:border-base-content/30"
               @click="stepEpochInLightbox(-1)"
             >
               ← Prev Epoch
             </button>
             <button
               type="button"
-              class="btn btn-xs btn-ghost border border-hairline"
+              class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline px-2.5 text-xs font-semibold cursor-pointer transition hover:border-base-content/30"
               @click="stepEpochInLightbox(1)"
             >
               Next Epoch →
@@ -748,11 +756,11 @@ onUnmounted(() => {
           <div class="flex items-center gap-2">
             <button
               type="button"
-              class="btn btn-xs"
+              class="btn btn-sm h-7.5 rounded-md px-3 text-xs font-semibold gap-1.5 cursor-pointer shadow-xs transition"
               :class="
                 comparePinned?.path === selectedSample.path
                   ? 'btn-primary'
-                  : 'btn-ghost border border-hairline'
+                  : 'btn-ghost border border-hairline hover:border-base-content/30'
               "
               @click="
                 comparePinned = comparePinned?.path === selectedSample.path ? null : selectedSample
@@ -766,7 +774,11 @@ onUnmounted(() => {
               }}
             </button>
 
-            <button type="button" class="btn btn-xs btn-ghost" @click="selectedSample = null">
+            <button
+              type="button"
+              class="btn btn-sm h-7.5 rounded-md btn-ghost px-2.5 text-xs font-semibold cursor-pointer transition"
+              @click="selectedSample = null"
+            >
               Close (Esc)
             </button>
           </div>

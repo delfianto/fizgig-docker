@@ -58,14 +58,14 @@ const emit = defineEmits<{
       >
         <button
           type="button"
-          class="btn btn-xs btn-ghost border border-hairline bg-base-200 cursor-pointer"
+          class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-hairline bg-base-200 px-3.5 text-xs font-semibold cursor-pointer transition"
           @click="emit('close')"
         >
           Cancel
         </button>
         <button
           type="button"
-          class="btn btn-xs btn-warning gap-1 font-semibold cursor-pointer"
+          class="btn btn-sm h-8.5 rounded-lg btn-warning gap-1.5 px-3.5 text-xs font-semibold cursor-pointer shadow-xs transition"
           @click="emit('confirm')"
         >
           <X class="h-3.5 w-3.5" />

@@ -46,7 +46,7 @@ function formatTime(timestamp?: number | null): string {
       <div class="flex items-center gap-1.5 shrink-0">
         <button
           type="button"
-          class="btn btn-xs border border-hairline bg-base-200 hover:border-primary/50 text-xs gap-1 cursor-pointer"
+          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 hover:border-primary/50 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
           title="Load this historical run's settings into Composer"
           @click="emit('clone', run)"
         >
@@ -56,11 +56,11 @@ function formatTime(timestamp?: number | null): string {
 
         <button
           type="button"
-          class="btn btn-xs gap-1 text-xs cursor-pointer"
+          class="btn btn-sm h-7.5 rounded-md gap-1.5 px-2.5 text-xs font-semibold cursor-pointer transition"
           :class="
             isActiveOrStarting
               ? 'btn-warning animate-pulse'
-              : 'btn-ghost border border-hairline bg-base-200'
+              : 'btn-ghost border border-hairline bg-base-200 hover:border-base-content/30'
           "
           @click="emit('return-to-live')"
         >

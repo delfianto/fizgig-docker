@@ -148,7 +148,7 @@ async function saveSurgicalLora(): Promise<void> {
         <div class="flex items-center gap-1.5">
           <button
             type="button"
-            class="btn btn-xs btn-outline border-base-300 cursor-pointer"
+            class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-100 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
             @click="applyPresetCurve('identity')"
           >
             <Sparkles class="h-3 w-3 text-secondary" />
@@ -156,14 +156,14 @@ async function saveSurgicalLora(): Promise<void> {
           </button>
           <button
             type="button"
-            class="btn btn-xs btn-outline border-base-300 cursor-pointer"
+            class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-100 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
             @click="applyPresetCurve('style')"
           >
             <span>Style Only</span>
           </button>
           <button
             type="button"
-            class="btn btn-xs btn-ghost cursor-pointer"
+            class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-100 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
             @click="resetAllBlocks(1.0)"
           >
             <RotateCcw class="h-3 w-3" />
@@ -288,7 +288,7 @@ async function saveSurgicalLora(): Promise<void> {
       <div class="space-y-2 border-t border-base-300 pt-3">
         <button
           type="button"
-          class="btn btn-primary btn-sm w-full cursor-pointer gap-2"
+          class="btn btn-primary btn-sm h-8.5 rounded-lg w-full cursor-pointer gap-2 text-xs font-semibold shadow-xs"
           @click="saveSurgicalLora"
         >
           <Save class="h-4 w-4" />

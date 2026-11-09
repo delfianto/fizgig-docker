@@ -22,11 +22,17 @@ const emit = defineEmits<{
     class="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 bg-base-200/50 px-4 py-2.5"
   >
     <div class="flex items-center gap-2">
-      <div class="join">
+      <div
+        class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
+      >
         <button
           type="button"
-          class="btn btn-xs join-item gap-1.5 cursor-pointer"
-          :class="activeTool === 'studio' ? 'btn-primary' : 'btn-ghost'"
+          class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
+          :class="
+            activeTool === 'studio'
+              ? 'bg-primary text-primary-content shadow-xs'
+              : 'btn-ghost text-subtle hover:text-base-content'
+          "
           @click="emit('set-tool', 'studio')"
         >
           <Sliders class="h-3.5 w-3.5" />
@@ -34,8 +40,12 @@ const emit = defineEmits<{
         </button>
         <button
           type="button"
-          class="btn btn-xs join-item gap-1.5 cursor-pointer"
-          :class="activeTool === 'royale' ? 'btn-primary' : 'btn-ghost'"
+          class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
+          :class="
+            activeTool === 'royale'
+              ? 'bg-primary text-primary-content shadow-xs'
+              : 'btn-ghost text-subtle hover:text-base-content'
+          "
           @click="emit('set-tool', 'royale')"
         >
           <Trophy class="h-3.5 w-3.5" />
@@ -43,8 +53,12 @@ const emit = defineEmits<{
         </button>
         <button
           type="button"
-          class="btn btn-xs join-item gap-1.5 cursor-pointer"
-          :class="activeTool === 'profiler' ? 'btn-primary' : 'btn-ghost'"
+          class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
+          :class="
+            activeTool === 'profiler'
+              ? 'bg-primary text-primary-content shadow-xs'
+              : 'btn-ghost text-subtle hover:text-base-content'
+          "
           @click="emit('set-tool', 'profiler')"
         >
           <Activity class="h-3.5 w-3.5" />
@@ -52,8 +66,12 @@ const emit = defineEmits<{
         </button>
         <button
           type="button"
-          class="btn btn-xs join-item gap-1.5 cursor-pointer"
-          :class="activeTool === 'metadata' ? 'btn-primary' : 'btn-ghost'"
+          class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
+          :class="
+            activeTool === 'metadata'
+              ? 'bg-primary text-primary-content shadow-xs'
+              : 'btn-ghost text-subtle hover:text-base-content'
+          "
           @click="emit('set-tool', 'metadata')"
         >
           <FileCode2 class="h-3.5 w-3.5" />
@@ -67,7 +85,7 @@ const emit = defineEmits<{
       <span class="text-xs font-medium text-base-content/60">Target LoRA:</span>
       <select
         :value="selectedLoraPath"
-        class="select select-xs select-bordered bg-base-300/70 font-mono text-xs min-w-72"
+        class="select select-sm h-8.5 rounded-lg border-hairline-strong bg-base-100 font-mono text-xs min-w-72 focus:border-primary focus:outline-none"
         @change="emit('select-lora', ($event.target as HTMLSelectElement).value)"
       >
         <option v-for="ckpt in checkpoints" :key="ckpt.path" :value="ckpt.path">
@@ -77,14 +95,14 @@ const emit = defineEmits<{
       <a
         v-if="selectedCheckpoint"
         :href="downloadUrl(selectedCheckpoint.path)"
-        class="btn btn-xs btn-ghost border border-base-300"
+        class="btn btn-sm h-8.5 w-8.5 p-0 rounded-lg btn-ghost border border-hairline bg-base-100 hover:border-primary transition cursor-pointer flex items-center justify-center"
         title="Download .safetensors"
       >
         <Download class="h-3.5 w-3.5" />
       </a>
       <button
         type="button"
-        class="btn btn-xs btn-ghost cursor-pointer"
+        class="btn btn-sm h-8.5 w-8.5 p-0 rounded-lg btn-ghost border border-hairline bg-base-100 hover:border-primary transition cursor-pointer flex items-center justify-center"
         title="Refresh checkpoints"
         @click="emit('refresh-checkpoints')"
       >

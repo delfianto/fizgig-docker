@@ -80,7 +80,7 @@ async function copyPath(text: string): Promise<void> {
       <div class="flex items-center gap-1.5 shrink-0">
         <button
           type="button"
-          class="btn btn-xs border border-hairline bg-base-200 hover:border-primary/50 text-xs gap-1 cursor-pointer"
+          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 hover:border-primary/50 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
           title="Load these settings into Composer to train further or adapt"
           @click="
             emit('clone', {
@@ -97,7 +97,7 @@ async function copyPath(text: string): Promise<void> {
 
         <button
           type="button"
-          class="btn btn-xs border border-hairline bg-base-200 text-xs gap-1 cursor-pointer"
+          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition hover:border-base-content/30"
           title="View in History"
           @click="emit('view-history')"
         >
@@ -107,7 +107,7 @@ async function copyPath(text: string): Promise<void> {
 
         <button
           type="button"
-          class="btn btn-xs btn-ghost border border-hairline bg-base-200 text-subtle hover:text-base-content cursor-pointer"
+          class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-200 text-subtle hover:text-base-content px-2.5 text-xs font-semibold gap-1.5 cursor-pointer transition"
           title="Dismiss completed summary and return to standby"
           @click="emit('dismiss')"
         >

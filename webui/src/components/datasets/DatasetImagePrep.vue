@@ -57,7 +57,7 @@ async function inspectPrepFolder(): Promise<void> {
             <input
               v-model="prepInputFolder"
               type="text"
-              class="input input-sm input-bordered w-full bg-base-300/70 font-mono text-xs"
+              class="input input-sm h-8.5 rounded-lg border-hairline-strong bg-base-100 font-mono text-xs focus:border-primary focus:outline-none w-full"
             />
           </div>
           <div>
@@ -68,7 +68,7 @@ async function inspectPrepFolder(): Promise<void> {
               v-model="prepOutputFolder"
               type="text"
               placeholder="/datasets/my_dataset_prepped"
-              class="input input-sm input-bordered w-full bg-base-300/70 font-mono text-xs"
+              class="input input-sm h-8.5 rounded-lg border-hairline-strong bg-base-100 font-mono text-xs focus:border-primary focus:outline-none w-full"
             />
           </div>
         </div>
@@ -76,7 +76,7 @@ async function inspectPrepFolder(): Promise<void> {
         <div class="flex items-center gap-2 pt-2">
           <button
             type="button"
-            class="btn btn-sm btn-primary cursor-pointer gap-1.5"
+            class="btn btn-sm h-8.5 rounded-lg btn-primary cursor-pointer gap-1.5 px-4 text-xs font-semibold shadow-xs"
             :disabled="loadingPrep"
             @click="inspectPrepFolder"
           >

@@ -148,7 +148,7 @@ async function handleClearOverride(): Promise<void> {
             <input
               v-model="width"
               type="text"
-              class="input input-sm font-mono-num w-full border-hairline-strong bg-base-100"
+              class="input input-sm h-8.5 rounded-lg font-mono-num w-full border-hairline-strong bg-base-100 text-xs focus:border-primary focus:outline-none"
             />
           </div>
           <div>
@@ -156,7 +156,7 @@ async function handleClearOverride(): Promise<void> {
             <input
               v-model="height"
               type="text"
-              class="input input-sm font-mono-num w-full border-hairline-strong bg-base-100"
+              class="input input-sm h-8.5 rounded-lg font-mono-num w-full border-hairline-strong bg-base-100 text-xs focus:border-primary focus:outline-none"
             />
           </div>
           <div>
@@ -164,7 +164,7 @@ async function handleClearOverride(): Promise<void> {
             <input
               v-model="steps"
               type="text"
-              class="input input-sm font-mono-num w-full border-hairline-strong bg-base-100"
+              class="input input-sm h-8.5 rounded-lg font-mono-num w-full border-hairline-strong bg-base-100 text-xs focus:border-primary focus:outline-none"
             />
           </div>
           <div>
@@ -172,7 +172,7 @@ async function handleClearOverride(): Promise<void> {
             <input
               v-model="cfg"
               type="text"
-              class="input input-sm font-mono-num w-full border-hairline-strong bg-base-100"
+              class="input input-sm h-8.5 rounded-lg font-mono-num w-full border-hairline-strong bg-base-100 text-xs focus:border-primary focus:outline-none"
             />
           </div>
           <div>
@@ -180,7 +180,7 @@ async function handleClearOverride(): Promise<void> {
             <input
               v-model="seed"
               type="text"
-              class="input input-sm font-mono-num w-full border-hairline-strong bg-base-100"
+              class="input input-sm h-8.5 rounded-lg font-mono-num w-full border-hairline-strong bg-base-100 text-xs focus:border-primary focus:outline-none"
             />
           </div>
           <div>
@@ -188,7 +188,7 @@ async function handleClearOverride(): Promise<void> {
             <input
               v-model="turbo"
               type="text"
-              class="input input-sm font-mono-num w-full border-hairline-strong bg-base-100"
+              class="input input-sm h-8.5 rounded-lg font-mono-num w-full border-hairline-strong bg-base-100 text-xs focus:border-primary focus:outline-none"
             />
           </div>
         </div>
@@ -198,19 +198,25 @@ async function handleClearOverride(): Promise<void> {
       <div class="flex items-center justify-between border-t border-hairline bg-base-200 px-4 py-3">
         <button
           type="button"
-          class="btn btn-sm btn-ghost border border-hairline text-warning hover:bg-warning/10"
+          class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-hairline text-warning hover:bg-warning/10 px-3 text-xs font-semibold gap-1.5 cursor-pointer transition"
           :disabled="saving || !runStore.isRunning"
           @click="handleClearOverride"
         >
           <RotateCcw class="h-3.5 w-3.5" />
-          Clear Override &amp; Restore Launch Prompts
+          <span>Clear Override &amp; Restore Launch Prompts</span>
         </button>
 
         <div class="flex items-center gap-2">
-          <button type="button" class="btn btn-sm btn-ghost" @click="emit('close')">Cancel</button>
           <button
             type="button"
-            class="btn btn-sm btn-primary"
+            class="btn btn-sm h-8.5 rounded-lg btn-ghost px-3 text-xs font-semibold cursor-pointer transition"
+            @click="emit('close')"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm h-8.5 rounded-lg btn-primary px-3.5 text-xs font-semibold cursor-pointer shadow-xs transition"
             :disabled="saving || !runStore.isRunning"
             @click="handleApplyOverride"
           >

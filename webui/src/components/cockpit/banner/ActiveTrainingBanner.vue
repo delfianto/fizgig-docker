@@ -68,7 +68,7 @@ async function handleAction(
       <div class="flex items-center gap-1.5 shrink-0">
         <button
           type="button"
-          class="btn btn-xs border border-hairline bg-base-200 hover:border-primary/50 text-xs gap-1 cursor-pointer"
+          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 hover:border-primary/50 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
           :disabled="busyAction !== null"
           title="Render sample previews after current step"
           @click="
@@ -85,7 +85,7 @@ async function handleAction(
 
         <button
           type="button"
-          class="btn btn-xs border border-hairline bg-base-200 hover:border-success/50 text-xs gap-1 cursor-pointer"
+          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 hover:border-success/50 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
           :disabled="busyAction !== null"
           title="Save a checkpoint after current step"
           @click="
@@ -102,7 +102,7 @@ async function handleAction(
 
         <button
           type="button"
-          class="btn btn-xs border border-hairline bg-base-200 hover:border-warning/50 text-xs gap-1 cursor-pointer"
+          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 hover:border-warning/50 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
           :disabled="busyAction !== null || run.pause"
           title="Request clean pause at next epoch boundary"
           @click="
@@ -122,7 +122,7 @@ async function handleAction(
           <button
             v-if="!confirmStop"
             type="button"
-            class="btn btn-xs border border-error/30 bg-error/10 text-error hover:bg-error/20 text-xs gap-1 cursor-pointer"
+            class="btn btn-sm h-7.5 rounded-md border border-error/30 bg-error/10 text-error hover:bg-error/20 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
             title="Stop active training run"
             @click="confirmStop = true"
           >
@@ -131,19 +131,19 @@ async function handleAction(
           </button>
           <div
             v-else
-            class="flex items-center gap-1 rounded border border-error/50 bg-base-200 px-1.5 py-0.5"
+            class="flex items-center gap-1.5 rounded-md border border-error/50 bg-base-200 px-2 h-7.5"
           >
             <span class="text-[11px] font-medium text-error">Stop run?</span>
             <button
               type="button"
-              class="btn btn-xs btn-error h-5 min-h-0 px-2 text-[11px] cursor-pointer"
+              class="btn btn-xs btn-error h-5.5 min-h-0 px-2 text-[11px] font-semibold rounded cursor-pointer"
               @click="handleAction('stop', () => runStore.stopTraining(), 'Stopped training run')"
             >
               Confirm
             </button>
             <button
               type="button"
-              class="btn btn-xs btn-ghost h-5 min-h-0 px-1.5 text-[11px] cursor-pointer"
+              class="btn btn-xs btn-ghost h-5.5 min-h-0 px-1.5 text-[11px] rounded cursor-pointer"
               @click="confirmStop = false"
             >
               Cancel

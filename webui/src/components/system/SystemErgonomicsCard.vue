@@ -23,39 +23,57 @@ const systemStore = useSystemStore();
 
       <div class="flex flex-wrap items-center gap-3">
         <!-- Font Scale Selector -->
-        <div class="join border border-base-300">
+        <div
+          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
+        >
           <button
             type="button"
-            class="btn btn-xs join-item cursor-pointer"
-            :class="systemStore.fontScale === 'normal' ? 'btn-primary' : 'btn-ghost'"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
+            :class="
+              systemStore.fontScale === 'normal'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
+            "
             @click="systemStore.setFontScale('normal')"
           >
             Normal (16px)
           </button>
           <button
             type="button"
-            class="btn btn-xs join-item cursor-pointer"
-            :class="systemStore.fontScale === 'large' ? 'btn-primary' : 'btn-ghost'"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
+            :class="
+              systemStore.fontScale === 'large'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
+            "
             @click="systemStore.setFontScale('large')"
           >
             Large (18px)
           </button>
           <button
             type="button"
-            class="btn btn-xs join-item cursor-pointer"
-            :class="systemStore.fontScale === 'xlarge' ? 'btn-primary' : 'btn-ghost'"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
+            :class="
+              systemStore.fontScale === 'xlarge'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
+            "
             @click="systemStore.setFontScale('xlarge')"
           >
             XL (20px)
           </button>
         </div>
 
-        <div class="join">
+        <div
+          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
+        >
           <button
             type="button"
-            class="btn btn-xs join-item cursor-pointer"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
             :class="
-              systemStore.density === 'default' ? 'btn-primary' : 'btn-ghost border border-base-300'
+              systemStore.density === 'default'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             @click="systemStore.density = 'default'"
           >
@@ -63,9 +81,11 @@ const systemStore = useSystemStore();
           </button>
           <button
             type="button"
-            class="btn btn-xs join-item cursor-pointer"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
             :class="
-              systemStore.density === 'compact' ? 'btn-primary' : 'btn-ghost border border-base-300'
+              systemStore.density === 'compact'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             @click="systemStore.density = 'compact'"
           >
@@ -74,7 +94,7 @@ const systemStore = useSystemStore();
         </div>
 
         <label
-          class="flex cursor-pointer items-center gap-2 rounded border border-base-300 bg-base-300/50 px-3 py-1.5 text-xs select-none"
+          class="flex h-8.5 cursor-pointer items-center gap-2 rounded-lg border border-hairline bg-base-300/50 px-3 text-xs select-none hover:border-primary/40 transition"
         >
           <input
             v-model="systemStore.explainMode"

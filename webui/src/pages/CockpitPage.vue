@@ -175,14 +175,16 @@ onUnmounted(() => {
       class="flex shrink-0 items-center justify-between border-b border-hairline bg-base-200 px-4 py-2"
     >
       <div class="flex items-center gap-2">
-        <div class="join rounded-md border border-hairline bg-base-300 p-0.5">
+        <div
+          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
+        >
           <button
             type="button"
-            class="btn btn-xs join-item border-0 gap-1.5 px-3"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
             :class="
               activeSubView === 'live'
-                ? 'bg-primary text-primary-content font-bold'
-                : 'btn-ghost text-subtle'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             @click="activeSubView = 'live'"
           >
@@ -192,11 +194,11 @@ onUnmounted(() => {
 
           <button
             type="button"
-            class="btn btn-xs join-item border-0 gap-1.5 px-3"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
             :class="
               activeSubView === 'queue'
-                ? 'bg-primary text-primary-content font-bold'
-                : 'btn-ghost text-subtle'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             @click="activeSubView = 'queue'"
           >
@@ -206,11 +208,11 @@ onUnmounted(() => {
 
           <button
             type="button"
-            class="btn btn-xs join-item border-0 gap-1.5 px-3"
+            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
             :class="
               activeSubView === 'history'
-                ? 'bg-primary text-primary-content font-bold'
-                : 'btn-ghost text-subtle'
+                ? 'bg-primary text-primary-content shadow-xs'
+                : 'btn-ghost text-subtle hover:text-base-content'
             "
             @click="
               activeSubView = 'history';
@@ -225,7 +227,7 @@ onUnmounted(() => {
         <!-- Historical Inspection Indicator -->
         <div
           v-if="inspectingHistoricalRun"
-          class="flex items-center gap-2 rounded border border-info/40 bg-info/10 px-2.5 py-0.5 text-xs text-info"
+          class="flex h-8.5 items-center gap-2 rounded-lg border border-info/40 bg-info/10 px-3 text-xs text-info"
         >
           <span class="flex items-center gap-1">
             <span class="text-subtle">Inspecting Archive:</span>
@@ -246,7 +248,7 @@ onUnmounted(() => {
         <button
           v-if="activeSubView === 'live'"
           type="button"
-          class="btn btn-xs gap-1.5 border border-hairline transition"
+          class="btn btn-sm h-8.5 rounded-lg border border-hairline px-3 text-xs font-semibold gap-1.5 transition cursor-pointer"
           :class="
             previewPaneMode !== 'collapsed'
               ? 'bg-base-300 text-base-content hover:border-primary/50'
@@ -255,13 +257,13 @@ onUnmounted(() => {
           :title="previewPaneMode !== 'collapsed' ? 'Hide preview pane' : 'Show preview pane'"
           @click="setPreviewPaneMode(previewPaneMode === 'collapsed' ? 'split' : 'collapsed')"
         >
-          <Eye class="h-3 w-3" />
+          <Eye class="h-3.5 w-3.5" />
           <span>Preview</span>
         </button>
 
         <button
           type="button"
-          class="btn btn-xs btn-ghost border border-hairline bg-base-300"
+          class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-hairline bg-base-300 px-3 text-xs font-semibold gap-1.5 cursor-pointer hover:border-primary/50 transition"
           title="Refresh telemetry, samples, and checkpoints"
           @click="
             runStore.pollRun();
@@ -274,7 +276,7 @@ onUnmounted(() => {
             runStore.pollLog();
           "
         >
-          <RefreshCw class="h-3 w-3" />
+          <RefreshCw class="h-3.5 w-3.5" />
           <span>Refresh</span>
         </button>
       </div>

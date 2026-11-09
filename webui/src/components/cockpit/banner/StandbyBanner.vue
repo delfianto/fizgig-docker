@@ -35,7 +35,7 @@ const emit = defineEmits<{
       <button
         v-if="sessionDismissed && lastRunLora"
         type="button"
-        class="btn btn-xs border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 text-xs gap-1 font-medium cursor-pointer"
+        class="btn btn-sm h-7.5 rounded-md border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 text-xs gap-1.5 px-2.5 font-semibold cursor-pointer transition"
         title="Restore the previously dismissed run in the monitor"
         @click="emit('restore-session')"
       >
@@ -45,15 +45,15 @@ const emit = defineEmits<{
 
       <router-link
         to="/composer"
-        class="btn btn-xs btn-primary gap-1 text-xs font-semibold shadow-xs"
+        class="btn btn-sm h-7.5 rounded-md btn-primary gap-1.5 px-3 text-xs font-semibold shadow-xs cursor-pointer"
       >
         <span>Launch Run in Composer</span>
-        <ArrowRight class="h-3 w-3" />
+        <ArrowRight class="h-3.5 w-3.5" />
       </router-link>
 
       <button
         type="button"
-        class="btn btn-xs btn-ghost border border-hairline bg-base-200 text-xs gap-1 cursor-pointer"
+        class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-200 hover:border-base-content/30 text-xs px-2.5 gap-1.5 cursor-pointer font-semibold transition"
         @click="emit('view-history')"
       >
         <History class="h-3.5 w-3.5" />
