@@ -56,12 +56,16 @@ const parsedRecipe = computed(() => {
   };
 });
 
-function autoSuggestLoraName(): void {
+function autoSuggestLoraName(asBaseline = false): void {
   const ds = selectedDatasetInfo.value?.name;
   if (!ds) return;
   const clean = ds.toLowerCase().replace(/[^a-z0-9_-]/g, "_");
   const fam = composerStore.family;
-  composerStore.setFieldValue("LORA_NAME", `${clean}_${fam}_v1`);
+  const name = `${clean}_${fam}_v1`;
+  composerStore.setFieldValue("LORA_NAME", name);
+  if (asBaseline || !composerStore.modifiedKeys.has("LORA_NAME")) {
+    composerStore.baselineValues.LORA_NAME = name;
+  }
 }
 
 function selectDataset(path: string): void {
@@ -72,7 +76,7 @@ function selectDataset(path: string): void {
     currentName.startsWith("my_lora_") ||
     currentName.endsWith(`_${composerStore.family}_v1`)
   ) {
-    autoSuggestLoraName();
+    autoSuggestLoraName(true);
   }
 }
 

@@ -5,6 +5,34 @@ import { type FormStateResponse, type PlanValidationResponse } from "@shared/typ
 import { apiGet, apiPost } from "@/api/client";
 import { useSchemaStore } from "./schema";
 
+export function isValueEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === undefined && b === undefined) return true;
+  if (a === null && b === null) return true;
+
+  // Normalize booleans (handles true vs "true", 1 vs true, etc.)
+  if (typeof a === "boolean" || typeof b === "boolean") {
+    const boolA = a === true || a === "true" || a === 1 || a === "1";
+    const boolB = b === true || b === "true" || b === 1 || b === "1";
+    return boolA === boolB;
+  }
+
+  // Normalize numeric & scientific notation (e.g. 0.0001 <-> 1e-4, 1 <-> 1.0, 30 <-> "30")
+  const strA = String(a ?? "").trim();
+  const strB = String(b ?? "").trim();
+  if (strA === strB) return true;
+
+  if (strA !== "" && strB !== "") {
+    const numA = Number(strA);
+    const numB = Number(strB);
+    if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
+      return numA === numB;
+    }
+  }
+
+  return false;
+}
+
 export const useComposerStore = defineStore("composer", () => {
   const schemaStore = useSchemaStore();
 
@@ -40,7 +68,7 @@ export const useComposerStore = defineStore("composer", () => {
     for (const [k, v] of Object.entries(draftValues.value)) {
       if (k.startsWith("__")) continue;
       const base = baselineValues.value[k];
-      if (base !== undefined && String(v) !== String(base)) {
+      if (base !== undefined && !isValueEqual(v, base)) {
         modified.add(k);
       }
     }
@@ -138,8 +166,14 @@ export const useComposerStore = defineStore("composer", () => {
 
   function resetField(key: string): void {
     if (key in baselineValues.value) {
-      draftValues.value[key] = baselineValues.value[key];
+      draftValues.value[key] = structuredClone(baselineValues.value[key]);
       void refreshFormState();
+    } else {
+      const row = schemaStore.getRowMap(family.value).get(key);
+      if (row && row.default !== undefined) {
+        draftValues.value[key] = row.default;
+        void refreshFormState();
+      }
     }
   }
 

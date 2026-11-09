@@ -12,12 +12,41 @@ const props = defineProps<{
 
 const composerStore = useComposerStore();
 const systemStore = useSystemStore();
-const showHintPopover = ref(false);
-const showNotePopover = ref(false);
+const showInfoPopover = ref(false);
 
 const currentValue = computed(() => {
   const val = composerStore.draftValues[props.row.key];
   return val !== undefined ? val : (props.row.default ?? "");
+});
+
+function resolveMatchingChoice(val: unknown, choices?: string[]): string {
+  if (!choices || choices.length === 0) return String(val ?? "");
+  const strVal = String(val ?? "").trim();
+
+  // 1. Exact string match
+  if (choices.includes(strVal)) return strVal;
+
+  // 2. Case-insensitive match
+  const lower = strVal.toLowerCase();
+  const caseMatch = choices.find((ch) => ch.toLowerCase() === lower);
+  if (caseMatch !== undefined) return caseMatch;
+
+  // 3. Numeric match (e.g. 0.0001 <-> 1e-4, 1 <-> 1.0, 30 <-> "30")
+  const numVal = Number(strVal);
+  if (!Number.isNaN(numVal) && strVal !== "") {
+    const numMatch = choices.find((ch) => {
+      const chNum = Number(ch);
+      return !Number.isNaN(chNum) && chNum === numVal;
+    });
+    if (numMatch !== undefined) return numMatch;
+  }
+
+  // 4. Fallback to raw value or first choice
+  return strVal || choices[0] || "";
+}
+
+const selectedChoice = computed(() => {
+  return resolveMatchingChoice(currentValue.value, props.row.choices);
 });
 
 const isModified = computed(() => composerStore.modifiedKeys.has(props.row.key));
@@ -25,6 +54,9 @@ const isModified = computed(() => composerStore.modifiedKeys.has(props.row.key))
 const isDisabled = computed(() => composerStore.formState.disabled?.includes(props.row.key));
 
 const dynamicNote = computed(() => composerStore.formState.notes?.[props.row.key] ?? "");
+
+const hasInfo = computed(() => Boolean(dynamicNote.value || props.row.hint));
+const hasRecommendation = computed(() => Boolean(dynamicNote.value));
 
 const isNumericLike = computed(() => {
   const k = props.row.key;
@@ -98,81 +130,80 @@ function updateValue(val: unknown): void {
           <RotateCcw class="h-2.5 w-2.5" />
         </button>
 
-        <!-- Floating Tip Popover Button -->
-        <div v-if="dynamicNote" class="relative inline-block">
+        <!-- Unified Info & Tip Popover Button -->
+        <div v-if="hasInfo" class="relative inline-block">
           <button
             type="button"
-            class="flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold transition cursor-pointer select-none"
-            :class="
-              showNotePopover
-                ? 'bg-warning text-warning-content shadow-xs ring-1 ring-warning'
-                : 'bg-warning/15 text-warning hover:bg-warning/25'
-            "
-            :title="dynamicNote"
-            @click.stop="showNotePopover = !showNotePopover"
+            class="group relative flex h-5 w-5 items-center justify-center rounded transition cursor-pointer select-none"
+            :class="[
+              showInfoPopover
+                ? 'bg-primary/20 text-primary ring-1 ring-primary/40'
+                : hasRecommendation
+                  ? 'text-warning hover:bg-warning/15 hover:text-warning'
+                  : 'text-muted hover:bg-base-300 hover:text-base-content',
+            ]"
+            :title="dynamicNote || row.hint || 'Parameter details'"
+            @click.stop="showInfoPopover = !showInfoPopover"
           >
-            <Lightbulb class="h-3 w-3 shrink-0" />
-            <span>Tip</span>
+            <component
+              :is="hasRecommendation ? Lightbulb : HelpCircle"
+              class="h-3.5 w-3.5 transition-transform group-hover:scale-110"
+            />
+            <span
+              v-if="hasRecommendation"
+              class="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-warning ring-1 ring-base-100"
+            />
           </button>
 
           <div
-            v-if="showNotePopover"
-            class="absolute right-0 top-full z-40 mt-1.5 w-64 rounded-lg border border-warning/40 bg-base-300 p-2.5 text-[11px] leading-relaxed text-base-content shadow-xl select-text"
+            v-if="showInfoPopover"
+            class="absolute right-0 top-full z-40 mt-1.5 w-68 sm:w-76 rounded-lg border border-hairline bg-base-300 p-3 text-[11px] leading-relaxed text-base-content shadow-xl select-text space-y-2.5"
             @click.stop
           >
-            <div
-              class="flex items-center justify-between gap-1 pb-1 border-b border-hairline mb-1.5"
-            >
+            <div class="flex items-center justify-between pb-1.5 border-b border-hairline">
               <span
+                class="flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-base-content"
+              >
+                <component
+                  :is="hasRecommendation ? Lightbulb : HelpCircle"
+                  class="h-3.5 w-3.5"
+                  :class="hasRecommendation ? 'text-warning' : 'text-primary'"
+                />
+                <span class="truncate">{{ row.label || row.key }}</span>
+              </span>
+              <button
+                type="button"
+                class="flex h-4 w-4 items-center justify-center rounded text-muted hover:bg-base-200 hover:text-base-content text-[11px] font-mono cursor-pointer transition-colors"
+                @click="showInfoPopover = false"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div
+              v-if="dynamicNote"
+              class="rounded-md border border-warning/30 bg-warning/10 p-2 space-y-1"
+            >
+              <div
                 class="flex items-center gap-1 font-bold text-warning text-[10px] uppercase tracking-wider"
               >
                 <Lightbulb class="h-3 w-3 shrink-0" />
-                Recommendation
-              </span>
-              <button
-                type="button"
-                class="text-muted hover:text-base-content text-[10px] font-mono px-1 py-0.5 rounded hover:bg-base-200 cursor-pointer"
-                @click="showNotePopover = false"
-              >
-                ✕
-              </button>
+                <span>Live Recommendation</span>
+              </div>
+              <p class="text-xs text-base-content leading-relaxed">{{ dynamicNote }}</p>
             </div>
-            <p class="text-subtle text-[11px]">{{ dynamicNote }}</p>
-          </div>
-        </div>
 
-        <!-- Floating Hint Popover Button -->
-        <div v-if="row.hint" class="relative inline-block">
-          <button
-            type="button"
-            class="flex h-5 w-5 items-center justify-center rounded text-muted hover:bg-base-300 hover:text-base-content transition cursor-pointer"
-            :class="{ 'text-primary bg-primary/10': showHintPopover }"
-            :title="row.hint"
-            @click.stop="showHintPopover = !showHintPopover"
-          >
-            <HelpCircle class="h-3.5 w-3.5" />
-          </button>
-
-          <div
-            v-if="showHintPopover"
-            class="absolute right-0 top-full z-40 mt-1.5 w-64 rounded-lg border border-hairline bg-base-300 p-2.5 text-[11px] leading-relaxed text-base-content shadow-xl select-text"
-            @click.stop
-          >
-            <div
-              class="flex items-center justify-between gap-1 pb-1 border-b border-hairline mb-1.5"
-            >
-              <span class="font-bold text-base-content text-[10px] uppercase tracking-wider">
-                Parameter Info
-              </span>
-              <button
-                type="button"
-                class="text-muted hover:text-base-content text-[10px] font-mono px-1 py-0.5 rounded hover:bg-base-200 cursor-pointer"
-                @click="showHintPopover = false"
+            <div v-if="row.hint" class="space-y-1">
+              <div
+                v-if="dynamicNote"
+                class="font-bold text-[10px] uppercase tracking-wider text-muted"
               >
-                ✕
-              </button>
+                Parameter Guide
+              </div>
+              <p class="text-subtle text-[11px] whitespace-pre-line leading-relaxed">
+                {{ row.hint }}
+              </p>
             </div>
-            <p class="text-subtle text-[11px]">{{ row.hint }}</p>
           </div>
         </div>
       </div>
@@ -213,81 +244,80 @@ function updateValue(val: unknown): void {
           <span>Reset</span>
         </button>
 
-        <!-- Floating Tip Popover Button -->
-        <div v-if="dynamicNote" class="relative inline-block">
+        <!-- Unified Info & Tip Popover Button -->
+        <div v-if="hasInfo" class="relative inline-block">
           <button
             type="button"
-            class="flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold transition cursor-pointer select-none"
-            :class="
-              showNotePopover
-                ? 'bg-warning text-warning-content shadow-xs ring-1 ring-warning'
-                : 'bg-warning/15 text-warning hover:bg-warning/25'
-            "
-            :title="dynamicNote"
-            @click.stop="showNotePopover = !showNotePopover"
+            class="group relative flex h-5 w-5 items-center justify-center rounded transition cursor-pointer select-none"
+            :class="[
+              showInfoPopover
+                ? 'bg-primary/20 text-primary ring-1 ring-primary/40'
+                : hasRecommendation
+                  ? 'text-warning hover:bg-warning/15 hover:text-warning'
+                  : 'text-muted hover:bg-base-300 hover:text-base-content',
+            ]"
+            :title="dynamicNote || row.hint || 'Parameter details'"
+            @click.stop="showInfoPopover = !showInfoPopover"
           >
-            <Lightbulb class="h-3 w-3 shrink-0" />
-            <span>Tip</span>
+            <component
+              :is="hasRecommendation ? Lightbulb : HelpCircle"
+              class="h-3.5 w-3.5 transition-transform group-hover:scale-110"
+            />
+            <span
+              v-if="hasRecommendation"
+              class="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-warning ring-1 ring-base-100"
+            />
           </button>
 
           <div
-            v-if="showNotePopover"
-            class="absolute right-0 top-full z-40 mt-1.5 w-64 sm:w-72 rounded-lg border border-warning/40 bg-base-300 p-2.5 text-[11px] leading-relaxed text-base-content shadow-xl select-text"
+            v-if="showInfoPopover"
+            class="absolute right-0 top-full z-40 mt-1.5 w-68 sm:w-76 rounded-lg border border-hairline bg-base-300 p-3 text-[11px] leading-relaxed text-base-content shadow-xl select-text space-y-2.5"
             @click.stop
           >
-            <div
-              class="flex items-center justify-between gap-1 pb-1 border-b border-hairline mb-1.5"
-            >
+            <div class="flex items-center justify-between pb-1.5 border-b border-hairline">
               <span
+                class="flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-base-content"
+              >
+                <component
+                  :is="hasRecommendation ? Lightbulb : HelpCircle"
+                  class="h-3.5 w-3.5"
+                  :class="hasRecommendation ? 'text-warning' : 'text-primary'"
+                />
+                <span class="truncate">{{ row.label || row.key }}</span>
+              </span>
+              <button
+                type="button"
+                class="flex h-4 w-4 items-center justify-center rounded text-muted hover:bg-base-200 hover:text-base-content text-[11px] font-mono cursor-pointer transition-colors"
+                @click="showInfoPopover = false"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div
+              v-if="dynamicNote"
+              class="rounded-md border border-warning/30 bg-warning/10 p-2 space-y-1"
+            >
+              <div
                 class="flex items-center gap-1 font-bold text-warning text-[10px] uppercase tracking-wider"
               >
                 <Lightbulb class="h-3 w-3 shrink-0" />
-                Recommendation
-              </span>
-              <button
-                type="button"
-                class="text-muted hover:text-base-content text-[10px] font-mono px-1 py-0.5 rounded hover:bg-base-200 cursor-pointer"
-                @click="showNotePopover = false"
-              >
-                ✕
-              </button>
+                <span>Live Recommendation</span>
+              </div>
+              <p class="text-xs text-base-content leading-relaxed">{{ dynamicNote }}</p>
             </div>
-            <p class="text-subtle text-[11px]">{{ dynamicNote }}</p>
-          </div>
-        </div>
 
-        <!-- Floating Hint Popover Button -->
-        <div v-if="row.hint" class="relative inline-block">
-          <button
-            type="button"
-            class="flex h-5 w-5 items-center justify-center rounded text-muted hover:bg-base-300 hover:text-base-content transition cursor-pointer"
-            :class="{ 'text-primary bg-primary/10': showHintPopover }"
-            :title="row.hint"
-            @click.stop="showHintPopover = !showHintPopover"
-          >
-            <HelpCircle class="h-3.5 w-3.5" />
-          </button>
-
-          <div
-            v-if="showHintPopover"
-            class="absolute right-0 top-full z-40 mt-1.5 w-64 rounded-lg border border-hairline bg-base-300 p-2.5 text-[11px] leading-relaxed text-base-content shadow-xl select-text"
-            @click.stop
-          >
-            <div
-              class="flex items-center justify-between gap-1 pb-1 border-b border-hairline mb-1.5"
-            >
-              <span class="font-bold text-base-content text-[10px] uppercase tracking-wider">
-                Parameter Info
-              </span>
-              <button
-                type="button"
-                class="text-muted hover:text-base-content text-[10px] font-mono px-1 py-0.5 rounded hover:bg-base-200 cursor-pointer"
-                @click="showHintPopover = false"
+            <div v-if="row.hint" class="space-y-1">
+              <div
+                v-if="dynamicNote"
+                class="font-bold text-[10px] uppercase tracking-wider text-muted"
               >
-                ✕
-              </button>
+                Parameter Guide
+              </div>
+              <p class="text-subtle text-[11px] whitespace-pre-line leading-relaxed">
+                {{ row.hint }}
+              </p>
             </div>
-            <p class="text-subtle text-[11px]">{{ row.hint }}</p>
           </div>
         </div>
       </div>
@@ -312,7 +342,7 @@ function updateValue(val: unknown): void {
           type="button"
           class="btn btn-xs join-item flex-1 border-0"
           :class="
-            String(currentValue) === ch
+            selectedChoice === ch
               ? 'bg-primary text-primary-content font-bold'
               : 'btn-ghost text-subtle'
           "
@@ -325,7 +355,7 @@ function updateValue(val: unknown): void {
       <!-- Compact Select -->
       <select
         v-else
-        :value="String(currentValue)"
+        :value="selectedChoice"
         class="select select-sm w-full border-hairline-strong bg-base-100 text-xs text-base-content focus:border-primary focus:outline-none"
         :class="{ 'font-mono-num': isNumericLike }"
         @change="updateValue(($event.target as HTMLSelectElement).value)"
