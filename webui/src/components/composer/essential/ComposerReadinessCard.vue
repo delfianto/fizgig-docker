@@ -8,10 +8,9 @@ import {
   Cpu,
   ShieldAlert,
   ShieldCheck,
-  Thermometer,
 } from "lucide-vue-next";
 import { type DatasetSummary } from "@shared/types";
-import { BaseButton } from "@/components/common";
+import { BaseButton, BaseSelect } from "@/components/common";
 import { useComposerStore } from "@/stores/composer";
 import { useRunStore } from "@/stores/run";
 import { useSystemStore } from "@/stores/system";
@@ -35,10 +34,6 @@ interface GpuOption {
   vramUsedGb: number;
   vramTotalGb: number;
   vramFreeGb: number;
-  util: number;
-  temp: number;
-  power?: number;
-  powerLimit?: number;
 }
 
 onMounted(async () => {
@@ -66,12 +61,8 @@ const availableGpus = computed<GpuOption[]>(() => {
         vramTotalBytes: total,
         vramFreeBytes: free,
         vramUsedGb: Math.round((used / (1024 * 1024 * 1024)) * 10) / 10,
-        vramTotalGb: Math.round((total / (1024 * 1024 * 1024)) * 10) / 10,
+        vramTotalGb: Math.round(total / (1024 * 1024 * 1024)),
         vramFreeGb: Math.round((free / (1024 * 1024 * 1024)) * 10) / 10,
-        util: g.util ?? 0,
-        temp: g.temp ?? 0,
-        power: g.power,
-        powerLimit: g.power_limit,
       };
     });
   }
@@ -84,8 +75,6 @@ const availableGpus = computed<GpuOption[]>(() => {
         name: string;
         total_gb: number;
         used_gb: number;
-        util?: number;
-        temp?: number;
       }>;
     }
   ).gpus;
@@ -101,10 +90,8 @@ const availableGpus = computed<GpuOption[]>(() => {
         vramTotalBytes: total,
         vramFreeBytes: free,
         vramUsedGb: Math.round((g.used_gb || 0) * 10) / 10,
-        vramTotalGb: Math.round((g.total_gb || 16) * 10) / 10,
+        vramTotalGb: Math.round(g.total_gb || 16),
         vramFreeGb: Math.round(((g.total_gb || 16) - (g.used_gb || 0)) * 10) / 10,
-        util: g.util ?? 0,
-        temp: g.temp ?? 0,
       };
     });
   }
@@ -121,18 +108,30 @@ const availableGpus = computed<GpuOption[]>(() => {
       vramTotalBytes: total,
       vramFreeBytes: free,
       vramUsedGb: Math.round((used / (1024 * 1024 * 1024)) * 10) / 10,
-      vramTotalGb: Math.round((total / (1024 * 1024 * 1024)) * 10) / 10,
+      vramTotalGb: Math.round(total / (1024 * 1024 * 1024)),
       vramFreeGb: Math.round((free / (1024 * 1024 * 1024)) * 10) / 10,
-      util: runStore.stats?.gpu_util ?? 0,
-      temp: runStore.stats?.gpu_temp ?? 0,
     },
   ];
+});
+
+const gpuSelectOptions = computed(() => {
+  return availableGpus.value.map((g) => ({
+    value: g.index,
+    label: `GPU ${g.index}: ${g.name} (${g.vramTotalGb} GB)`,
+  }));
 });
 
 const selectedGpu = computed(() => {
   const target = availableGpus.value.find((g) => g.index === composerStore.selectedGpuIndex);
   return target || availableGpus.value[0] || null;
 });
+
+function onSelectGpu(value: string | number): void {
+  const idx = Number(value);
+  if (!Number.isNaN(idx)) {
+    void composerStore.setSelectedGpu(idx);
+  }
+}
 
 const estVramGb = computed(() => composerStore.estimatedVramGb);
 
@@ -221,107 +220,40 @@ const overallReadiness = computed(() => {
       </span>
     </div>
 
-    <!-- GPU Selection List with Radio Buttons -->
+    <!-- GPU Select Box -->
     <div class="space-y-1">
       <div class="flex items-center justify-between">
-        <label class="text-xs font-semibold text-subtle"> Target Training GPU: </label>
+        <label class="text-xs font-semibold text-subtle flex items-center gap-1.5">
+          <Cpu class="h-3.5 w-3.5 text-primary" />
+          <span>Target Training GPU:</span>
+        </label>
         <span class="text-[11px] font-mono text-muted">
           {{ availableGpus.length }} device(s) detected
         </span>
       </div>
 
-      <div class="space-y-1">
-        <div
-          v-for="gpu in availableGpus"
-          :key="gpu.index"
-          class="flex items-center justify-between gap-2.5 rounded-lg border p-2 transition cursor-pointer select-none"
-          :class="
-            composerStore.selectedGpuIndex === gpu.index
-              ? 'border-primary bg-primary/10 shadow-xs ring-1 ring-primary/40'
-              : 'border-hairline bg-base-200/50 text-subtle hover:bg-base-200 hover:border-hairline-strong'
-          "
-          @click="composerStore.setSelectedGpu(gpu.index)"
-        >
-          <!-- Left: Radio & Identity -->
-          <div class="flex items-center gap-2 min-w-0">
-            <input
-              type="radio"
-              name="selected_gpu"
-              :checked="composerStore.selectedGpuIndex === gpu.index"
-              class="radio radio-primary radio-xs pointer-events-none shrink-0"
-            />
-            <div
-              class="flex h-6 w-6 items-center justify-center rounded bg-base-300 shrink-0"
-              :class="composerStore.selectedGpuIndex === gpu.index ? 'text-primary' : 'text-subtle'"
-            >
-              <Cpu class="h-3.5 w-3.5" />
-            </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-1.5">
-                <span class="font-bold text-xs text-base-content truncate">
-                  {{ gpu.name }}
-                </span>
-                <span
-                  class="badge badge-xs font-mono px-1 py-0 h-4 text-[9px]"
-                  :class="
-                    composerStore.selectedGpuIndex === gpu.index ? 'badge-primary' : 'badge-neutral'
-                  "
-                >
-                  GPU {{ gpu.index }}
-                </span>
-                <span
-                  v-if="composerStore.selectedGpuIndex === gpu.index"
-                  class="badge badge-xs badge-success font-mono text-[9px] px-1 py-0 h-4"
-                >
-                  Active
-                </span>
-              </div>
-              <span class="font-mono text-[10px] text-muted block truncate">
-                {{ gpu.vramUsedGb }} / {{ gpu.vramTotalGb }} GB used ({{ gpu.vramFreeGb }} GB free)
-              </span>
-            </div>
-          </div>
-
-          <!-- Right: Telemetry & Memory Bar -->
-          <div class="flex flex-col items-end gap-1 shrink-0">
-            <div class="flex items-center gap-1.5 font-mono text-[10px] text-base-content">
-              <span>{{ gpu.util }}% load</span>
-              <span class="text-muted">·</span>
-              <div class="flex items-center gap-0.5">
-                <Thermometer class="h-2.5 w-2.5 text-muted" />
-                <span>{{ gpu.temp }}°C</span>
-              </div>
-            </div>
-            <!-- Visual VRAM Bar -->
-            <div class="w-20 h-1.5 bg-base-300 rounded-full overflow-hidden">
-              <div
-                class="h-full transition-all"
-                :class="
-                  gpu.vramUsedBytes / gpu.vramTotalBytes > 0.85
-                    ? 'bg-error'
-                    : gpu.vramUsedBytes / gpu.vramTotalBytes > 0.6
-                      ? 'bg-warning'
-                      : 'bg-primary'
-                "
-                :style="{
-                  width: `${Math.min(100, Math.round((gpu.vramUsedBytes / gpu.vramTotalBytes) * 100))}%`,
-                }"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <BaseSelect
+        :model-value="composerStore.selectedGpuIndex"
+        :options="gpuSelectOptions"
+        size="default"
+        class="w-full font-mono text-xs font-semibold"
+        @update:model-value="onSelectGpu"
+      />
     </div>
 
-    <!-- Estimated VRAM Telemetry Strip -->
+    <!-- Estimated VRAM Telemetry & Headroom Strip -->
     <div
       class="flex items-center justify-between rounded-lg border border-hairline bg-base-300/70 px-2.5 py-1.5 text-xs font-mono"
     >
       <div class="flex items-center gap-1.5 text-subtle truncate">
-        <span class="text-[11px] text-muted">Est. Job VRAM:</span>
+        <span class="text-[11px] text-muted">Est. VRAM:</span>
         <span class="font-bold text-base-content text-[11px]">~{{ estVramGb }} GB</span>
+        <span class="text-muted">·</span>
+        <span class="text-[11px] text-muted truncate">
+          Free: {{ selectedGpu?.vramFreeGb ?? 0 }} / {{ selectedGpu?.vramTotalGb ?? 0 }} GB
+        </span>
       </div>
-      <div class="flex items-center gap-1.5 text-[11px]">
+      <div class="flex items-center gap-1 text-[11px] shrink-0">
         <span class="text-muted">Headroom:</span>
         <span
           class="font-bold font-mono"
