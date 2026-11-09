@@ -34,12 +34,12 @@ const samplePromptCount = computed(() => {
       {{ composerStore.draftValues.SAMPLE_EVERY_N_EPOCHS ?? 1 }} epoch to monitor generalization:
     </p>
 
-    <!-- Compact, comfortable textarea that fits nicely without page scroll -->
+    <!-- Generous sample prompt editor matching dataset selector height for uniform UI -->
     <textarea
       :value="String(composerStore.draftValues.SAMPLE_PROMPT ?? '')"
-      rows="4"
+      rows="16"
       placeholder="A close-up portrait of trigger, looking at camera, neutral background...&#10;&#10;A dynamic wide shot of trigger outdoors in the city, golden hour lighting..."
-      class="textarea textarea-bordered w-full h-28 min-h-20 max-h-50 resize-y border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed text-base-content focus:border-primary p-2"
+      class="textarea textarea-bordered w-full h-[425px] min-h-[300px] max-h-[600px] resize-y border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed text-base-content focus:border-primary p-3"
       @input="
         composerStore.setFieldValue('SAMPLE_PROMPT', ($event.target as HTMLTextAreaElement).value)
       "

@@ -94,9 +94,9 @@ function onSelectDataset(path: string): void {
         </div>
       </div>
 
-      <!-- Scrollable list: max-h-44 shows at least 4 rows cleanly -->
+      <!-- Scrollable list: 425px shows full 8 rows cleanly -->
       <div
-        class="max-h-44 overflow-y-auto space-y-1 rounded-lg border border-hairline bg-base-200/50 p-1 scrollbar-thin"
+        class="h-[425px] max-h-[425px] overflow-y-auto space-y-1 rounded-lg border border-hairline bg-base-200/50 p-1 scrollbar-thin"
       >
         <div v-if="filteredDatasets.length === 0" class="py-4 text-center text-xs text-muted">
           No datasets matching "{{ datasetFilter }}"
