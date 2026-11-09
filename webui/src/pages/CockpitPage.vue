@@ -5,15 +5,12 @@ import {
   Activity,
   ArrowDown,
   ArrowUp,
-  Columns2,
   Copy,
   Download,
   Eye,
   FileCode2,
   History,
   ListOrdered,
-  PanelRightClose,
-  PanelRightOpen,
   Pause,
   Play,
   RefreshCw,
@@ -165,12 +162,14 @@ onUnmounted(() => {
             type="button"
             class="btn btn-xs join-item border-0 gap-1.5 px-3"
             :class="
-              activeSubView === 'live' ? 'bg-primary text-primary-content' : 'btn-ghost text-subtle'
+              activeSubView === 'live'
+                ? 'bg-primary text-primary-content font-bold'
+                : 'btn-ghost text-subtle'
             "
             @click="activeSubView = 'live'"
           >
             <Activity class="h-3.5 w-3.5" />
-            <span>Live Cockpit</span>
+            <span>Cockpit</span>
           </button>
 
           <button
@@ -178,13 +177,13 @@ onUnmounted(() => {
             class="btn btn-xs join-item border-0 gap-1.5 px-3"
             :class="
               activeSubView === 'queue'
-                ? 'bg-primary text-primary-content'
+                ? 'bg-primary text-primary-content font-bold'
                 : 'btn-ghost text-subtle'
             "
             @click="activeSubView = 'queue'"
           >
             <ListOrdered class="h-3.5 w-3.5" />
-            <span> Queue ({{ runStore.run?.web_queue?.items?.length ?? 0 }}) </span>
+            <span>Queue</span>
           </button>
 
           <button
@@ -192,7 +191,7 @@ onUnmounted(() => {
             class="btn btn-xs join-item border-0 gap-1.5 px-3"
             :class="
               activeSubView === 'history'
-                ? 'bg-primary text-primary-content'
+                ? 'bg-primary text-primary-content font-bold'
                 : 'btn-ghost text-subtle'
             "
             @click="
@@ -201,7 +200,7 @@ onUnmounted(() => {
             "
           >
             <History class="h-3.5 w-3.5" />
-            <span>Run History ({{ runStore.historicalRuns.length }})</span>
+            <span>History</span>
           </button>
         </div>
 
@@ -225,17 +224,21 @@ onUnmounted(() => {
       </div>
 
       <div class="flex items-center gap-2">
-        <!-- Quick Preview Pane Restore Button when collapsed -->
+        <!-- Preview Pane Toggle Button -->
         <button
-          v-if="activeSubView === 'live' && previewPaneMode === 'collapsed'"
+          v-if="activeSubView === 'live'"
           type="button"
-          class="btn btn-xs btn-primary gap-1.5 shadow-xs"
-          title="Restore preview pane"
-          @click="setPreviewPaneMode('split')"
+          class="btn btn-xs gap-1.5 border border-hairline transition"
+          :class="
+            previewPaneMode !== 'collapsed'
+              ? 'bg-base-300 text-base-content hover:border-primary/50'
+              : 'btn-primary shadow-xs'
+          "
+          :title="previewPaneMode !== 'collapsed' ? 'Hide preview pane' : 'Show preview pane'"
+          @click="setPreviewPaneMode(previewPaneMode === 'collapsed' ? 'split' : 'collapsed')"
         >
           <Eye class="h-3 w-3" />
-          <span>Show Previews ({{ runStore.samples.length }})</span>
-          <PanelRightOpen class="h-3 w-3 ml-0.5 opacity-80" />
+          <span>Preview</span>
         </button>
 
         <button
@@ -477,26 +480,6 @@ onUnmounted(() => {
           @set-pane-mode="(mode) => setPreviewPaneMode(mode)"
           @open-override-drawer="overrideDrawerOpen = true"
         />
-      </div>
-
-      <!-- Collapsed Right Edge Hover/Expand Strip -->
-      <div
-        v-if="previewPaneMode === 'collapsed'"
-        class="absolute right-0 top-1/2 -translate-y-1/2 z-20"
-      >
-        <button
-          type="button"
-          class="flex items-center gap-1.5 rounded-l-md border-y border-l border-hairline bg-base-300/95 px-1.5 py-3 text-xs text-subtle shadow-lg backdrop-blur hover:bg-base-200 hover:text-primary transition"
-          title="Expand Preview Pane"
-          @click="setPreviewPaneMode('split')"
-        >
-          <PanelRightOpen class="h-4 w-4 text-primary" />
-          <span
-            class="[writing-mode:vertical-rl] font-semibold tracking-wider text-[11px] uppercase"
-          >
-            Previews ({{ runStore.samples.length }})
-          </span>
-        </button>
       </div>
     </div>
 

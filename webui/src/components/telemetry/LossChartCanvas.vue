@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { type LossDataPoint } from "@shared/types";
 
 const props = defineProps<{
@@ -12,17 +12,44 @@ const emit = defineEmits<{
   hoverEpoch: [epoch: number | null];
 }>();
 
+const showSmooth = ref<boolean>(true);
 const smoothing = ref<number>(0.65);
 const logScale = ref<boolean>(false);
 const clipOutliers = ref<boolean>(true);
 const showLr = ref<boolean>(true);
 const hoverIndex = ref<number | null>(null);
 
-const width = 760;
-const height = 260;
-const pad = { top: 18, right: 48, bottom: 32, left: 62 };
-const plotW = width - pad.left - pad.right;
+const containerRef = ref<HTMLDivElement | null>(null);
+const chartWidth = ref<number>(800);
+const height = 240;
+const pad = { top: 18, right: 36, bottom: 32, left: 56 };
+const plotW = computed(() => Math.max(100, chartWidth.value - pad.left - pad.right));
 const plotH = height - pad.top - pad.bottom;
+
+let resizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  if (containerRef.value) {
+    const initialW = containerRef.value.clientWidth;
+    if (initialW > 100) {
+      chartWidth.value = initialW;
+    }
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 100) {
+          chartWidth.value = Math.round(w);
+        }
+      }
+    });
+    resizeObserver.observe(containerRef.value);
+  }
+});
+
+onUnmounted(() => {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
+});
 
 const smoothedSeries = computed<number[]>(() => {
   const pts = props.points;
@@ -60,7 +87,7 @@ const bounds = computed(() => {
 
 function xForStep(step: number): number {
   const { minStep, maxStep } = bounds.value;
-  return pad.left + ((step - minStep) / (maxStep - minStep)) * plotW;
+  return pad.left + ((step - minStep) / (maxStep - minStep)) * plotW.value;
 }
 
 function yForLoss(lossVal: number): number {
@@ -79,8 +106,8 @@ function yForLoss(lossVal: number): number {
 const rawPath = computed(() => {
   const pts = props.points;
   if (pts.length < 2) return "";
-  // Downsample to at most 400 segments for crisp SVG performance
-  const stride = Math.max(1, Math.floor(pts.length / 400));
+  const maxSegments = Math.max(400, Math.floor(chartWidth.value));
+  const stride = Math.max(1, Math.floor(pts.length / maxSegments));
   const cmds: string[] = [];
   for (let i = 0; i < pts.length; i += stride) {
     const pt = pts[i];
@@ -96,7 +123,8 @@ const smoothPath = computed(() => {
   const pts = props.points;
   const sm = smoothedSeries.value;
   if (pts.length < 2) return "";
-  const stride = Math.max(1, Math.floor(pts.length / 400));
+  const maxSegments = Math.max(400, Math.floor(chartWidth.value));
+  const stride = Math.max(1, Math.floor(pts.length / maxSegments));
   const cmds: string[] = [];
   for (let i = 0; i < pts.length; i += stride) {
     const pt = pts[i];
@@ -111,8 +139,9 @@ const smoothPath = computed(() => {
 
 const bestSmoothedMarker = computed(() => {
   const pts = props.points;
-  const sm = smoothedSeries.value;
-  if (pts.length === 0 || sm.length === 0) return null;
+  if (pts.length === 0) return null;
+  const sm = showSmooth.value ? smoothedSeries.value : pts.map((p) => p.loss);
+  if (sm.length === 0) return null;
   let bestIdx = 0;
   for (let i = 1; i < sm.length; i++) {
     if ((sm[i] ?? Infinity) < (sm[bestIdx] ?? Infinity)) {
@@ -128,6 +157,7 @@ const bestSmoothedMarker = computed(() => {
     step: pt.step,
     epoch: pt.epoch,
     loss: val,
+    isEma: showSmooth.value,
   };
 });
 
@@ -176,13 +206,13 @@ const hoveredPoint = computed(() => {
 function onMouseMove(ev: MouseEvent): void {
   const svg = ev.currentTarget as SVGSVGElement;
   const rect = svg.getBoundingClientRect();
-  const relX = ((ev.clientX - rect.left) / rect.width) * width;
-  if (relX < pad.left || relX > width - pad.right || props.points.length === 0) {
+  const relX = ((ev.clientX - rect.left) / rect.width) * chartWidth.value;
+  if (relX < pad.left || relX > chartWidth.value - pad.right || props.points.length === 0) {
     hoverIndex.value = null;
     emit("hoverEpoch", null);
     return;
   }
-  const ratio = (relX - pad.left) / plotW;
+  const ratio = (relX - pad.left) / plotW.value;
   const idx = Math.min(
     props.points.length - 1,
     Math.max(0, Math.round(ratio * (props.points.length - 1))),
@@ -203,20 +233,25 @@ function onMouseLeave(): void {
     <!-- Chart Control Strip -->
     <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
       <div class="flex items-center gap-3">
-        <label class="flex items-center gap-2 text-subtle">
+        <label class="flex cursor-pointer items-center gap-1.5 text-subtle">
+          <input v-model="showSmooth" type="checkbox" class="toggle toggle-xs toggle-primary" />
           <span>Smooth</span>
+        </label>
+
+        <div v-if="showSmooth" class="flex items-center gap-2 pl-0.5">
           <input
             v-model.number="smoothing"
             type="range"
             min="0"
             max="0.95"
             step="0.05"
-            class="range range-xs range-primary w-20"
+            class="chart-slider"
+            title="EMA smoothing factor (0 = raw, 0.95 = heavy EMA)"
           />
-          <span class="font-mono-num w-8 text-[11px] text-muted">
+          <span class="font-mono-num w-7 text-[11px] text-muted">
             {{ smoothing.toFixed(2) }}
           </span>
-        </label>
+        </div>
 
         <label class="flex cursor-pointer items-center gap-1.5 text-subtle">
           <input v-model="logScale" type="checkbox" class="toggle toggle-xs toggle-primary" />
@@ -241,7 +276,7 @@ function onMouseLeave(): void {
       >
         <span class="inline-flex items-center gap-1 text-success">
           <span class="h-2 w-2 rounded-full bg-success" />
-          Lowest EMA:
+          {{ bestSmoothedMarker.isEma ? "Lowest EMA:" : "Lowest Loss:" }}
           <strong>{{ bestSmoothedMarker.loss.toFixed(4) }}</strong>
           at step {{ bestSmoothedMarker.step }}
           <template v-if="bestSmoothedMarker.epoch"> (ep {{ bestSmoothedMarker.epoch }}) </template>
@@ -250,9 +285,13 @@ function onMouseLeave(): void {
     </div>
 
     <!-- Interactive SVG Chart Surface -->
-    <div class="relative overflow-hidden rounded-lg border border-hairline bg-base-100">
+    <div
+      ref="containerRef"
+      class="relative w-full overflow-hidden rounded-lg border border-hairline bg-base-100"
+    >
       <svg
-        :viewBox="`0 0 ${width} ${height}`"
+        :viewBox="`0 0 ${chartWidth} ${height}`"
+        preserveAspectRatio="none"
         class="block h-60 w-full cursor-crosshair select-none"
         @mousemove="onMouseMove"
         @mouseleave="onMouseLeave"
@@ -261,7 +300,7 @@ function onMouseLeave(): void {
         <g v-for="(tick, idx) in yTicks" :key="idx">
           <line
             :x1="pad.left"
-            :x2="width - pad.right"
+            :x2="chartWidth - pad.right"
             :y1="tick.y"
             :y2="tick.y"
             stroke="rgba(255,255,255,0.05)"
@@ -306,13 +345,14 @@ function onMouseLeave(): void {
           v-if="rawPath"
           :d="rawPath"
           fill="none"
-          stroke="var(--color-chart-raw)"
-          stroke-width="1"
+          :stroke="showSmooth ? 'var(--color-chart-raw)' : 'var(--color-chart-smooth)'"
+          :stroke-width="showSmooth ? 1 : 1.5"
+          :opacity="showSmooth ? 0.75 : 1"
         />
 
         <!-- Smoothed EMA Loss Path -->
         <path
-          v-if="smoothPath"
+          v-if="showSmooth && smoothPath"
           :d="smoothPath"
           fill="none"
           stroke="var(--color-chart-smooth)"
@@ -365,7 +405,7 @@ function onMouseLeave(): void {
         <span>
           Raw <strong class="text-subtle">{{ hoveredPoint.loss.toFixed(4) }}</strong>
         </span>
-        <span>
+        <span v-if="showSmooth">
           EMA
           <strong class="text-primary">{{ hoveredPoint.smoothed.toFixed(4) }}</strong>
         </span>

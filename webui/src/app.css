@@ -134,3 +134,33 @@ body {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Slim telemetry track slider (replaces chunky DaisyUI range pill) */
+.chart-slider {
+  height: 4px;
+  width: 5rem;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+.chart-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 1px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.chart-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 1px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
