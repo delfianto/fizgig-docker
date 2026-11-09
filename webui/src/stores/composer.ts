@@ -10,8 +10,33 @@ export function isValueEqual(a: unknown, b: unknown): boolean {
   if (a === undefined && b === undefined) return true;
   if (a === null && b === null) return true;
 
-  // Normalize booleans (handles true vs "true", 1 vs true, etc.)
-  if (typeof a === "boolean" || typeof b === "boolean") {
+  // Normalize booleans (handles true vs "true", 1 vs true, false vs "false", "0" vs false, etc.)
+  const isBoolLikeA =
+    typeof a === "boolean" ||
+    a === "true" ||
+    a === "false" ||
+    a === 1 ||
+    a === 0 ||
+    a === "1" ||
+    a === "0";
+  const isBoolLikeB =
+    typeof b === "boolean" ||
+    b === "true" ||
+    b === "false" ||
+    b === 1 ||
+    b === 0 ||
+    b === "1" ||
+    b === "0";
+  if (
+    isBoolLikeA &&
+    isBoolLikeB &&
+    (typeof a === "boolean" ||
+      typeof b === "boolean" ||
+      a === "true" ||
+      a === "false" ||
+      b === "true" ||
+      b === "false")
+  ) {
     const boolA = a === true || a === "true" || a === 1 || a === "1";
     const boolB = b === true || b === "true" || b === 1 || b === "1";
     return boolA === boolB;
@@ -27,6 +52,15 @@ export function isValueEqual(a: unknown, b: unknown): boolean {
     const numB = Number(strB);
     if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
       return numA === numB;
+    }
+  }
+
+  // Deep comparison for objects/dictionaries (e.g. blocks)
+  if (typeof a === "object" && typeof b === "object" && a !== null && b !== null) {
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
     }
   }
 

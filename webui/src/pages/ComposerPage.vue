@@ -56,7 +56,7 @@ const parsedRecipe = computed(() => {
   };
 });
 
-function autoSuggestLoraName(asBaseline = false): void {
+function autoSuggestLoraName(asBaseline = true): void {
   const ds = selectedDatasetInfo.value?.name;
   if (!ds) return;
   const clean = ds.toLowerCase().replace(/[^a-z0-9_-]/g, "_");

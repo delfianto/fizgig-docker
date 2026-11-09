@@ -55,8 +55,14 @@ const isDisabled = computed(() => composerStore.formState.disabled?.includes(pro
 
 const dynamicNote = computed(() => composerStore.formState.notes?.[props.row.key] ?? "");
 
-const hasInfo = computed(() => Boolean(dynamicNote.value || props.row.hint));
 const hasRecommendation = computed(() => Boolean(dynamicNote.value));
+
+const isCheckboxChecked = computed(() => {
+  const val = currentValue.value;
+  if (typeof val === "boolean") return val;
+  if (val === "true" || val === "1" || val === 1) return true;
+  return false;
+});
 
 const isNumericLike = computed(() => {
   const k = props.row.key;
@@ -112,7 +118,7 @@ function updateValue(val: unknown): void {
         <input
           type="checkbox"
           class="toggle toggle-xs toggle-primary shrink-0"
-          :checked="Boolean(currentValue)"
+          :checked="isCheckboxChecked"
           :disabled="isDisabled"
           @change="updateValue(($event.target as HTMLInputElement).checked)"
         />
@@ -131,7 +137,7 @@ function updateValue(val: unknown): void {
         </button>
 
         <!-- Unified Info & Tip Popover Button -->
-        <div v-if="hasInfo" class="relative inline-block">
+        <div class="relative inline-block">
           <button
             type="button"
             class="group relative flex h-5 w-5 items-center justify-center rounded transition cursor-pointer select-none"
@@ -145,10 +151,7 @@ function updateValue(val: unknown): void {
             :title="dynamicNote || row.hint || 'Parameter details'"
             @click.stop="showInfoPopover = !showInfoPopover"
           >
-            <component
-              :is="hasRecommendation ? Lightbulb : HelpCircle"
-              class="h-3.5 w-3.5 transition-transform group-hover:scale-110"
-            />
+            <HelpCircle class="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
             <span
               v-if="hasRecommendation"
               class="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-warning ring-1 ring-base-100"
@@ -164,8 +167,7 @@ function updateValue(val: unknown): void {
               <span
                 class="flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-base-content"
               >
-                <component
-                  :is="hasRecommendation ? Lightbulb : HelpCircle"
+                <HelpCircle
                   class="h-3.5 w-3.5"
                   :class="hasRecommendation ? 'text-warning' : 'text-primary'"
                 />
@@ -203,6 +205,21 @@ function updateValue(val: unknown): void {
               <p class="text-subtle text-[11px] whitespace-pre-line leading-relaxed">
                 {{ row.hint }}
               </p>
+            </div>
+
+            <div v-else-if="!dynamicNote" class="space-y-1 text-[11px] text-subtle leading-relaxed">
+              <p>Standard hyperparameter for {{ composerStore.family }}.</p>
+              <div
+                class="font-mono text-[10px] text-muted space-y-0.5 pt-1 border-t border-hairline"
+              >
+                <div>
+                  Key: <span class="text-base-content">{{ row.key }}</span>
+                </div>
+                <div>
+                  Default:
+                  <span class="text-base-content">{{ String(row.default ?? "false") }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -245,7 +262,7 @@ function updateValue(val: unknown): void {
         </button>
 
         <!-- Unified Info & Tip Popover Button -->
-        <div v-if="hasInfo" class="relative inline-block">
+        <div class="relative inline-block">
           <button
             type="button"
             class="group relative flex h-5 w-5 items-center justify-center rounded transition cursor-pointer select-none"
@@ -259,10 +276,7 @@ function updateValue(val: unknown): void {
             :title="dynamicNote || row.hint || 'Parameter details'"
             @click.stop="showInfoPopover = !showInfoPopover"
           >
-            <component
-              :is="hasRecommendation ? Lightbulb : HelpCircle"
-              class="h-3.5 w-3.5 transition-transform group-hover:scale-110"
-            />
+            <HelpCircle class="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
             <span
               v-if="hasRecommendation"
               class="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-warning ring-1 ring-base-100"
@@ -278,8 +292,7 @@ function updateValue(val: unknown): void {
               <span
                 class="flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider text-base-content"
               >
-                <component
-                  :is="hasRecommendation ? Lightbulb : HelpCircle"
+                <HelpCircle
                   class="h-3.5 w-3.5"
                   :class="hasRecommendation ? 'text-warning' : 'text-primary'"
                 />
@@ -317,6 +330,21 @@ function updateValue(val: unknown): void {
               <p class="text-subtle text-[11px] whitespace-pre-line leading-relaxed">
                 {{ row.hint }}
               </p>
+            </div>
+
+            <div v-else-if="!dynamicNote" class="space-y-1 text-[11px] text-subtle leading-relaxed">
+              <p>Standard hyperparameter for {{ composerStore.family }}.</p>
+              <div
+                class="font-mono text-[10px] text-muted space-y-0.5 pt-1 border-t border-hairline"
+              >
+                <div>
+                  Key: <span class="text-base-content">{{ row.key }}</span>
+                </div>
+                <div>
+                  Default:
+                  <span class="text-base-content">{{ String(row.default ?? "none") }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -363,7 +391,26 @@ function updateValue(val: unknown): void {
         <option v-for="ch in row.choices" :key="ch" :value="ch">
           {{ row.labels?.[ch] ?? ch }}
         </option>
+        <option
+          v-if="selectedChoice && !row.choices.includes(selectedChoice)"
+          :value="selectedChoice"
+        >
+          {{ selectedChoice }}
+        </option>
       </select>
+    </template>
+
+    <!-- Blocks to train (e.g. TRAINING_BLOCKS) -->
+    <template v-else-if="row.kind === 'blocks'">
+      <div class="rounded border border-hairline bg-base-100/70 p-2 text-xs text-subtle space-y-1">
+        <div class="flex items-center justify-between font-mono text-[11px]">
+          <span>Block Selection</span>
+          <span class="badge badge-xs badge-neutral">Managed by Area</span>
+        </div>
+        <p class="text-[10px] text-muted">
+          Blocks train according to the selected Model Area (Full Model, Identity, Style, Details).
+        </p>
+      </div>
     </template>
 
     <!-- Multi-line Textarea -->

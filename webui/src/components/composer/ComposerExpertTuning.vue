@@ -40,6 +40,7 @@ function modifiedCountInSection(sec: SchemaSection): number {
 function shouldSpanFull(row: SchemaRow): boolean {
   if (row.kind === "note") return true;
   if (row.kind === "text") return true;
+  if (row.kind === "blocks") return true;
   if (row.kind === "folder" || row.kind === "path") return true;
   if (row.kind === "radio" && (row.choices?.length ?? 0) > 2) return true;
   return false;
