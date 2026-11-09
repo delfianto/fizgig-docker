@@ -150,6 +150,7 @@ export interface LiveRunResponse {
   progress: RunProgress | null;
   started_at: number | null;
   training_at: number | null;
+  ended_at?: number | null;
   running: boolean;
   web_queue: WebQueueState;
 }

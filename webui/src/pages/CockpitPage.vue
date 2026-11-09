@@ -51,10 +51,22 @@ const displayedRunPrompts = computed(() => {
     .filter(Boolean);
 });
 
-function cloneRunToComposer(item: HistoricalRun): void {
+const sessionDismissed = ref(false);
+
+function cloneRunToComposer(item: {
+  family: string;
+  image_folder?: string;
+  values?: Record<string, unknown>;
+  lora: string;
+}): void {
   composerStore.loadFromHistoricalRun(item);
   toast.success(`Loaded settings from "${item.lora}" into Composer`);
   void router.push("/composer");
+}
+
+function dismissCurrentSession(): void {
+  sessionDismissed.value = true;
+  toast.info("Cleared completed session from view");
 }
 
 async function inspectRunSamplesAndLoss(item: HistoricalRun): Promise<void> {
@@ -69,20 +81,38 @@ async function inspectRunSamplesAndLoss(item: HistoricalRun): Promise<void> {
 
 async function switchBackToLiveRun(): Promise<void> {
   inspectingHistoricalRun.value = null;
-  await Promise.all([
-    runStore.fetchLiveLoss(),
-    runStore.fetchSamples(),
-    runStore.fetchCheckpoints(),
-  ]);
+  sessionDismissed.value = false;
+  if (runStore.isActiveOrStarting) {
+    await Promise.all([
+      runStore.fetchLiveLoss(),
+      runStore.fetchSamples(),
+      runStore.fetchCheckpoints(),
+    ]);
+  } else if (runStore.isCompleted && runStore.run) {
+    await Promise.all([
+      runStore.fetchLiveLoss(runStore.run.history_id || undefined),
+      runStore.fetchSamples(undefined, runStore.run.lora),
+      runStore.fetchCheckpoints(runStore.run.output_dir),
+    ]);
+  } else {
+    await Promise.all([
+      runStore.fetchLiveLoss(),
+      runStore.fetchSamples(),
+      runStore.fetchCheckpoints(),
+    ]);
+  }
 }
 
 watch(
   () => runStore.run?.running,
   (running) => {
-    if (running && inspectingHistoricalRun.value) {
-      inspectingHistoricalRun.value = null;
-      void runStore.fetchLiveLoss();
-      void runStore.fetchSamples();
+    if (running) {
+      sessionDismissed.value = false;
+      if (inspectingHistoricalRun.value) {
+        inspectingHistoricalRun.value = null;
+        void runStore.fetchLiveLoss();
+        void runStore.fetchSamples();
+      }
     }
   },
 );
@@ -94,11 +124,16 @@ onMounted(async () => {
     runStore.fetchCheckpoints(),
   ]);
 
-  if (!runStore.run?.running && runStore.historicalRuns.length > 0) {
-    const latest = runStore.historicalRuns[0];
-    if (latest) {
-      await inspectRunSamplesAndLoss(latest);
-    }
+  if (runStore.isActiveOrStarting) {
+    inspectingHistoricalRun.value = null;
+    await Promise.all([runStore.fetchLiveLoss(), runStore.fetchSamples()]);
+  } else if (runStore.isCompleted && runStore.run) {
+    inspectingHistoricalRun.value = null;
+    await Promise.all([
+      runStore.fetchLiveLoss(runStore.run.history_id || undefined),
+      runStore.fetchSamples(undefined, runStore.run.lora),
+      runStore.fetchCheckpoints(runStore.run.output_dir),
+    ]);
   } else {
     await Promise.all([runStore.fetchLiveLoss(), runStore.fetchSamples()]);
   }
@@ -169,16 +204,16 @@ onUnmounted(() => {
           v-if="inspectingHistoricalRun"
           class="flex items-center gap-2 rounded border border-info/40 bg-info/10 px-2.5 py-0.5 text-xs text-info"
         >
-          <span>
-            Viewing historical run:
-            <strong class="font-mono">{{ inspectingHistoricalRun.lora }}</strong>
+          <span class="flex items-center gap-1">
+            <span class="text-subtle">Inspecting Archive:</span>
+            <strong class="font-mono text-base-content">{{ inspectingHistoricalRun.lora }}</strong>
           </span>
           <button
             type="button"
-            class="underline hover:text-base-content cursor-pointer"
+            class="underline hover:text-base-content cursor-pointer text-xs"
             @click="switchBackToLiveRun"
           >
-            Return to live run
+            {{ runStore.isActiveOrStarting ? "Return to active run" : "Close archive view" }}
           </button>
         </div>
       </div>
@@ -238,8 +273,15 @@ onUnmounted(() => {
               : 'lg:col-span-7'
         "
       >
-        <!-- Live Run Status & Instant Controls -->
-        <LiveRunBanner />
+        <!-- Live / Completed / Standby Run Status & Instant Controls -->
+        <LiveRunBanner
+          :inspecting-historical-run="inspectingHistoricalRun"
+          :session-dismissed="sessionDismissed"
+          @clone="cloneRunToComposer"
+          @dismiss="dismissCurrentSession"
+          @view-history="activeSubView = 'history'"
+          @return-to-live="switchBackToLiveRun"
+        />
 
         <!-- 6-Card Tabular KPI Strip -->
         <KpiMetricsStrip

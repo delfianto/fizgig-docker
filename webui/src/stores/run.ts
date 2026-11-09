@@ -30,6 +30,17 @@ export const useRunStore = defineStore("run", () => {
     const st = run.value?.state;
     return Boolean(run.value?.running || st === "starting" || st === "running" || st === "pausing");
   });
+  const isCompleted = computed(() => {
+    if (!run.value) return false;
+    if (run.value.running) return false;
+    const st = run.value.state;
+    return (
+      st === "completed" ||
+      st === "finished" ||
+      (run.value.progress?.percent ?? 0) >= 100 ||
+      Boolean(run.value.ended_at && run.value.lora)
+    );
+  });
 
   const activeLoraName = computed(() => run.value?.lora || historicalRuns.value[0]?.lora || "");
   const activeOutputDir = computed(
@@ -262,6 +273,7 @@ export const useRunStore = defineStore("run", () => {
     lastError,
     isRunning,
     isActiveOrStarting,
+    isCompleted,
     activeLoraName,
     activeOutputDir,
     lowestLossPoint,

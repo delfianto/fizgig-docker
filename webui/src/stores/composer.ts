@@ -1,11 +1,7 @@
 import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 import { useDebounceFn } from "@vueuse/core";
-import {
-  type FormStateResponse,
-  type HistoricalRun,
-  type PlanValidationResponse,
-} from "@shared/types";
+import { type FormStateResponse, type PlanValidationResponse } from "@shared/types";
 import { apiGet, apiPost } from "@/api/client";
 import { useSchemaStore } from "./schema";
 
@@ -227,7 +223,12 @@ export const useComposerStore = defineStore("composer", () => {
     return plan;
   }
 
-  function loadFromHistoricalRun(run: HistoricalRun): void {
+  function loadFromHistoricalRun(run: {
+    family: string;
+    image_folder?: string;
+    values?: Record<string, unknown>;
+    lora: string;
+  }): void {
     family.value = run.family;
     imageFolder.value = run.image_folder || imageFolder.value;
     const defaults = schemaStore.buildDefaults(run.family);
