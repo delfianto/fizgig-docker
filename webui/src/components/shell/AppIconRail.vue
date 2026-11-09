@@ -26,7 +26,6 @@ const navItems = computed(() => [
     path: "/cockpit",
     icon: Activity,
     shortcut: "Alt+1",
-    pulse: runStore.isRunning,
     badge: runStore.run?.web_queue?.items?.length || 0,
   },
   {
@@ -93,15 +92,9 @@ const navItems = computed(() => [
             {{ item.name }}
           </span>
 
-          <!-- Active training amber pulse dot -->
-          <span
-            v-if="item.pulse"
-            class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-warning"
-          />
-
           <!-- Queue count badge -->
           <span
-            v-else-if="item.badge && item.badge > 0"
+            v-if="item.badge && item.badge > 0"
             class="font-mono-num absolute top-1 right-1 rounded bg-primary px-1 text-[9px] font-semibold text-primary-content"
           >
             {{ item.badge }}

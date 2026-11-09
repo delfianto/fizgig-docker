@@ -46,32 +46,23 @@ async function handleAction(
     >
       <!-- Top Row: Stage & Run Identity on Left, Instant Controls on Right -->
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-3">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <span class="relative flex h-2.5 w-2.5 shrink-0">
-            <span
-              class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
-            />
-            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
+        <div class="flex items-center gap-2 flex-wrap min-w-0">
+          <span class="text-sm font-bold font-mono text-base-content truncate">
+            {{ runStore.run.lora }}
           </span>
-
-          <div class="flex items-center gap-2 flex-wrap min-w-0">
-            <span class="text-sm font-bold font-mono text-base-content truncate">
-              {{ runStore.run.lora }}
-            </span>
-            <span class="badge badge-sm badge-neutral border-hairline font-mono text-[11px]">
-              {{ runStore.run.family }}
-            </span>
-            <span
-              class="rounded px-2 py-0.5 text-xs font-semibold"
-              :class="
-                runStore.run.pause
-                  ? 'bg-warning/10 border border-warning/30 text-warning'
-                  : 'bg-primary/10 border border-primary/20 text-primary'
-              "
-            >
-              {{ liveStageText }}
-            </span>
-          </div>
+          <span class="badge badge-sm badge-neutral border-hairline font-mono text-[11px]">
+            {{ runStore.run.family }}
+          </span>
+          <span
+            class="rounded px-2 py-0.5 text-xs font-semibold"
+            :class="
+              runStore.run.pause
+                ? 'bg-warning/10 border border-warning/30 text-warning'
+                : 'bg-primary/10 border border-primary/20 text-primary'
+            "
+          >
+            {{ liveStageText }}
+          </span>
         </div>
 
         <!-- Instant Training Controls -->
