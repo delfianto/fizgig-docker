@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { type IncomingMessage, type ServerResponse } from "node:http";
+import { Readable } from "node:stream";
 import { type Plugin } from "vite-plus";
 
 interface ProxyOptions {
@@ -294,6 +295,14 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
         if (typeof contentType === "string") {
           headers["Content-Type"] = contentType;
         }
+        const accept = req.headers.accept;
+        if (typeof accept === "string") {
+          headers.Accept = accept;
+        }
+        const lastEventId = req.headers["last-event-id"];
+        if (typeof lastEventId === "string") {
+          headers["Last-Event-ID"] = lastEventId;
+        }
 
         const upstreamRes = await fetch(`${baseUrl}${url}`, {
           method,
@@ -313,6 +322,46 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
         if (upstreamCd) resHeaders["Content-Disposition"] = upstreamCd;
         const upstreamCc = upstreamRes.headers.get("cache-control");
         if (upstreamCc) resHeaders["Cache-Control"] = upstreamCc;
+
+        // Stream SSE or real-time event streams without buffering the entire body
+        const isEventStream =
+          upstreamCt?.includes("text/event-stream") ||
+          (url.startsWith("/api/log") && upstreamRes.status === 200);
+
+        if (isEventStream && upstreamRes.body) {
+          resHeaders["Content-Type"] = upstreamCt || "text/event-stream";
+          resHeaders["Cache-Control"] = "no-cache, no-transform";
+          resHeaders["Connection"] = "keep-alive";
+          resHeaders["X-Accel-Buffering"] = "no";
+          res.writeHead(upstreamRes.status, resHeaders);
+          if (typeof res.flushHeaders === "function") {
+            res.flushHeaders();
+          }
+
+          const nodeStream = Readable.fromWeb(
+            upstreamRes.body as Parameters<typeof Readable.fromWeb>[0],
+          );
+          nodeStream.pipe(res);
+
+          const cleanup = () => {
+            try {
+              nodeStream.destroy();
+            } catch {
+              // ignore
+            }
+          };
+
+          req.on("close", cleanup);
+          req.on("error", cleanup);
+          nodeStream.on("error", () => {
+            try {
+              res.destroy();
+            } catch {
+              // ignore
+            }
+          });
+          return;
+        }
 
         const arrayBuf = await upstreamRes.arrayBuffer();
 

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { nextTick, ref, watch } from "vue";
 import { Download, FileCode2, Terminal } from "lucide-vue-next";
 import { type CheckpointItem, type HistoricalRun } from "@shared/types";
 import { downloadUrl, formatBytes } from "@/api/client";
 import { useRunStore } from "@/stores/run";
 
-defineProps<{
+const props = defineProps<{
   checkpoints: CheckpointItem[];
   outputDir: string;
   consoleLog: string;
@@ -14,6 +14,28 @@ defineProps<{
 
 const runStore = useRunStore();
 const bottomTab = ref<"checkpoints" | "console" | "spec">("checkpoints");
+const logContainerRef = ref<HTMLDivElement | null>(null);
+
+function scrollToBottom(): void {
+  if (logContainerRef.value) {
+    logContainerRef.value.scrollTop = logContainerRef.value.scrollHeight;
+  }
+}
+
+watch(
+  () => props.consoleLog,
+  () => {
+    if (bottomTab.value === "console") {
+      void nextTick(scrollToBottom);
+    }
+  },
+);
+
+watch(bottomTab, (tab) => {
+  if (tab === "console") {
+    void nextTick(scrollToBottom);
+  }
+});
 </script>
 
 <template>
@@ -118,6 +140,7 @@ const bottomTab = ref<"checkpoints" | "console" | "spec">("checkpoints");
     <!-- Tab 2: Raw Console Stdout -->
     <div
       v-else-if="bottomTab === 'console'"
+      ref="logContainerRef"
       class="flex-1 overflow-y-auto bg-base-100 p-3 font-mono text-[11px] leading-relaxed text-subtle"
     >
       <pre class="whitespace-pre-wrap">{{ consoleLog || "No console output captured." }}</pre>
