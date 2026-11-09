@@ -39,7 +39,7 @@ const samplePromptCount = computed(() => {
       :value="String(composerStore.draftValues.SAMPLE_PROMPT ?? '')"
       rows="4"
       placeholder="A close-up portrait of trigger, looking at camera, neutral background...&#10;&#10;A dynamic wide shot of trigger outdoors in the city, golden hour lighting..."
-      class="textarea textarea-bordered w-full h-28 min-h-[80px] max-h-[200px] resize-y border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed text-base-content focus:border-primary p-2"
+      class="textarea textarea-bordered w-full h-28 min-h-20 max-h-50 resize-y border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed text-base-content focus:border-primary p-2"
       @input="
         composerStore.setFieldValue('SAMPLE_PROMPT', ($event.target as HTMLTextAreaElement).value)
       "

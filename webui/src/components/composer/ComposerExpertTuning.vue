@@ -1,112 +1,66 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { Search } from "lucide-vue-next";
-import { type SchemaRow } from "@shared/types";
+import { computed, ref, watch } from "vue";
+import { Search, Sliders } from "lucide-vue-next";
+import { type SchemaRow, type SchemaSection } from "@shared/types";
 import SchemaField from "@/components/schema/SchemaField.vue";
 import { useComposerStore } from "@/stores/composer";
 
 const composerStore = useComposerStore();
 
-const expertTab = ref<keyof typeof EXPERT_GROUPS>("general");
+const selectedSectionIndex = ref(0);
 const paramFilter = ref("");
 
-const EXPERT_GROUPS = {
-  general: {
-    title: "General & Architecture",
-    keys: [
-      "LORA_NAME",
-      "CAPTION_TRIGGER_WORD",
-      "LORA_OUTPUT_DIR",
-      "MAX_TRAIN_EPOCHS",
-      "SAVE_EVERY_N_EPOCHS",
-      "SEED",
-      "RESUME_TRAINING",
-    ],
-  },
-  network: {
-    title: "Network & LoRA Rank",
-    keys: [
-      "NETWORK_DIM",
-      "NETWORK_ALPHA",
-      "CONV_DIM",
-      "CONV_ALPHA",
-      "NETWORK_DROPOUT",
-      "SCALE_WEIGHT_NORMS",
-      "FAMILY_DORA",
-      "FAMILY_WEIGHT_DECOMPOSE",
-    ],
-  },
-  optimizer: {
-    title: "Optimizer & Schedule",
-    keys: [
-      "OPTIMIZER_TYPE",
-      "LEARNING_RATE",
-      "ADAPTIVE_LR",
-      "UNET_LR",
-      "TEXT_ENCODER_LR",
-      "LR_SCHEDULER",
-      "LR_WARMUP_STEPS",
-      "OPTIMIZER_ARGS",
-      "MAX_GRAD_NORM",
-    ],
-  },
-  dataset: {
-    title: "Dataset & Caching",
-    keys: [
-      "DATASET_MEGAPIXELS",
-      "DATASET_BATCH_SIZE",
-      "DATASET_CAPTION_EXT",
-      "CACHE_LATENTS",
-      "CACHE_TEXT_ENCODER_OUTPUTS",
-      "COLOR_AUGMENTATION",
-      "FLIP_AUGMENTATION",
-      "NUM_WORKERS",
-    ],
-  },
-  samples: {
-    title: "Sample Prompts",
-    keys: [
-      "SAMPLE_PROMPT",
-      "SAMPLE_EVERY_N_EPOCHS",
-      "SAMPLE_WIDTH",
-      "SAMPLE_HEIGHT",
-      "SAMPLE_STEPS",
-      "SAMPLE_CFG_SCALE",
-      "SAMPLE_SEED",
-      "FAMILY_TURBO_STRENGTH",
-    ],
-  },
-  hardware: {
-    title: "Hardware & Precision",
-    keys: [
-      "MIXED_PRECISION",
-      "GRADIENT_CHECKPOINTING",
-      "GRADIENT_ACCUMULATION_STEPS",
-      "BLOCKS_SWAP",
-      "XFORMERS",
-      "SDPA",
-    ],
-  },
-} as const;
+const sections = computed<SchemaSection[]>(() => {
+  return composerStore.currentFamilyDesc?.form.sections ?? [];
+});
 
-function row(key: string): SchemaRow | null {
-  const rows = composerStore.currentFamilyDesc?.form.rows ?? [];
-  return rows.find((r) => r.key === key) ?? null;
-}
+// Reset selected section if family changes and index is out of bounds
+watch(
+  () => composerStore.family,
+  () => {
+    selectedSectionIndex.value = 0;
+  },
+);
 
-function modifiedCountInTab(tabKey: keyof typeof EXPERT_GROUPS): number {
-  const grp = EXPERT_GROUPS[tabKey];
+const currentSection = computed<SchemaSection | null>(() => {
+  if (sections.value.length === 0) return null;
+  return sections.value[selectedSectionIndex.value] ?? sections.value[0] ?? null;
+});
+
+function modifiedCountInSection(sec: SchemaSection): number {
   let count = 0;
-  for (const k of grp.keys) {
-    if (composerStore.modifiedKeys.has(k)) {
+  for (const r of sec.rows) {
+    if (r && r.key && composerStore.modifiedKeys.has(r.key)) {
       count++;
     }
   }
   return count;
 }
 
-const currentGroupTitle = computed(() => EXPERT_GROUPS[expertTab.value].title);
-const currentKeys = computed(() => EXPERT_GROUPS[expertTab.value].keys);
+// All rows across all sections if searching globally, or rows of the current section
+const displayedRows = computed<SchemaRow[]>(() => {
+  const query = paramFilter.value.trim().toLowerCase();
+  if (query) {
+    // Global search across all sections
+    const matches: SchemaRow[] = [];
+    for (const sec of sections.value) {
+      for (const r of sec.rows) {
+        if (!r || !r.key) continue;
+        const keyMatch = r.key.toLowerCase().includes(query);
+        const labelMatch = r.label ? r.label.toLowerCase().includes(query) : false;
+        const hintMatch = r.hint ? r.hint.toLowerCase().includes(query) : false;
+        if (keyMatch || labelMatch || hintMatch) {
+          matches.push(r);
+        }
+      }
+    }
+    return matches;
+  }
+
+  // Current section rows
+  if (!currentSection.value) return [];
+  return currentSection.value.rows.filter((r): r is SchemaRow => r !== null && Boolean(r.key));
+});
 </script>
 
 <template>
@@ -115,29 +69,39 @@ const currentKeys = computed(() => EXPERT_GROUPS[expertTab.value].keys);
     <aside
       class="flex flex-col border-r border-hairline bg-base-200/50 p-2.5 space-y-1 overflow-y-auto"
     >
-      <div class="mb-2 px-2 pt-1 text-[11px] font-bold uppercase tracking-wider text-muted">
-        Expert Parameters
+      <div
+        class="mb-2 px-2 pt-1 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted"
+      >
+        <span>Expert Sections</span>
+        <span class="badge badge-xs font-mono font-normal">{{ sections.length }}</span>
+      </div>
+
+      <div v-if="sections.length === 0" class="py-6 text-center text-xs text-muted">
+        Loading schema sections...
       </div>
 
       <button
-        v-for="(grp, tabKey) in EXPERT_GROUPS"
-        :key="tabKey"
+        v-for="(sec, idx) in sections"
+        :key="sec.title || idx"
         type="button"
         class="flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition cursor-pointer"
         :class="
-          expertTab === tabKey
+          selectedSectionIndex === idx && !paramFilter
             ? 'bg-primary text-primary-content font-bold shadow'
             : 'text-subtle hover:bg-base-300'
         "
-        @click="expertTab = tabKey"
+        @click="
+          selectedSectionIndex = idx;
+          paramFilter = '';
+        "
       >
-        <span class="truncate">{{ grp.title }}</span>
+        <span class="truncate">{{ sec.title || `Section ${idx + 1}` }}</span>
         <span
-          v-if="modifiedCountInTab(tabKey) > 0"
+          v-if="modifiedCountInSection(sec) > 0"
           class="badge badge-xs font-mono"
-          :class="expertTab === tabKey ? 'badge-warning' : 'badge-primary'"
+          :class="selectedSectionIndex === idx && !paramFilter ? 'badge-warning' : 'badge-primary'"
         >
-          {{ modifiedCountInTab(tabKey) }}
+          {{ modifiedCountInSection(sec) }}
         </span>
       </button>
     </aside>
@@ -149,41 +113,48 @@ const currentKeys = computed(() => EXPERT_GROUPS[expertTab.value].keys);
         class="flex items-center justify-between border-b border-hairline bg-base-200/40 px-5 py-2.5"
       >
         <div>
-          <h2 class="text-sm font-bold text-base-content">
-            {{ currentGroupTitle }}
+          <h2 class="text-sm font-bold text-base-content flex items-center gap-2">
+            <Sliders class="h-4 w-4 text-primary" />
+            <span>{{
+              paramFilter ? `Search Results ("${paramFilter}")` : currentSection?.title
+            }}</span>
           </h2>
           <p class="text-xs text-muted">
-            Fine-tune underlying hyperparameters while preserving recipe baseline defaults.
+            {{
+              paramFilter
+                ? `Found ${displayedRows.length} parameter(s) matching "${paramFilter}" across all sections.`
+                : `Fine-tune underlying hyperparameters for ${composerStore.family} while preserving recipe baseline defaults.`
+            }}
           </p>
         </div>
 
-        <div class="relative w-64">
+        <div class="relative w-72">
           <Search class="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted" />
           <input
             v-model="paramFilter"
             type="text"
-            placeholder="Search parameter key..."
+            placeholder="Filter parameters (e.g. lr, dim, epoch)..."
             class="input input-xs input-bordered w-full bg-base-300/60 pl-8 text-xs font-mono"
           />
         </div>
       </div>
 
       <!-- Render Parameter Fields in Clean Grid -->
-      <div class="flex-1 overflow-y-auto p-6">
-        <div class="mx-auto max-w-4xl space-y-4">
+      <div class="flex-1 overflow-y-auto p-5">
+        <div class="mx-auto max-w-4xl space-y-3.5">
           <div
-            v-for="k in currentKeys"
-            :key="k"
-            class="rounded-lg border border-hairline bg-base-200/60 p-3.5 transition-colors hover:border-hairline-strong"
-            :class="{
-              hidden: paramFilter && !k.toLowerCase().includes(paramFilter.toLowerCase()),
-            }"
+            v-if="displayedRows.length === 0"
+            class="rounded-lg border border-hairline bg-base-200/40 p-8 text-center text-xs text-muted"
           >
-            <SchemaField v-if="row(k)" :row="row(k)!" />
-            <div v-else class="flex items-center justify-between text-xs text-muted">
-              <span class="font-mono">{{ k }}</span>
-              <span class="badge badge-xs">Not applicable to {{ composerStore.family }}</span>
-            </div>
+            No parameters found{{ paramFilter ? ` matching "${paramFilter}"` : "" }}.
+          </div>
+
+          <div
+            v-for="r in displayedRows"
+            :key="r.key"
+            class="rounded-lg border border-hairline bg-base-200/60 p-3.5 transition-colors hover:border-hairline-strong"
+          >
+            <SchemaField :row="r" />
           </div>
         </div>
       </div>
