@@ -13,8 +13,10 @@ const samplePromptCount = computed(() => {
 </script>
 
 <template>
-  <section class="rounded-xl border border-hairline bg-base-300/80 p-2.5 space-y-1.5">
-    <div class="flex items-center justify-between border-b border-hairline pb-1.5">
+  <section
+    class="rounded-xl border border-hairline bg-base-300/80 p-2.5 space-y-1.5 h-[582px] flex flex-col justify-between"
+  >
+    <div class="flex items-center justify-between border-b border-hairline pb-1.5 shrink-0">
       <div class="flex items-center gap-2">
         <Eye class="h-4 w-4 text-info" />
         <h2 class="text-xs font-bold uppercase tracking-wider text-base-content">
@@ -29,23 +31,22 @@ const samplePromptCount = computed(() => {
       </div>
     </div>
 
-    <p class="text-[11px] text-subtle">
+    <p class="text-[11px] text-subtle shrink-0">
       Test prompts rendered every
       {{ composerStore.draftValues.SAMPLE_EVERY_N_EPOCHS ?? 1 }} epoch to monitor generalization:
     </p>
 
-    <!-- Generous sample prompt editor matching dataset selector height for uniform UI -->
+    <!-- Generous sample prompt editor matching dataset selector container height for uniform UI -->
     <textarea
       :value="String(composerStore.draftValues.SAMPLE_PROMPT ?? '')"
-      rows="16"
       placeholder="A close-up portrait of trigger, looking at camera, neutral background...&#10;&#10;A dynamic wide shot of trigger outdoors in the city, golden hour lighting..."
-      class="textarea textarea-bordered w-full h-[425px] min-h-[300px] max-h-[600px] resize-y border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed text-base-content focus:border-primary p-3"
+      class="textarea textarea-bordered w-full flex-1 min-h-[300px] resize-y border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed text-base-content focus:border-primary p-3"
       @input="
         composerStore.setFieldValue('SAMPLE_PROMPT', ($event.target as HTMLTextAreaElement).value)
       "
     />
 
-    <div class="flex items-center justify-between text-[11px] text-muted pt-0.5">
+    <div class="flex items-center justify-between text-[11px] text-muted pt-0.5 shrink-0">
       <span>Separate multiple prompts with a blank line.</span>
       <span class="font-mono">Renders per checkpoint</span>
     </div>

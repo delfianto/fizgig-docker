@@ -228,7 +228,6 @@ onMounted(async () => {
       :parsed-recipe="parsedRecipe"
       :current-preset-note="currentPresetNote"
       :can-process="isDatasetCompletelyTagged"
-      @switch-to-expert="composerMode = 'expert'"
       @select-dataset="selectDataset"
       @auto-name="autoSuggestLoraName"
       @set-quick-epochs="setQuickEpochs"

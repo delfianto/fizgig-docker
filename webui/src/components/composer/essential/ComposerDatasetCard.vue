@@ -55,9 +55,11 @@ function onSelectDataset(path: string): void {
 </script>
 
 <template>
-  <section class="rounded-xl border border-hairline bg-base-300/80 p-2.5 space-y-1.5">
+  <section
+    class="rounded-xl border border-hairline bg-base-300/80 p-2.5 space-y-1.5 h-[582px] flex flex-col justify-between"
+  >
     <!-- Header -->
-    <div class="flex items-center justify-between border-b border-hairline pb-1.5">
+    <div class="flex items-center justify-between border-b border-hairline pb-1.5 shrink-0">
       <div class="flex items-center gap-2">
         <FolderOpen class="h-4 w-4 text-primary" />
         <h2 class="text-xs font-bold uppercase tracking-wider text-base-content">
@@ -78,8 +80,8 @@ function onSelectDataset(path: string): void {
     </div>
 
     <!-- Dataset Picker: Scrollable List with Search -->
-    <div class="space-y-1">
-      <div class="flex items-center justify-between">
+    <div class="space-y-1 flex-1 min-h-0 flex flex-col">
+      <div class="flex items-center justify-between shrink-0">
         <label class="text-xs font-semibold text-subtle"> Select Dataset Folder: </label>
         <div class="relative w-44">
           <Search
@@ -94,9 +96,9 @@ function onSelectDataset(path: string): void {
         </div>
       </div>
 
-      <!-- Scrollable list: 425px shows full 8 rows cleanly -->
+      <!-- Scrollable list: flex-1 up to 425px showing full 8 rows cleanly -->
       <div
-        class="h-[425px] max-h-[425px] overflow-y-auto space-y-1 rounded-lg border border-hairline bg-base-200/50 p-1 scrollbar-thin"
+        class="flex-1 min-h-[360px] max-h-[425px] overflow-y-auto space-y-1 rounded-lg border border-hairline bg-base-200/50 p-1 scrollbar-thin"
       >
         <div v-if="filteredDatasets.length === 0" class="py-4 text-center text-xs text-muted">
           No datasets matching "{{ datasetFilter }}"
@@ -176,7 +178,7 @@ function onSelectDataset(path: string): void {
       <!-- Incomplete Dataset Warning Callout -->
       <div
         v-if="selectedDatasetInfo && !isSelectedDatasetReady"
-        class="flex items-center justify-between gap-2 rounded-md border border-warning/30 bg-warning/10 px-2.5 py-1 text-xs text-warning"
+        class="flex items-center justify-between gap-2 rounded-md border border-warning/30 bg-warning/10 px-2.5 py-1 text-xs text-warning shrink-0"
       >
         <div class="flex items-center gap-1.5 truncate">
           <AlertTriangle class="h-3.5 w-3.5 shrink-0" />
@@ -200,7 +202,7 @@ function onSelectDataset(path: string): void {
     </div>
 
     <!-- LoRA Name & Trigger Word Inputs -->
-    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 pt-0.5">
+    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 pt-0.5 shrink-0">
       <div>
         <div class="mb-0.5 flex items-center justify-between">
           <label class="text-xs font-semibold text-subtle">LoRA Name</label>

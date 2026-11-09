@@ -20,7 +20,6 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  (e: "switch-to-expert"): void;
   (e: "select-dataset", path: string): void;
   (e: "auto-name"): void;
   (e: "set-quick-epochs", epochs: number): void;
@@ -51,7 +50,6 @@ const isSelectedDatasetReady = computed(() => {
         <ComposerRecipeCard
           :parsed-recipe="parsedRecipe"
           :current-preset-note="currentPresetNote"
-          @switch-to-expert="emit('switch-to-expert')"
         />
 
         <ComposerScheduleCard @set-quick-epochs="emit('set-quick-epochs', $event)" />

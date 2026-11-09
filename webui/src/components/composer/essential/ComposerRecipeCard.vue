@@ -7,10 +7,6 @@ defineProps<{
   currentPresetNote: string | null;
 }>();
 
-const emit = defineEmits<{
-  (e: "switch-to-expert"): void;
-}>();
-
 const composerStore = useComposerStore();
 </script>
 
@@ -31,13 +27,6 @@ const composerStore = useComposerStore();
           </span>
         </div>
       </div>
-      <button
-        type="button"
-        class="btn btn-xs btn-outline border-hairline text-[11px] h-5 min-h-0 px-2 shrink-0 cursor-pointer"
-        @click="emit('switch-to-expert')"
-      >
-        Customize ↗
-      </button>
     </div>
 
     <!-- Compact Parameter Badges in 1 row -->
