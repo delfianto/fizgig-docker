@@ -42,8 +42,6 @@ function shouldSpanFull(row: SchemaRow): boolean {
   if (row.kind === "text") return true;
   if (row.kind === "folder" || row.kind === "path") return true;
   if (row.kind === "radio" && (row.choices?.length ?? 0) > 2) return true;
-  if (row.kind === "check") return false;
-  if ((row.label?.length ?? 0) > 65) return true;
   return false;
 }
 
@@ -168,9 +166,9 @@ const displayedRows = computed<SchemaRow[]>(() => {
         </div>
       </div>
 
-      <!-- Render Parameter Fields in Clean Responsive Grid -->
-      <div class="flex-1 overflow-y-auto p-5">
-        <div class="mx-auto max-w-5xl">
+      <!-- Render Parameter Fields in Clean Responsive 3-Column Grid -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-5">
+        <div class="mx-auto max-w-6xl">
           <div
             v-if="displayedRows.length === 0"
             class="rounded-lg border border-hairline bg-base-200/40 p-8 text-center text-xs text-muted"
@@ -178,11 +176,11 @@ const displayedRows = computed<SchemaRow[]>(() => {
             No parameters found{{ paramFilter ? ` matching "${paramFilter}"` : "" }}.
           </div>
 
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
             <div
               v-for="r in displayedRows"
               :key="r.key"
-              class="rounded-lg border p-3 transition-colors flex flex-col justify-between"
+              class="rounded-lg border p-2.5 transition-colors flex flex-col justify-between"
               :class="[
                 r.kind === 'note'
                   ? 'col-span-full border-info/30 bg-info/10'
