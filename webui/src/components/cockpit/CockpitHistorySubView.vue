@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { Activity, Copy } from "lucide-vue-next";
 import { type HistoricalRun } from "@shared/types";
+import { BaseButton, BaseInput } from "@/components/common";
 
 const props = defineProps<{
   historicalRuns: HistoricalRun[];
@@ -51,12 +52,12 @@ function renderMiniSparkline(vals?: number[]): string {
         <h2 class="text-sm font-semibold text-base-content">
           Run History ({{ filteredHistory.length }})
         </h2>
-        <input
-          v-model="historySearch"
-          type="text"
-          placeholder="Filter by LoRA name, model family, or dataset..."
-          class="input input-sm h-8.5 w-72 rounded-lg border-hairline-strong bg-base-100 text-xs focus:border-primary focus:outline-none"
-        />
+        <div class="w-72">
+          <BaseInput
+            v-model="historySearch"
+            placeholder="Filter by LoRA name, model family, or dataset..."
+          />
+        </div>
       </div>
 
       <div class="divide-y divide-hairline text-xs">
@@ -120,23 +121,15 @@ function renderMiniSparkline(vals?: number[]): string {
               />
             </svg>
 
-            <button
-              type="button"
-              class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-200 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer"
-              @click="emit('inspect', item)"
-            >
-              <Activity class="h-3.5 w-3.5 text-primary" />
+            <BaseButton size="compact" variant="ghost" @click="emit('inspect', item)">
+              <template #icon-left><Activity class="h-3.5 w-3.5 text-primary" /></template>
               <span>Inspect Loss &amp; Samples</span>
-            </button>
+            </BaseButton>
 
-            <button
-              type="button"
-              class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-200 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer"
-              @click="emit('clone', item)"
-            >
-              <Copy class="h-3.5 w-3.5" />
+            <BaseButton size="compact" variant="ghost" @click="emit('clone', item)">
+              <template #icon-left><Copy class="h-3.5 w-3.5" /></template>
               <span>Clone to Composer</span>
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>

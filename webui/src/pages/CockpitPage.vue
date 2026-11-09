@@ -13,6 +13,7 @@ import LiveRunBanner from "@/components/cockpit/LiveRunBanner.vue";
 import LivePreviewDrawer from "@/components/telemetry/LivePreviewDrawer.vue";
 import LossChartCanvas from "@/components/telemetry/LossChartCanvas.vue";
 import SampleMatrixGrid from "@/components/telemetry/SampleMatrixGrid.vue";
+import { BaseButton, BasePillGroup } from "@/components/common";
 import { useComposerStore } from "@/stores/composer";
 import { useRunStore } from "@/stores/run";
 
@@ -175,54 +176,20 @@ onUnmounted(() => {
       class="flex shrink-0 items-center justify-between border-b border-hairline bg-base-200 px-4 py-2"
     >
       <div class="flex items-center gap-2">
-        <div
-          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
-        >
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              activeSubView === 'live'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="activeSubView = 'live'"
-          >
-            <Activity class="h-3.5 w-3.5" />
-            <span>Monitor</span>
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              activeSubView === 'queue'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="activeSubView = 'queue'"
-          >
-            <ListOrdered class="h-3.5 w-3.5" />
-            <span>Queue</span>
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              activeSubView === 'history'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="
-              activeSubView = 'history';
-              runStore.fetchHistoricalRuns();
-            "
-          >
-            <History class="h-3.5 w-3.5" />
-            <span>History</span>
-          </button>
-        </div>
+        <BasePillGroup
+          :model-value="activeSubView"
+          :options="[
+            { value: 'live', label: 'Monitor', icon: Activity },
+            { value: 'queue', label: 'Queue', icon: ListOrdered },
+            { value: 'history', label: 'History', icon: History },
+          ]"
+          @update:model-value="
+            (val) => {
+              activeSubView = val as 'live' | 'queue' | 'history';
+              if (val === 'history') runStore.fetchHistoricalRuns();
+            }
+          "
+        />
 
         <!-- Historical Inspection Indicator -->
         <div
@@ -245,25 +212,18 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-2">
         <!-- Preview Pane Toggle Button -->
-        <button
+        <BaseButton
           v-if="activeSubView === 'live'"
-          type="button"
-          class="btn btn-sm h-8.5 rounded-lg border border-hairline px-3 text-xs font-semibold gap-1.5 transition cursor-pointer"
-          :class="
-            previewPaneMode !== 'collapsed'
-              ? 'bg-base-300 text-base-content hover:border-primary/50'
-              : 'btn-primary shadow-xs'
-          "
+          :variant="previewPaneMode !== 'collapsed' ? 'ghost' : 'primary'"
           :title="previewPaneMode !== 'collapsed' ? 'Hide preview pane' : 'Show preview pane'"
           @click="setPreviewPaneMode(previewPaneMode === 'collapsed' ? 'split' : 'collapsed')"
         >
-          <Eye class="h-3.5 w-3.5" />
+          <template #icon-left><Eye class="h-3.5 w-3.5" /></template>
           <span>Preview</span>
-        </button>
+        </BaseButton>
 
-        <button
-          type="button"
-          class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-hairline bg-base-300 px-3 text-xs font-semibold gap-1.5 cursor-pointer hover:border-primary/50 transition"
+        <BaseButton
+          variant="ghost"
           title="Refresh telemetry, samples, and checkpoints"
           @click="
             runStore.pollRun();
@@ -276,9 +236,9 @@ onUnmounted(() => {
             runStore.pollLog();
           "
         >
-          <RefreshCw class="h-3.5 w-3.5" />
+          <template #icon-left><RefreshCw class="h-3.5 w-3.5" /></template>
           <span>Refresh</span>
-        </button>
+        </BaseButton>
       </div>
     </div>
 
