@@ -1,0 +1,48 @@
+{
+  "name": "fizgig-webui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "High-density Linear-style Web UI for Fizgig",
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "vue-tsc -p tsconfig.json --noEmit && vp build",
+    "preview": "vp preview",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "check": "vp fmt --check -c .oxfmtrc.json && vp lint -c .oxlintrc.json",
+    "check:fix": "vp fmt --write -c .oxfmtrc.json && vp lint -c .oxlintrc.json --fix",
+    "lint": "vp lint -c .oxlintrc.json src shared server",
+    "format": "vp fmt --write -c .oxfmtrc.json",
+    "test": "vp test run"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@vueuse/core": "^15.0.0",
+    "lucide-vue-next": "^1.0.0",
+    "pinia": "^4.1.0",
+    "reka-ui": "^2.11.0",
+    "vue": "^3.5.45",
+    "vue-router": "^5.4.0",
+    "vue-sonner": "^2.0.9",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "@voidzero-dev/vite-plus-core": "1.5.0",
+    "daisyui": "^5.7.50",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^6.0.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.5.0",
+    "vite-plus": "1.5.0",
+    "vitest": "^5.1.0",
+    "vue-tsc": "^3.3.14"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.5.0"
+  },
+  "packageManager": "bun@1.4.4"
+}

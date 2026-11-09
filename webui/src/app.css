@@ -1,0 +1,127 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: false;
+}
+
+@plugin "daisyui/theme" {
+  name: "fizgig";
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+
+  /* 4-step near-black elevation hierarchy */
+  --color-base-100: #08090a;
+  --color-base-200: #0c0d0f;
+  --color-base-300: #111318;
+  --color-base-content: #f4f5f8;
+
+  /* Single rationed accent (Linear indigo, 4.70:1 contrast with #ffffff) */
+  --color-primary: #5e6ad2;
+  --color-primary-content: #ffffff;
+
+  /* Desaturated secondary/neutral chrome */
+  --color-secondary: #7d828c;
+  --color-secondary-content: #08090a;
+  --color-accent: #5e6ad2;
+  --color-accent-content: #f4f5f8;
+  --color-neutral: #111318;
+  --color-neutral-content: #b9bdc6;
+
+  /* Semantic status hues (confined to pills, rings, icons, sparklines) */
+  --color-info: #38bdf8;
+  --color-info-content: #08090a;
+  --color-success: #4ade80;
+  --color-success-content: #08090a;
+  --color-warning: #f2c94c;
+  --color-warning-content: #08090a;
+  --color-error: #eb5757;
+  --color-error-content: #f4f5f8;
+
+  /* Tight developer-tool geometry, zero drop-shadows or noise */
+  --radius-selector: 0.375rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.22rem;
+  --size-field: 0.22rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --color-canvas: #0b0c0e;
+  --color-surface-hover: #161922;
+  --color-muted: #7d828c;
+  --color-subtle: #b9bdc6;
+  --color-hairline: rgba(255, 255, 255, 0.07);
+  --color-hairline-strong: rgba(255, 255, 255, 0.14);
+
+  /* Telemetry & Block Category Tokens */
+  --color-chart-raw: rgba(125, 130, 140, 0.32);
+  --color-chart-smooth: #5e6ad2;
+  --color-chart-epoch: #38bdf8;
+  --color-chart-lr: #f2c94c;
+  --color-chart-best: #4ade80;
+
+  --color-block-style-comp: #5b9bd5;
+  --color-block-style-id: #5bb3a6;
+  --color-block-identity: #4ade80;
+  --color-block-id-detail: #f2c94c;
+  --color-block-detail: #f2994a;
+}
+
+:root {
+  font-size: 18px; /* High-readability large default */
+}
+
+:root[data-font-size="normal"] {
+  font-size: 16px;
+}
+
+:root[data-font-size="large"] {
+  font-size: 18px;
+}
+
+:root[data-font-size="xlarge"] {
+  font-size: 20px;
+}
+
+:root[data-density="compact"] {
+  font-size: 15.5px;
+}
+
+body {
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Crisp custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
