@@ -45,6 +45,18 @@ function resolveMatchingChoice(val: unknown, choices?: string[]): string {
   return strVal || choices[0] || "";
 }
 
+function formatDecimalValue(val: unknown): string {
+  if (val === undefined || val === null || val === "") return "";
+  const str = String(val).trim();
+  if (/^[+-]?\d+(\.\d+)?e[+-]?\d+$/i.test(str)) {
+    const num = Number(str);
+    if (!Number.isNaN(num)) {
+      return num.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 8 });
+    }
+  }
+  return str;
+}
+
 const selectedChoice = computed(() => {
   return resolveMatchingChoice(currentValue.value, props.row.choices);
 });
@@ -254,7 +266,7 @@ function updateValue(val: unknown): void {
           v-if="isModified"
           type="button"
           class="flex items-center gap-0.5 rounded bg-primary/15 px-1 py-0.5 text-[10px] font-medium text-primary hover:bg-primary hover:text-primary-content"
-          :title="`Preset default: ${composerStore.baselineValues[row.key]}. Click to reset.`"
+          :title="`Preset default: ${formatDecimalValue(composerStore.baselineValues[row.key])}. Click to reset.`"
           @click="composerStore.resetField(row.key)"
         >
           <RotateCcw class="h-2.5 w-2.5" />
@@ -376,7 +388,7 @@ function updateValue(val: unknown): void {
           "
           @click="updateValue(ch)"
         >
-          {{ row.labels?.[ch] ?? ch }}
+          {{ row.labels?.[ch] ?? (isNumericLike ? formatDecimalValue(ch) : ch) }}
         </button>
       </div>
 
@@ -389,13 +401,13 @@ function updateValue(val: unknown): void {
         @change="updateValue(($event.target as HTMLSelectElement).value)"
       >
         <option v-for="ch in row.choices" :key="ch" :value="ch">
-          {{ row.labels?.[ch] ?? ch }}
+          {{ row.labels?.[ch] ?? (isNumericLike ? formatDecimalValue(ch) : ch) }}
         </option>
         <option
           v-if="selectedChoice && !row.choices.includes(selectedChoice)"
           :value="selectedChoice"
         >
-          {{ selectedChoice }}
+          {{ isNumericLike ? formatDecimalValue(selectedChoice) : selectedChoice }}
         </option>
       </select>
     </template>
@@ -427,8 +439,10 @@ function updateValue(val: unknown): void {
     <template v-else>
       <input
         type="text"
-        :value="String(currentValue)"
-        :placeholder="composerStore.formState.placeholders?.[row.key] || String(row.default ?? '')"
+        :value="isNumericLike ? formatDecimalValue(currentValue) : String(currentValue)"
+        :placeholder="
+          composerStore.formState.placeholders?.[row.key] || formatDecimalValue(row.default) || ''
+        "
         class="input input-sm w-full border-hairline-strong bg-base-100 text-xs text-base-content focus:border-primary focus:outline-none"
         :class="{
           'font-mono-num': isNumericLike || row.kind === 'folder' || row.kind === 'path',

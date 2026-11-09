@@ -8,6 +8,18 @@ defineProps<{
 }>();
 
 const composerStore = useComposerStore();
+
+function formatDecimalValue(val: unknown): string {
+  if (val === undefined || val === null || val === "") return "";
+  const str = String(val).trim();
+  if (/^[+-]?\d+(\.\d+)?e[+-]?\d+$/i.test(str)) {
+    const num = Number(str);
+    if (!Number.isNaN(num)) {
+      return num.toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 8 });
+    }
+  }
+  return str;
+}
 </script>
 
 <template>
@@ -52,7 +64,7 @@ const composerStore = useComposerStore();
           {{
             composerStore.draftValues.ADAPTIVE_LR
               ? "Adaptive"
-              : composerStore.draftValues.LEARNING_RATE || "1e-4"
+              : formatDecimalValue(composerStore.draftValues.LEARNING_RATE || "0.0001")
           }}
         </span>
       </div>
