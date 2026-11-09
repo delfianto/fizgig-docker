@@ -138,7 +138,7 @@ const activeTrackBgClass = computed(() => {
         :class="[
           thumbSizeClass,
           thumbTranslateClass,
-          isChecked ? 'bg-primary-content' : 'bg-muted-light dark:bg-muted/90',
+          isChecked ? 'bg-white shadow-xs' : 'bg-subtle group-hover:bg-white shadow-xs',
         ]"
       >
         <slot name="thumb" :checked="isChecked" />
