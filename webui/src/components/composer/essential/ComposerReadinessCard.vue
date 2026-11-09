@@ -209,11 +209,8 @@ const overallReadiness = computed(() => {
     <!-- Header -->
     <div class="flex items-center justify-between border-b border-hairline/60 pb-1.5">
       <div class="flex items-center gap-2">
-        <ShieldCheck v-if="overallReadiness.status === 'ready'" class="h-4 w-4 text-primary" />
-        <ShieldAlert v-else class="h-4 w-4 text-warning" />
-        <h3 class="text-xs font-bold uppercase tracking-wider text-base-content">
-          Compute &amp; Readiness
-        </h3>
+        <Cpu class="h-4 w-4 text-primary" />
+        <h3 class="text-xs font-bold uppercase tracking-wider text-base-content">Compute Device</h3>
       </div>
       <span class="badge badge-sm font-semibold text-[11px]" :class="overallReadiness.badgeClass">
         {{ overallReadiness.label }}
@@ -223,8 +220,7 @@ const overallReadiness = computed(() => {
     <!-- GPU Select Box -->
     <div class="space-y-1">
       <div class="flex items-center justify-between">
-        <label class="text-xs font-semibold text-subtle flex items-center gap-1.5">
-          <Cpu class="h-3.5 w-3.5 text-primary" />
+        <label class="text-xs font-semibold text-subtle">
           <span>Target Training GPU:</span>
         </label>
         <span class="text-[11px] font-mono text-muted">

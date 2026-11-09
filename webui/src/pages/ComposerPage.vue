@@ -231,6 +231,7 @@ onMounted(async () => {
     <ComposerHeaderBar
       v-model:mode="composerMode"
       :can-process="isDatasetCompletelyTagged"
+      :selected-dataset-info="selectedDatasetInfo"
       @validate-plan="handleValidatePlan"
       @queue-run="handleQueueRun"
       @start-run="handleStartRun"
