@@ -1,0 +1,57 @@
+name: WebUI CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'webui/**'
+      - '.github/workflows/webui.yml'
+  pull_request:
+    paths:
+      - 'webui/**'
+      - '.github/workflows/webui.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: webui-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check-and-build:
+    name: Lint, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webui
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Code formatting and lint check (Oxfmt & Oxlint)
+        run: bun run check
+
+      - name: Native TypeScript 7 Typecheck
+        run: bun run typecheck
+
+      - name: Unit Tests (Vitest)
+        run: bun run test
+
+      - name: Production Build (Vite+)
+        run: bun run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webui-dist
+          path: webui/dist/
+          if-no-files-found: error
+          retention-days: 7

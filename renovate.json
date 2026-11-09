@@ -1,0 +1,59 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate configuration keeping webui and docker dependencies continuously updated to latest versions, including major releases.",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":enableVulnerabilityAlerts"
+  ],
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "separateMajorMinor": true,
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+  "major": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "description": "Group minor and patch dependencies for webui to reduce noise",
+      "matchPaths": ["webui/**"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "webui minor and patch dependencies",
+      "labels": ["dependencies", "webui", "minor-patch"]
+    },
+    {
+      "description": "Create individual PRs for major webui dependency upgrades",
+      "matchPaths": ["webui/**"],
+      "matchUpdateTypes": ["major"],
+      "groupName": null,
+      "labels": ["dependencies", "webui", "major-update"],
+      "commitMessagePrefix": "feat(deps):",
+      "semanticCommitType": "feat"
+    },
+    {
+      "description": "Keep TypeScript and Content Mapper aligned",
+      "matchPackageNames": ["typescript", "@vue/content-mapper"],
+      "groupName": "typescript-toolchain",
+      "labels": ["dependencies", "typescript"]
+    },
+    {
+      "description": "Keep Vite+ core toolchain grouped",
+      "matchPackageNames": [
+        "vite-plus",
+        "@voidzero-dev/vite-plus-core",
+        "@tailwindcss/vite",
+        "@vitejs/plugin-vue",
+        "vitest"
+      ],
+      "groupName": "vite-plus-toolchain"
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "labels": ["ci", "github-actions"]
+    }
+  ]
+}
