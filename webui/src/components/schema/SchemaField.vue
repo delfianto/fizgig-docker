@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { HelpCircle, RotateCcw } from "lucide-vue-next";
+import { HelpCircle, Info, RotateCcw } from "lucide-vue-next";
 import { type SchemaRow } from "@shared/types";
 import { useComposerStore } from "@/stores/composer";
 import { useSystemStore } from "@/stores/system";
@@ -53,16 +53,32 @@ function updateValue(val: unknown): void {
 </script>
 
 <template>
+  <!-- Advisory Section Note / Callout -->
+  <div v-if="row.kind === 'note'" class="flex items-start gap-2.5 text-xs text-base-content">
+    <Info class="h-4 w-4 text-info shrink-0 mt-0.5" />
+    <div class="space-y-0.5 min-w-0">
+      <div v-if="row.label" class="font-medium text-base-content leading-relaxed">
+        {{ row.label }}
+      </div>
+      <div v-if="row.hint" class="text-[11px] text-muted leading-relaxed">
+        {{ row.hint }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Toggle Checkbox -->
   <div
-    v-if="row.kind === 'check'"
-    class="flex flex-col gap-1 rounded-md border border-hairline bg-base-200/60 px-2.5 py-2 transition-colors hover:border-hairline-strong"
+    v-else-if="row.kind === 'check'"
+    class="flex flex-col justify-between h-full gap-1.5"
     :class="{ 'opacity-50 pointer-events-none': isDisabled }"
   >
     <div class="flex items-center justify-between gap-2">
-      <label class="flex cursor-pointer items-center gap-2 text-xs font-medium text-base-content">
+      <label
+        class="flex cursor-pointer items-center gap-2 text-xs font-medium text-base-content select-none"
+      >
         <input
           type="checkbox"
-          class="toggle toggle-xs toggle-primary"
+          class="toggle toggle-xs toggle-primary shrink-0"
           :checked="Boolean(currentValue)"
           :disabled="isDisabled"
           @change="updateValue(($event.target as HTMLInputElement).checked)"
@@ -95,23 +111,23 @@ function updateValue(val: unknown): void {
 
     <p
       v-if="(systemStore.explainMode || showHintPopover) && row.hint"
-      class="text-[11px] leading-relaxed text-muted"
+      class="text-[11px] leading-relaxed text-muted pt-0.5"
     >
       {{ row.hint }}
     </p>
-    <p v-if="dynamicNote" class="text-[11px] leading-relaxed text-warning">
+    <p v-if="dynamicNote" class="text-[11px] leading-relaxed text-warning pt-0.5">
       {{ dynamicNote }}
     </p>
   </div>
 
   <!-- Standard Label + Input/Select/Radio Control -->
   <div
-    v-else-if="row.kind !== 'note'"
-    class="flex flex-col gap-1"
+    v-else
+    class="flex flex-col justify-between h-full gap-1.5"
     :class="{ 'opacity-50 pointer-events-none': isDisabled }"
   >
     <div class="flex items-center justify-between gap-1.5">
-      <label class="flex items-center gap-1.5 text-xs font-medium text-subtle">
+      <label class="flex items-center gap-1.5 text-xs font-semibold text-subtle">
         <span>{{ row.label || row.key }}</span>
         <span v-if="row.suffix" class="font-mono text-[10px] text-muted"> ({{ row.suffix }}) </span>
       </label>
@@ -160,7 +176,7 @@ function updateValue(val: unknown): void {
           class="btn btn-xs join-item flex-1 border-0"
           :class="
             String(currentValue) === ch
-              ? 'bg-primary text-primary-content'
+              ? 'bg-primary text-primary-content font-bold'
               : 'btn-ghost text-subtle'
           "
           @click="updateValue(ch)"
@@ -210,13 +226,13 @@ function updateValue(val: unknown): void {
     <!-- Optional Hint / Live Note -->
     <p
       v-if="(systemStore.explainMode || showHintPopover) && row.hint"
-      class="text-[11px] leading-relaxed text-muted"
+      class="text-[11px] leading-relaxed text-muted pt-0.5"
     >
       {{ row.hint }}
     </p>
     <p
       v-if="dynamicNote"
-      class="rounded border border-warning/30 bg-warning/10 px-2 py-1 text-[11px] leading-snug text-warning"
+      class="rounded border border-warning/30 bg-warning/10 px-2 py-1 text-[11px] leading-snug text-warning pt-0.5"
     >
       {{ dynamicNote }}
     </p>

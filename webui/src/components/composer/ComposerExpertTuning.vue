@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { Search, Sliders } from "lucide-vue-next";
+import { Search, Sliders, X } from "lucide-vue-next";
 import { type SchemaRow, type SchemaSection } from "@shared/types";
 import SchemaField from "@/components/schema/SchemaField.vue";
 import { useComposerStore } from "@/stores/composer";
@@ -35,6 +35,16 @@ function modifiedCountInSection(sec: SchemaSection): number {
     }
   }
   return count;
+}
+
+function shouldSpanFull(row: SchemaRow): boolean {
+  if (row.kind === "note") return true;
+  if (row.kind === "text") return true;
+  if (row.kind === "folder" || row.kind === "path") return true;
+  if (row.kind === "radio" && (row.choices?.length ?? 0) > 2) return true;
+  if (row.kind === "check") return false;
+  if ((row.label?.length ?? 0) > 65) return true;
+  return false;
 }
 
 // All rows across all sections if searching globally, or rows of the current section
@@ -108,18 +118,25 @@ const displayedRows = computed<SchemaRow[]>(() => {
 
     <!-- Expert Main Parameter Form Panel -->
     <section class="flex flex-col overflow-hidden bg-base-100">
-      <!-- Sub-header with Filter Search -->
+      <!-- Sub-header with Section Meta & Search Filter -->
       <div
-        class="flex items-center justify-between border-b border-hairline bg-base-200/40 px-5 py-2.5"
+        class="flex items-center justify-between gap-4 border-b border-hairline bg-base-200/50 px-5 py-3 shrink-0"
       >
-        <div>
-          <h2 class="text-sm font-bold text-base-content flex items-center gap-2">
-            <Sliders class="h-4 w-4 text-primary" />
-            <span>{{
-              paramFilter ? `Search Results ("${paramFilter}")` : currentSection?.title
-            }}</span>
-          </h2>
-          <p class="text-xs text-muted">
+        <div class="space-y-1 min-w-0">
+          <div class="flex items-center gap-2.5">
+            <div
+              class="flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-primary shrink-0"
+            >
+              <Sliders class="h-3.5 w-3.5" />
+            </div>
+            <h2 class="text-sm font-bold tracking-tight text-base-content truncate">
+              {{ paramFilter ? `Search Results ("${paramFilter}")` : currentSection?.title }}
+            </h2>
+            <span class="badge badge-sm badge-neutral font-mono text-[11px] shrink-0">
+              {{ displayedRows.length }} params
+            </span>
+          </div>
+          <p class="text-xs text-muted pl-8.5 leading-relaxed">
             {{
               paramFilter
                 ? `Found ${displayedRows.length} parameter(s) matching "${paramFilter}" across all sections.`
@@ -128,20 +145,32 @@ const displayedRows = computed<SchemaRow[]>(() => {
           </p>
         </div>
 
-        <div class="relative w-72">
-          <Search class="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted" />
+        <!-- Taller, Centered Search Input with Clear Action -->
+        <div class="relative w-72 sm:w-80 shrink-0">
+          <Search
+            class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted shrink-0"
+          />
           <input
             v-model="paramFilter"
             type="text"
             placeholder="Filter parameters (e.g. lr, dim, epoch)..."
-            class="input input-xs input-bordered w-full bg-base-300/60 pl-8 text-xs font-mono"
+            class="input input-sm h-8.5 w-full rounded-lg border border-hairline bg-base-300/80 pl-9 pr-8 text-xs font-mono text-base-content placeholder:text-muted focus:border-primary focus:bg-base-100 focus:outline-none transition-colors"
           />
+          <button
+            v-if="paramFilter"
+            type="button"
+            class="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full text-muted hover:bg-base-200 hover:text-base-content cursor-pointer transition-colors"
+            title="Clear search"
+            @click="paramFilter = ''"
+          >
+            <X class="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
 
-      <!-- Render Parameter Fields in Clean Grid -->
+      <!-- Render Parameter Fields in Clean Responsive Grid -->
       <div class="flex-1 overflow-y-auto p-5">
-        <div class="mx-auto max-w-4xl space-y-3.5">
+        <div class="mx-auto max-w-5xl">
           <div
             v-if="displayedRows.length === 0"
             class="rounded-lg border border-hairline bg-base-200/40 p-8 text-center text-xs text-muted"
@@ -149,12 +178,20 @@ const displayedRows = computed<SchemaRow[]>(() => {
             No parameters found{{ paramFilter ? ` matching "${paramFilter}"` : "" }}.
           </div>
 
-          <div
-            v-for="r in displayedRows"
-            :key="r.key"
-            class="rounded-lg border border-hairline bg-base-200/60 p-3.5 transition-colors hover:border-hairline-strong"
-          >
-            <SchemaField :row="r" />
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div
+              v-for="r in displayedRows"
+              :key="r.key"
+              class="rounded-lg border p-3 transition-colors flex flex-col justify-between"
+              :class="[
+                r.kind === 'note'
+                  ? 'col-span-full border-info/30 bg-info/10'
+                  : 'border-hairline bg-base-200/60 hover:border-hairline-strong',
+                shouldSpanFull(r) && r.kind !== 'note' ? 'col-span-full' : 'col-span-1',
+              ]"
+            >
+              <SchemaField :row="r" />
+            </div>
           </div>
         </div>
       </div>
