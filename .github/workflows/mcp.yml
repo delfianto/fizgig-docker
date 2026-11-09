@@ -42,5 +42,8 @@ jobs:
       - name: Code lint check (Ruff)
         run: uv run ruff check .
 
+      - name: Static type check (Basedpyright)
+        run: uv run basedpyright
+
       - name: Run MCP & Catalog Unit Tests
-        run: uv run python -m unittest discover -s tests -v
+        run: uv run --locked --extra mcp python -m unittest discover -s tests -v
