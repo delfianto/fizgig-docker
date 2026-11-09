@@ -322,6 +322,7 @@ onUnmounted(() => {
           :loss-points="runStore.lossPoints"
           :lowest-loss-point="runStore.lowestLossPoint"
           :run-values="runStore.run?.values"
+          :pane-mode="previewPaneMode"
         />
 
         <!-- Loss Chart Card -->

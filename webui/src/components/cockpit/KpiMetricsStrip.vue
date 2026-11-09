@@ -8,7 +8,17 @@ const props = defineProps<{
   lossPoints: LossDataPoint[];
   lowestLossPoint: LossDataPoint | null;
   runValues?: Record<string, unknown>;
+  paneMode?: "collapsed" | "split" | "wide";
 }>();
+
+const gridClasses = computed(() => {
+  if (props.paneMode && props.paneMode !== "collapsed") {
+    // When preview is opened (split or wide), strictly 2 rows of 3 cards
+    return "grid-cols-3";
+  }
+  // When full width (preview collapsed): 6 cards on xl+ screens, 2 rows of 3 on narrower layouts
+  return "grid-cols-3 xl:grid-cols-6";
+});
 
 const epochDisplay = computed(() => {
   if (props.progress) {
@@ -59,7 +69,7 @@ const learnRateDisplay = computed(() => {
 </script>
 
 <template>
-  <div class="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
+  <div class="grid gap-2.5" :class="gridClasses">
     <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
       <div class="text-xs font-semibold tracking-wider text-muted uppercase">Epoch</div>
       <div class="font-mono-num mt-1 text-xl font-bold text-base-content">
