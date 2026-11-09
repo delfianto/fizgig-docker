@@ -1,9 +1,24 @@
-import { computed, ref } from "vue";
+import { computed, ref, toRaw } from "vue";
 import { defineStore } from "pinia";
 import { useDebounceFn } from "@vueuse/core";
 import { type FormStateResponse, type PlanValidationResponse } from "@shared/types";
 import { apiGet, apiPost } from "@/api/client";
 import { useSchemaStore } from "./schema";
+
+export function deepClone<T>(obj: T): T {
+  if (obj === null || typeof obj !== "object") {
+    return obj;
+  }
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch {
+    try {
+      return structuredClone(toRaw(obj));
+    } catch {
+      return { ...(obj as object) } as T;
+    }
+  }
+}
 
 export function isValueEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
@@ -88,6 +103,7 @@ export const useComposerStore = defineStore("composer", () => {
 
   const planResult = ref<PlanValidationResponse | null>(null);
   const validatingPlan = ref(false);
+  const selectedSectionIndex = ref(0);
   const triggerCheckVerdict = ref<{
     trigger: string;
     tokens: number;
@@ -139,6 +155,7 @@ export const useComposerStore = defineStore("composer", () => {
     const desc = schemaStore.getFamily(famKey);
     if (!desc) return;
     family.value = famKey;
+    selectedSectionIndex.value = 0;
     planResult.value = null;
 
     const defaults = schemaStore.buildDefaults(famKey);
@@ -148,8 +165,8 @@ export const useComposerStore = defineStore("composer", () => {
     if (firstPreset) {
       await applyPreset(firstPreset.name, defaults);
     } else {
-      baselineValues.value = { ...defaults };
-      draftValues.value = { ...defaults };
+      baselineValues.value = deepClone(defaults);
+      draftValues.value = deepClone(defaults);
       presetName.value = "";
       await refreshFormState();
     }
@@ -177,12 +194,12 @@ export const useComposerStore = defineStore("composer", () => {
         merged.LORA_NAME = existingLoraName;
       }
       presetName.value = name;
-      baselineValues.value = structuredClone(merged);
-      draftValues.value = structuredClone(merged);
+      baselineValues.value = deepClone(merged);
+      draftValues.value = deepClone(merged);
       await refreshFormState();
     } catch {
-      baselineValues.value = { ...base };
-      draftValues.value = { ...base };
+      baselineValues.value = deepClone(base);
+      draftValues.value = deepClone(base);
     }
   }
 
@@ -200,19 +217,19 @@ export const useComposerStore = defineStore("composer", () => {
 
   function resetField(key: string): void {
     if (key in baselineValues.value) {
-      draftValues.value[key] = structuredClone(baselineValues.value[key]);
+      draftValues.value[key] = deepClone(baselineValues.value[key]);
       void refreshFormState();
     } else {
       const row = schemaStore.getRowMap(family.value).get(key);
       if (row && row.default !== undefined) {
-        draftValues.value[key] = row.default;
+        draftValues.value[key] = deepClone(row.default);
         void refreshFormState();
       }
     }
   }
 
   function resetAllToPreset(): void {
-    draftValues.value = structuredClone(baselineValues.value);
+    draftValues.value = deepClone(baselineValues.value);
     planResult.value = null;
     void refreshFormState();
   }
@@ -306,8 +323,8 @@ export const useComposerStore = defineStore("composer", () => {
     imageFolder.value = run.image_folder || imageFolder.value;
     const defaults = schemaStore.buildDefaults(run.family);
     const merged = { ...defaults, ...run.values };
-    baselineValues.value = structuredClone(merged);
-    draftValues.value = structuredClone(merged);
+    baselineValues.value = deepClone(merged);
+    draftValues.value = deepClone(merged);
     presetName.value = "Cloned from " + run.lora;
     planResult.value = null;
     void refreshFormState();
@@ -320,6 +337,7 @@ export const useComposerStore = defineStore("composer", () => {
     imageFolder,
     baselineValues,
     draftValues,
+    selectedSectionIndex,
     formState,
     planResult,
     validatingPlan,

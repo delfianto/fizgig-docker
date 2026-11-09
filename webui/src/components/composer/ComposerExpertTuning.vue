@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { Search, Sliders, X } from "lucide-vue-next";
 import { type SchemaRow, type SchemaSection } from "@shared/types";
 import SchemaField from "@/components/schema/SchemaField.vue";
@@ -7,20 +7,17 @@ import { useComposerStore } from "@/stores/composer";
 
 const composerStore = useComposerStore();
 
-const selectedSectionIndex = ref(0);
+const selectedSectionIndex = computed({
+  get: () => composerStore.selectedSectionIndex,
+  set: (val: number) => {
+    composerStore.selectedSectionIndex = val;
+  },
+});
 const paramFilter = ref("");
 
 const sections = computed<SchemaSection[]>(() => {
   return composerStore.currentFamilyDesc?.form.sections ?? [];
 });
-
-// Reset selected section if family changes and index is out of bounds
-watch(
-  () => composerStore.family,
-  () => {
-    selectedSectionIndex.value = 0;
-  },
-);
 
 const currentSection = computed<SchemaSection | null>(() => {
   if (sections.value.length === 0) return null;
