@@ -55,13 +55,10 @@ const isSelectedDatasetReady = computed(() => {
         <ComposerScheduleCard @set-quick-epochs="emit('set-quick-epochs', $event)" />
       </div>
 
-      <!-- RIGHT COLUMN (5 cols): Preview Prompts & Compute Preflight Telemetry -->
+      <!-- RIGHT COLUMN (5 cols): Preview Prompts & Compute Device -->
       <div class="flex flex-col gap-2.5 lg:col-span-5">
         <ComposerPromptsCard />
-        <ComposerReadinessCard
-          :selected-dataset-info="selectedDatasetInfo"
-          :is-selected-dataset-ready="isSelectedDatasetReady"
-        />
+        <ComposerReadinessCard />
       </div>
     </div>
   </main>
