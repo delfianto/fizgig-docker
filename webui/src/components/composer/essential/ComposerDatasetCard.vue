@@ -13,6 +13,7 @@ import {
   Wand2,
 } from "lucide-vue-next";
 import { type DatasetSummary } from "@shared/types";
+import { BaseButton, BaseInput } from "@/components/common";
 import { useComposerStore } from "@/stores/composer";
 import { useSchemaStore } from "@/stores/schema";
 
@@ -83,16 +84,12 @@ function onSelectDataset(path: string): void {
     <div class="space-y-1 flex-1 min-h-0 flex flex-col">
       <div class="flex items-center justify-between shrink-0">
         <label class="text-xs font-semibold text-subtle"> Select Dataset Folder: </label>
-        <div class="relative w-44">
-          <Search
-            class="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none"
-          />
-          <input
-            v-model="datasetFilter"
-            type="text"
-            placeholder="Filter datasets..."
-            class="input input-xs pl-7 w-full border-hairline bg-base-100 text-xs text-base-content focus:border-primary"
-          />
+        <div class="w-48">
+          <BaseInput v-model="datasetFilter" size="xs" placeholder="Filter datasets...">
+            <template #prefix>
+              <Search class="h-3.5 w-3.5 text-muted" />
+            </template>
+          </BaseInput>
         </div>
       </div>
 
@@ -212,14 +209,12 @@ function onSelectDataset(path: string): void {
             tagged. 100% required.
           </span>
         </div>
-        <button
-          type="button"
-          class="btn btn-xs btn-warning btn-outline h-5 min-h-0 px-2 text-[10px] shrink-0 cursor-pointer"
-          @click="router.push('/datasets')"
-        >
+        <BaseButton variant="warning" size="xs" class="shrink-0" @click="router.push('/datasets')">
           <span>Caption Studio</span>
-          <ArrowRight class="h-2.5 w-2.5" />
-        </button>
+          <template #icon-right>
+            <ArrowRight class="h-2.5 w-2.5" />
+          </template>
+        </BaseButton>
       </div>
     </div>
 
@@ -228,51 +223,50 @@ function onSelectDataset(path: string): void {
       <div>
         <div class="mb-0.5 flex items-center justify-between">
           <label class="text-xs font-semibold text-subtle">LoRA Name</label>
-          <button
-            type="button"
-            class="btn btn-xs btn-ghost gap-1 text-[11px] text-primary h-5 min-h-0 px-1.5"
+          <BaseButton
+            size="xs"
+            variant="bare"
+            class="text-primary hover:text-primary hover:bg-primary/10 px-1.5"
             title="Auto-generate from dataset name"
             @click="emit('auto-name')"
           >
-            <Wand2 class="h-3 w-3" />
-            Auto-name
-          </button>
+            <template #icon-left>
+              <Wand2 class="h-3 w-3" />
+            </template>
+            <span>Auto-name</span>
+          </BaseButton>
         </div>
-        <input
-          :value="String(composerStore.draftValues.LORA_NAME ?? '')"
-          type="text"
+        <BaseInput
+          :model-value="String(composerStore.draftValues.LORA_NAME ?? '')"
           placeholder="e.g. jeje_krea2_v1"
-          class="input input-sm h-8.5 w-full rounded-lg border-hairline-strong bg-base-100 font-mono text-xs text-base-content focus:border-primary focus:outline-none"
-          @input="
-            composerStore.setFieldValue('LORA_NAME', ($event.target as HTMLInputElement).value)
-          "
+          mono
+          @update:model-value="composerStore.setFieldValue('LORA_NAME', $event)"
         />
       </div>
 
       <div>
         <div class="mb-0.5 flex items-center justify-between">
           <label class="text-xs font-semibold text-subtle">Trigger Word</label>
-          <button
-            type="button"
-            class="btn btn-xs btn-ghost gap-1 text-[11px] text-primary h-5 min-h-0 px-1.5"
+          <BaseButton
+            size="xs"
+            variant="bare"
+            class="text-primary hover:text-primary hover:bg-primary/10 px-1.5"
+            title="Inspect tokenizer breakdown for trigger word"
             @click="composerStore.checkTriggerWord()"
           >
-            <Sparkles class="h-3 w-3" />
-            Inspect Tokenizer
-          </button>
+            <template #icon-left>
+              <Sparkles class="h-3 w-3" />
+            </template>
+            <span>Inspect Tokenizer</span>
+          </BaseButton>
         </div>
-        <input
-          :value="String(composerStore.draftValues.CAPTION_TRIGGER_WORD ?? '')"
-          type="text"
+        <BaseInput
+          :model-value="String(composerStore.draftValues.CAPTION_TRIGGER_WORD ?? '')"
           placeholder="e.g. jeje"
-          class="input input-sm h-8.5 w-full rounded-lg border-hairline-strong bg-base-100 font-mono text-xs text-base-content focus:border-primary focus:outline-none"
-          @input="
-            composerStore.setFieldValue(
-              'CAPTION_TRIGGER_WORD',
-              ($event.target as HTMLInputElement).value,
-            )
-          "
+          mono
+          @update:model-value="composerStore.setFieldValue('CAPTION_TRIGGER_WORD', $event)"
           @blur="composerStore.checkTriggerWord()"
+          @change="composerStore.checkTriggerWord()"
         />
         <div
           v-if="composerStore.triggerCheckVerdict"

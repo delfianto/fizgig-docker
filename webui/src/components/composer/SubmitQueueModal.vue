@@ -47,14 +47,16 @@ const emit = defineEmits<{
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          class="btn btn-ghost btn-xs btn-circle text-muted hover:text-base-content"
+        <BaseButton
+          variant="bare"
+          size="icon-xs"
+          class="text-muted hover:text-base-content rounded-full"
           :disabled="isSubmitting"
+          title="Close dialog"
           @click="emit('close')"
         >
           <X class="h-4 w-4" />
-        </button>
+        </BaseButton>
       </div>
 
       <!-- Job Summary Card -->

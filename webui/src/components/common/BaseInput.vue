@@ -33,6 +33,8 @@ const emit = defineEmits<{
   (e: "change", value: string): void;
   (e: "keydown", event: KeyboardEvent): void;
   (e: "keyup", event: KeyboardEvent): void;
+  (e: "blur", event: FocusEvent): void;
+  (e: "focus", event: FocusEvent): void;
 }>();
 
 const sizeClasses = computed(() => {
@@ -85,11 +87,13 @@ function handleChange(event: Event): void {
       @change="handleChange"
       @keydown="emit('keydown', $event)"
       @keyup="emit('keyup', $event)"
+      @blur="emit('blur', $event)"
+      @focus="emit('focus', $event)"
     />
 
     <div
       v-if="$slots.suffix"
-      class="pointer-events-none absolute right-2.5 flex items-center text-subtle z-1"
+      class="pointer-events-none absolute right-2.5 flex items-center text-subtle z-1 [&>*]:pointer-events-auto"
     >
       <slot name="suffix" />
     </div>

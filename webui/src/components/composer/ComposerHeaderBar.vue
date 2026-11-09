@@ -87,30 +87,16 @@ const runStore = useRunStore();
 
     <!-- Center: Progressive Disclosure Mode Switcher -->
     <BasePillGroup>
-      <button
-        type="button"
-        class="btn btn-sm h-7.5 border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
-        :class="
-          mode === 'essential'
-            ? 'bg-primary text-primary-content font-bold shadow-xs'
-            : 'btn-ghost text-subtle hover:bg-base-200'
-        "
+      <BaseButton
+        size="pill"
+        :active="mode === 'essential'"
         @click="emit('update:mode', 'essential')"
       >
-        <Sparkles class="h-3.5 w-3.5" />
+        <template #icon-left><Sparkles class="h-3.5 w-3.5" /></template>
         <span>Essential Studio</span>
-      </button>
-      <button
-        type="button"
-        class="btn btn-sm h-7.5 border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
-        :class="
-          mode === 'expert'
-            ? 'bg-primary text-primary-content font-bold shadow-xs'
-            : 'btn-ghost text-subtle hover:bg-base-200'
-        "
-        @click="emit('update:mode', 'expert')"
-      >
-        <Sliders class="h-3.5 w-3.5" />
+      </BaseButton>
+      <BaseButton size="pill" :active="mode === 'expert'" @click="emit('update:mode', 'expert')">
+        <template #icon-left><Sliders class="h-3.5 w-3.5" /></template>
         <span>Expert Tuning</span>
         <span
           v-if="composerStore.modifiedKeys.size > 0"
@@ -118,7 +104,7 @@ const runStore = useRunStore();
         >
           {{ composerStore.modifiedKeys.size }}
         </span>
-      </button>
+      </BaseButton>
     </BasePillGroup>
 
     <!-- Right: Preflight & Launch Buttons (Uniform cohesive button set) -->

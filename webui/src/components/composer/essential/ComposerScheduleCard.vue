@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Clock } from "lucide-vue-next";
+import { BaseButton, BaseInput } from "@/components/common";
 import { useComposerStore } from "@/stores/composer";
 
 const emit = defineEmits<{
@@ -34,29 +35,29 @@ const epochTicks = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
       <div class="flex items-center justify-between">
         <label class="text-xs font-semibold text-subtle"> Total Epochs: </label>
         <div class="flex items-center gap-1.5">
-          <button
+          <BaseButton
             v-for="ep in [15, 30, 50, 75]"
             :key="ep"
-            type="button"
-            class="btn btn-sm h-7 min-h-0 px-2.5 text-xs rounded-md cursor-pointer font-medium"
-            :class="currentEpochs === ep ? 'btn-primary' : 'btn-ghost border border-hairline'"
+            size="xs"
+            :variant="currentEpochs === ep ? 'primary' : 'ghost'"
+            :active="currentEpochs === ep"
+            class="px-2.5 font-medium"
             @click="emit('set-quick-epochs', ep)"
           >
             {{ ep }}
-          </button>
-          <input
-            :value="currentEpochs"
-            type="number"
-            min="1"
-            max="300"
-            class="input input-sm h-7 w-16 border-hairline-strong bg-base-100 font-mono text-center font-bold text-base-content text-xs rounded-md focus:border-primary focus:outline-none"
-            @input="
-              composerStore.setFieldValue(
-                'MAX_TRAIN_EPOCHS',
-                Math.max(1, Number(($event.target as HTMLInputElement).value)),
-              )
-            "
-          />
+          </BaseButton>
+          <div class="w-16">
+            <BaseInput
+              :model-value="currentEpochs"
+              type="number"
+              size="xs"
+              mono
+              input-class="text-center font-bold"
+              @update:model-value="
+                composerStore.setFieldValue('MAX_TRAIN_EPOCHS', Math.max(1, Number($event)))
+              "
+            />
+          </div>
         </div>
       </div>
 

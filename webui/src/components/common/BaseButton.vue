@@ -5,6 +5,7 @@ export type ButtonVariant =
   | "primary"
   | "secondary"
   | "ghost"
+  | "bare"
   | "neutral"
   | "outline"
   | "warning"
@@ -16,7 +17,8 @@ export type ButtonSize =
   | "pill" // 33.75px (h-7.5 rounded-md) - Segmented pills inside BasePillGroup
   | "square-default" // 38.25px × 38.25px (h-8.5 w-8.5 rounded-lg) - Square icon button
   | "square-compact" // 33.75px × 33.75px (h-7.5 w-7.5 rounded-md) - Steppers, reorder, delete
-  | "icon-xs"; // 24px × 24px (h-6 w-6 rounded) - Ultra-compact row icon button
+  | "icon-xs" // 24px × 24px (h-6 w-6 rounded) - Ultra-compact row icon button
+  | "xs"; // 24px (h-6 rounded px-2 text-[11px] gap-1) - Compact inline actions & badges
 
 const props = withDefaults(
   defineProps<{
@@ -76,6 +78,8 @@ const variantClasses = computed(() => {
       return "border border-warning/40 bg-warning/10 text-warning hover:bg-warning/20 shadow-xs";
     case "error":
       return "border border-error/40 bg-error/10 text-error hover:bg-error/20 shadow-xs";
+    case "bare":
+      return "btn-ghost border-0 bg-transparent text-subtle hover:bg-base-200/60 hover:text-base-content";
     case "ghost":
     default:
       return "btn-ghost border border-hairline bg-base-200 text-subtle hover:text-base-content hover:border-primary/50";
@@ -96,6 +100,8 @@ const sizeClasses = computed(() => {
       return "btn-sm h-7.5 w-7.5 p-0 rounded-md gap-0";
     case "icon-xs":
       return "btn-xs h-6 w-6 p-0 rounded gap-0 min-h-0";
+    case "xs":
+      return "btn-xs h-6 rounded px-2 text-[11px] gap-1 min-h-0 font-medium";
     default:
       return "btn-sm h-8.5 rounded-lg px-3 text-xs gap-1.5";
   }

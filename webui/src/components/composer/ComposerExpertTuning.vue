@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { Search, Sliders, ToggleRight, X } from "lucide-vue-next";
 import { type SchemaRow, type SchemaSection } from "@shared/types";
+import { BaseInput } from "@/components/common";
 import SchemaField from "@/components/schema/SchemaField.vue";
 import { useComposerStore } from "@/stores/composer";
 
@@ -164,25 +165,27 @@ const activeToggleCount = computed(() => {
         </div>
 
         <!-- Taller, Centered Search Input with Clear Action -->
-        <div class="relative w-72 sm:w-80 shrink-0">
-          <Search
-            class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted shrink-0"
-          />
-          <input
+        <div class="w-72 sm:w-80 shrink-0">
+          <BaseInput
             v-model="paramFilter"
-            type="text"
             placeholder="Filter parameters (e.g. lr, dim, epoch)..."
-            class="input input-sm h-8.5 w-full rounded-lg border border-hairline bg-base-300/80 pl-9 pr-8 text-xs font-mono text-base-content placeholder:text-muted focus:border-primary focus:bg-base-100 focus:outline-none transition-colors"
-          />
-          <button
-            v-if="paramFilter"
-            type="button"
-            class="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full text-muted hover:bg-base-200 hover:text-base-content cursor-pointer transition-colors"
-            title="Clear search"
-            @click="paramFilter = ''"
+            mono
           >
-            <X class="h-3.5 w-3.5" />
-          </button>
+            <template #prefix>
+              <Search class="h-4 w-4 text-muted" />
+            </template>
+            <template #suffix>
+              <button
+                v-if="paramFilter"
+                type="button"
+                class="flex h-5 w-5 items-center justify-center rounded-full text-muted hover:bg-base-200 hover:text-base-content cursor-pointer transition-colors"
+                title="Clear search"
+                @click="paramFilter = ''"
+              >
+                <X class="h-3.5 w-3.5" />
+              </button>
+            </template>
+          </BaseInput>
         </div>
       </div>
 

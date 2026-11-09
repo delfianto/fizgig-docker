@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { HelpCircle, Info, Lightbulb, RotateCcw } from "lucide-vue-next";
 import { type SchemaRow } from "@shared/types";
-import BaseToggle from "@/components/common/BaseToggle.vue";
+import { BaseButton, BaseInput, BasePillGroup, BaseSelect, BaseToggle } from "@/components/common";
 import { formatDecimal } from "@/utils";
 import { useComposerStore } from "@/stores/composer";
 import { useSystemStore } from "@/stores/system";
@@ -312,16 +312,19 @@ const displayToggleLabel = computed(() => shortenToggleLabel(props.row));
       </label>
 
       <div class="flex shrink-0 items-center gap-1">
-        <button
+        <BaseButton
           v-if="isModified"
-          type="button"
-          class="flex items-center gap-0.5 rounded bg-primary/15 px-1 py-0.5 text-[10px] font-medium text-primary hover:bg-primary hover:text-primary-content"
+          size="xs"
+          variant="bare"
+          class="h-5 px-1.5 py-0 text-[10px] text-primary bg-primary/15 hover:bg-primary hover:text-primary-content"
           :title="`Preset default: ${formatDecimalValue(composerStore.baselineValues[row.key])}. Click to reset.`"
           @click="composerStore.resetField(row.key)"
         >
-          <RotateCcw class="h-2.5 w-2.5" />
+          <template #icon-left>
+            <RotateCcw class="h-2.5 w-2.5" />
+          </template>
           <span>Reset</span>
-        </button>
+        </BaseButton>
 
         <!-- Unified Info & Tip Popover Button -->
         <div class="relative inline-block">
@@ -426,40 +429,30 @@ const displayToggleLabel = computed(() => shortenToggleLabel(props.row));
         v-if="row.kind === 'radio' && row.choices.length <= 3"
         class="join flex w-full rounded-lg border border-hairline-strong bg-base-100 p-0.5 h-8.5 items-center"
       >
-        <button
+        <BaseButton
           v-for="ch in row.choices"
           :key="ch"
-          type="button"
-          class="btn btn-sm h-7.5 join-item flex-1 border-0 text-xs font-semibold rounded-md transition cursor-pointer"
-          :class="
-            selectedChoice === ch
-              ? 'bg-primary text-primary-content font-bold shadow-xs'
-              : 'btn-ghost text-subtle hover:bg-base-200'
-          "
+          size="pill"
+          :active="selectedChoice === ch"
+          class="flex-1"
           @click="updateValue(ch)"
         >
           {{ row.labels?.[ch] ?? (isNumericLike ? formatDecimalValue(ch) : ch) }}
-        </button>
+        </BaseButton>
       </div>
 
       <!-- Compact Select -->
-      <select
+      <BaseSelect
         v-else
-        :value="selectedChoice"
-        class="select select-sm h-8.5 w-full rounded-lg border-hairline-strong bg-base-100 text-xs text-base-content focus:border-primary focus:outline-none"
-        :class="{ 'font-mono-num': isNumericLike }"
-        @change="updateValue(($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="ch in row.choices" :key="ch" :value="ch">
-          {{ row.labels?.[ch] ?? (isNumericLike ? formatDecimalValue(ch) : ch) }}
-        </option>
-        <option
-          v-if="selectedChoice && !row.choices.includes(selectedChoice)"
-          :value="selectedChoice"
-        >
-          {{ isNumericLike ? formatDecimalValue(selectedChoice) : selectedChoice }}
-        </option>
-      </select>
+        :model-value="selectedChoice"
+        :options="
+          row.choices.map((ch) => ({
+            value: ch,
+            label: row.labels?.[ch] ?? (isNumericLike ? formatDecimalValue(ch) : ch),
+          }))
+        "
+        @update:model-value="updateValue($event)"
+      />
     </template>
 
     <!-- Blocks to train (e.g. TRAINING_BLOCKS) -->
@@ -486,17 +479,13 @@ const displayToggleLabel = computed(() => shortenToggleLabel(props.row));
 
     <!-- Standard Entry / Folder / Path / Cadence -->
     <template v-else>
-      <input
-        type="text"
-        :value="isNumericLike ? formatDecimalValue(currentValue) : String(currentValue)"
+      <BaseInput
+        :model-value="isNumericLike ? formatDecimalValue(currentValue) : String(currentValue)"
         :placeholder="
           composerStore.formState.placeholders?.[row.key] || formatDecimalValue(row.default) || ''
         "
-        class="input input-sm h-8.5 w-full rounded-lg border-hairline-strong bg-base-100 text-xs text-base-content focus:border-primary focus:outline-none"
-        :class="{
-          'font-mono-num': isNumericLike || row.kind === 'folder' || row.kind === 'path',
-        }"
-        @input="updateValue(($event.target as HTMLInputElement).value)"
+        :mono="isNumericLike || row.kind === 'folder' || row.kind === 'path'"
+        @update:model-value="updateValue($event)"
       />
     </template>
 
