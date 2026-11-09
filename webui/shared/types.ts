@@ -154,6 +154,22 @@ export interface LiveRunResponse {
   web_queue: WebQueueState;
 }
 
+export interface GpuDeviceInfo {
+  index: number;
+  name: string;
+  vram: [number, number]; // [used_bytes, total_bytes]
+  util: number; // GPU Load % (0-100)
+  temp: number; // GPU Temp °C
+  power?: number; // Power W
+  power_limit?: number; // Power Cap W
+}
+
+export interface CpuTelemetryInfo {
+  util: number; // CPU Load % (0-100)
+  temp: number | null; // CPU Temp °C
+  cores?: number;
+}
+
 export interface GpuStatsResponse {
   vram: [number, number];
   ram: [number, number];
@@ -169,6 +185,14 @@ export interface GpuStatsResponse {
   };
   jobs: Array<{ what: string; name?: string }>;
   loaded: Array<{ what: string; name: string; tab: string }>;
+
+  // Enriched Hardware Telemetry
+  gpu_util?: number;
+  gpu_temp?: number;
+  cpu_util?: number;
+  cpu_temp?: number | null;
+  gpus?: GpuDeviceInfo[];
+  cpu?: CpuTelemetryInfo;
 }
 
 export interface LossDataPoint {

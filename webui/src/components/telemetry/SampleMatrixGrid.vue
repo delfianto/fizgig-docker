@@ -9,7 +9,6 @@ import {
   GalleryHorizontal,
   Grid,
   Layers,
-  Maximize2,
   PanelRightClose,
   PanelRightOpen,
   Sparkles,
@@ -364,7 +363,7 @@ onUnmounted(() => {
             v-for="col in promptColumns"
             :key="col.index"
             type="button"
-            class="btn btn-xs shrink-0 truncate max-w-[200px]"
+            class="btn btn-xs shrink-0 truncate max-w-50"
             :class="
               selectedPromptFilter === col.index
                 ? 'btn-primary font-bold shadow-xs'
@@ -450,7 +449,7 @@ onUnmounted(() => {
               />
               <!-- Bottom overlay strip -->
               <div
-                class="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/90 via-black/40 to-transparent px-2 py-1 text-[11px] text-white opacity-0 transition group-hover:opacity-100"
+                class="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-linear-to-t from-black/90 via-black/40 to-transparent px-2 py-1 text-[11px] text-white opacity-0 transition group-hover:opacity-100"
               >
                 <span class="font-mono-num font-semibold">Ep {{ ep }} · P{{ col.index + 1 }}</span>
                 <span class="flex items-center gap-1"><Eye class="h-3 w-3" /> Inspect</span>
@@ -523,14 +522,14 @@ onUnmounted(() => {
               @click="carouselPromptIdx = col.index"
             >
               <span class="font-mono-num">P{{ col.index + 1 }}</span>
-              <span class="hidden lg:inline truncate max-w-[120px]">{{ col.text }}</span>
+              <span class="hidden lg:inline truncate max-w-30">{{ col.text }}</span>
             </button>
           </div>
         </div>
 
         <!-- Main Carousel Image Stage -->
         <div
-          class="relative flex flex-col items-center justify-center overflow-hidden rounded-xl border border-hairline bg-base-100 p-2 sm:p-4 min-h-[420px] shadow-sm"
+          class="relative flex flex-col items-center justify-center overflow-hidden rounded-xl border border-hairline bg-base-100 p-2 sm:p-4 min-h-105 shadow-sm"
         >
           <template v-if="carouselCurrentSample">
             <div

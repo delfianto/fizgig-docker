@@ -1,25 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import {
-  Activity,
-  ArrowDown,
-  ArrowUp,
-  Copy,
-  Download,
-  Eye,
-  FileCode2,
-  History,
-  ListOrdered,
-  Pause,
-  Play,
-  RefreshCw,
-  Terminal,
-  Trash2,
-} from "lucide-vue-next";
+import { Activity, Eye, History, ListOrdered, RefreshCw } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { type HistoricalRun } from "@shared/types";
-import { downloadUrl, formatBytes } from "@/api/client";
+import CockpitHistorySubView from "@/components/cockpit/CockpitHistorySubView.vue";
+import CockpitQueueSubView from "@/components/cockpit/CockpitQueueSubView.vue";
+import InspectorTabsCard from "@/components/cockpit/InspectorTabsCard.vue";
+import KpiMetricsStrip from "@/components/cockpit/KpiMetricsStrip.vue";
+import LiveRunBanner from "@/components/cockpit/LiveRunBanner.vue";
 import LivePreviewDrawer from "@/components/telemetry/LivePreviewDrawer.vue";
 import LossChartCanvas from "@/components/telemetry/LossChartCanvas.vue";
 import SampleMatrixGrid from "@/components/telemetry/SampleMatrixGrid.vue";
@@ -31,10 +20,8 @@ const runStore = useRunStore();
 const composerStore = useComposerStore();
 
 const activeSubView = ref<"live" | "queue" | "history">("live");
-const bottomTab = ref<"checkpoints" | "console" | "spec">("checkpoints");
 const highlightedEpoch = ref<number | null>(null);
 const overrideDrawerOpen = ref(false);
-const historySearch = ref("");
 const inspectingHistoricalRun = ref<HistoricalRun | null>(null);
 
 export type PreviewPaneMode = "collapsed" | "split" | "wide";
@@ -64,17 +51,6 @@ const displayedRunPrompts = computed(() => {
     .filter(Boolean);
 });
 
-const filteredHistory = computed(() => {
-  const q = historySearch.value.trim().toLowerCase();
-  if (!q) return runStore.historicalRuns;
-  return runStore.historicalRuns.filter(
-    (r) =>
-      r.lora.toLowerCase().includes(q) ||
-      r.family.toLowerCase().includes(q) ||
-      (r.image_folder && r.image_folder.toLowerCase().includes(q)),
-  );
-});
-
 function cloneRunToComposer(item: HistoricalRun): void {
   composerStore.loadFromHistoricalRun(item);
   toast.success(`Loaded settings from "${item.lora}" into Composer`);
@@ -98,22 +74,6 @@ async function switchBackToLiveRun(): Promise<void> {
     runStore.fetchSamples(),
     runStore.fetchCheckpoints(),
   ]);
-}
-
-function renderMiniSparkline(vals?: number[]): string {
-  if (!vals || vals.length < 2) return "";
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
-  const span = Math.max(1e-6, max - min);
-  const w = 80;
-  const h = 22;
-  return vals
-    .map((v, i) => {
-      const x = (i / (vals.length - 1)) * w;
-      const y = h - ((v - min) / span) * (h - 4) - 2;
-      return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
 }
 
 watch(
@@ -215,7 +175,7 @@ onUnmounted(() => {
           </span>
           <button
             type="button"
-            class="underline hover:text-base-content"
+            class="underline hover:text-base-content cursor-pointer"
             @click="switchBackToLiveRun"
           >
             Return to live run
@@ -267,7 +227,7 @@ onUnmounted(() => {
       v-if="activeSubView === 'live'"
       class="relative grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-12"
     >
-      <!-- Left Column: KPI Strip + Loss Chart + Checkpoints/Console/Spec -->
+      <!-- Left Column: Live Run Banner + KPI Strip + Loss Chart + Inspector Card -->
       <div
         class="flex flex-col gap-3 overflow-y-auto border-r border-hairline p-3.5 transition-all duration-200"
         :class="
@@ -278,68 +238,17 @@ onUnmounted(() => {
               : 'lg:col-span-7'
         "
       >
+        <!-- Live Run Status & Instant Controls -->
+        <LiveRunBanner />
+
         <!-- 6-Card Tabular KPI Strip -->
-        <div class="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
-          <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
-            <div class="text-xs font-semibold tracking-wider text-muted uppercase">Epoch</div>
-            <div class="font-mono-num mt-1 text-xl font-bold text-base-content">
-              {{
-                progress
-                  ? `${progress.epoch} / ${progress.total_epochs}`
-                  : inspectingHistoricalRun
-                    ? `${inspectingHistoricalRun.curve?.length ?? inspectingHistoricalRun.epoch ?? "—"} / ${inspectingHistoricalRun.values?.MAX_TRAIN_EPOCHS ?? inspectingHistoricalRun.epochs ?? inspectingHistoricalRun.curve?.length ?? "—"}`
-                    : "—"
-              }}
-            </div>
-          </div>
-
-          <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
-            <div class="text-xs font-semibold tracking-wider text-muted uppercase">Step</div>
-            <div class="font-mono-num mt-1 text-xl font-bold text-base-content">
-              {{
-                progress
-                  ? `${progress.step} / ${progress.total_steps}`
-                  : runStore.lossPoints.length || "—"
-              }}
-            </div>
-          </div>
-
-          <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
-            <div class="text-xs font-semibold tracking-wider text-muted uppercase">Speed</div>
-            <div class="font-mono-num mt-1 text-xl font-bold text-base-content">
-              {{ progress?.speed || "—" }}
-            </div>
-          </div>
-
-          <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
-            <div class="text-xs font-semibold tracking-wider text-muted uppercase">Loss</div>
-            <div class="font-mono-num mt-1 text-xl font-bold text-primary">
-              {{
-                progress?.loss ||
-                (runStore.lowestLossPoint ? runStore.lowestLossPoint.loss.toFixed(4) : "—")
-              }}
-            </div>
-          </div>
-
-          <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
-            <div class="text-xs font-semibold tracking-wider text-muted uppercase">Grad Norm</div>
-            <div class="font-mono-num mt-1 text-xl font-bold text-base-content">
-              {{ progress?.grad_norm || "—" }}
-            </div>
-          </div>
-
-          <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
-            <div class="text-xs font-semibold tracking-wider text-muted uppercase">Learn Rate</div>
-            <div class="font-mono-num mt-1 text-xl font-bold text-warning">
-              {{
-                progress?.lr ||
-                inspectingHistoricalRun?.values?.LEARNING_RATE ||
-                runStore.run?.values?.LEARNING_RATE ||
-                "—"
-              }}
-            </div>
-          </div>
-        </div>
+        <KpiMetricsStrip
+          :progress="progress"
+          :inspecting-historical-run="inspectingHistoricalRun"
+          :loss-points="runStore.lossPoints"
+          :lowest-loss-point="runStore.lowestLossPoint"
+          :run-values="runStore.run?.values"
+        />
 
         <!-- Loss Chart Card -->
         <div class="rounded-lg border border-hairline bg-base-300 p-3.5">
@@ -352,117 +261,12 @@ onUnmounted(() => {
         </div>
 
         <!-- Bottom Inspector Card: Checkpoints | Console Log | Active Spec -->
-        <div
-          class="flex flex-1 flex-col overflow-hidden rounded-lg border border-hairline bg-base-300"
-        >
-          <div
-            class="flex items-center justify-between border-b border-hairline bg-base-200 px-3 py-1.5 text-xs"
-          >
-            <div class="flex items-center gap-1">
-              <button
-                type="button"
-                class="btn btn-xs"
-                :class="bottomTab === 'checkpoints' ? 'btn-primary' : 'btn-ghost text-subtle'"
-                @click="bottomTab = 'checkpoints'"
-              >
-                <Download class="h-3 w-3" />
-                Checkpoints ({{ runStore.checkpoints.length }})
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-xs"
-                :class="bottomTab === 'console' ? 'btn-primary' : 'btn-ghost text-subtle'"
-                @click="
-                  bottomTab = 'console';
-                  runStore.pollLog();
-                "
-              >
-                <Terminal class="h-3 w-3" />
-                Console Log
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-xs"
-                :class="bottomTab === 'spec' ? 'btn-primary' : 'btn-ghost text-subtle'"
-                @click="bottomTab = 'spec'"
-              >
-                <FileCode2 class="h-3 w-3" />
-                Launch Spec
-              </button>
-            </div>
-
-            <span class="font-mono text-[11px] text-muted">
-              {{ runStore.activeOutputDir }}
-            </span>
-          </div>
-
-          <!-- Tab 1: Checkpoints List -->
-          <div
-            v-if="bottomTab === 'checkpoints'"
-            class="flex-1 divide-y divide-hairline overflow-y-auto text-xs"
-          >
-            <div v-if="runStore.checkpoints.length === 0" class="p-6 text-center text-muted">
-              No checkpoints saved for this run yet.
-            </div>
-            <div
-              v-for="ckpt in runStore.checkpoints"
-              :key="ckpt.path"
-              class="flex items-center justify-between px-3.5 py-2.5 hover:bg-surface-hover"
-            >
-              <div class="flex items-center gap-3 overflow-hidden">
-                <span class="font-mono text-sm font-semibold text-base-content">
-                  {{ ckpt.name }}
-                </span>
-                <span
-                  v-if="ckpt.epoch"
-                  class="rounded bg-base-200 px-2 py-0.5 font-mono text-xs text-subtle"
-                >
-                  Epoch {{ ckpt.epoch }}
-                </span>
-              </div>
-
-              <div class="flex shrink-0 items-center gap-3">
-                <span class="font-mono-num text-xs text-muted">
-                  {{ formatBytes(ckpt.size) }}
-                </span>
-                <a
-                  :href="downloadUrl(ckpt.path)"
-                  class="btn btn-sm btn-ghost border border-hairline bg-base-200 hover:border-primary text-xs"
-                >
-                  <Download class="h-3.5 w-3.5 text-primary" />
-                  <span>Download</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tab 2: Raw Console Stdout -->
-          <div
-            v-else-if="bottomTab === 'console'"
-            class="flex-1 overflow-y-auto bg-base-100 p-3 font-mono text-[11px] leading-relaxed text-subtle"
-          >
-            <pre class="whitespace-pre-wrap">{{
-              runStore.consoleLog || "No console output captured."
-            }}</pre>
-          </div>
-
-          <!-- Tab 3: Launch Spec (Read-Only) -->
-          <div
-            v-else
-            class="flex-1 overflow-y-auto bg-base-100 p-3 font-mono text-[11px] text-subtle"
-          >
-            <div class="mb-2 flex items-center justify-between">
-              <span class="font-sans text-xs font-medium text-base-content">
-                Frozen Launch Values ({{ inspectingHistoricalRun?.lora || runStore.run?.lora }})
-              </span>
-            </div>
-            <pre class="whitespace-pre-wrap">{{
-              JSON.stringify(inspectingHistoricalRun?.values ?? runStore.run?.values ?? {}, null, 2)
-            }}</pre>
-          </div>
-        </div>
+        <InspectorTabsCard
+          :checkpoints="runStore.checkpoints"
+          :output-dir="runStore.activeOutputDir"
+          :console-log="runStore.consoleLog"
+          :inspecting-historical-run="inspectingHistoricalRun"
+        />
       </div>
 
       <!-- Right Column: Epoch × Prompt Sample Matrix / Carousel -->
@@ -484,203 +288,15 @@ onUnmounted(() => {
     </div>
 
     <!-- SUB-VIEW 2: QUEUE MANAGER -->
-    <div v-else-if="activeSubView === 'queue'" class="flex-1 overflow-y-auto p-4">
-      <div class="mx-auto max-w-5xl rounded-lg border border-hairline bg-base-300">
-        <div
-          class="flex items-center justify-between border-b border-hairline bg-base-200 px-4 py-3"
-        >
-          <div>
-            <h2 class="text-sm font-semibold text-base-content">Shared Training Queue</h2>
-            <p class="text-xs text-muted">
-              Jobs run sequentially. Holding the queue prevents pending jobs from starting when the
-              current run finishes.
-            </p>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <button
-              v-if="!runStore.run?.web_queue?.held"
-              type="button"
-              class="btn btn-sm btn-ghost border border-warning/40 bg-warning/10 text-warning"
-              @click="runStore.holdQueue()"
-            >
-              <Pause class="h-3.5 w-3.5" />
-              Hold Queue Dispatch
-            </button>
-            <button
-              v-else
-              type="button"
-              class="btn btn-sm btn-primary"
-              @click="runStore.startQueue()"
-            >
-              <Play class="h-3.5 w-3.5" />
-              Release Hold &amp; Start Queue
-            </button>
-          </div>
-        </div>
-
-        <div class="divide-y divide-hairline">
-          <div
-            v-if="!runStore.run?.web_queue?.items?.length"
-            class="p-8 text-center text-xs text-muted"
-          >
-            Queue is currently empty. Use the
-            <strong class="text-base-content">Composer</strong> to validate and add runs to the
-            queue.
-          </div>
-
-          <div
-            v-for="(item, idx) in runStore.run?.web_queue?.items ?? []"
-            :key="item.id"
-            class="flex items-center justify-between px-4 py-3 text-xs hover:bg-surface-hover"
-          >
-            <div class="flex items-center gap-3">
-              <span
-                class="font-mono-num flex h-6 w-6 items-center justify-center rounded bg-base-200 text-subtle"
-              >
-                {{ idx + 1 }}
-              </span>
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-mono font-semibold text-base-content">
-                    {{ item.lora }}
-                  </span>
-                  <span class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-[10px]">
-                    {{ item.family }}
-                  </span>
-                </div>
-                <div class="mt-0.5 font-mono text-[11px] text-muted">
-                  {{ item.image_folder }}
-                  <span v-if="item.summary"> · {{ item.summary }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-1.5">
-              <button
-                type="button"
-                class="btn btn-xs btn-ghost border border-hairline"
-                :disabled="idx === 0"
-                @click="runStore.moveQueueItem(item.id, -1)"
-              >
-                <ArrowUp class="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                class="btn btn-xs btn-ghost border border-hairline"
-                @click="runStore.moveQueueItem(item.id, 1)"
-              >
-                <ArrowDown class="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                class="btn btn-xs btn-ghost border border-error/30 text-error hover:bg-error/15"
-                @click="runStore.removeQueueItem(item.id)"
-              >
-                <Trash2 class="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <CockpitQueueSubView v-else-if="activeSubView === 'queue'" />
 
     <!-- SUB-VIEW 3: HISTORICAL RUNS -->
-    <div v-else class="flex-1 overflow-y-auto p-4">
-      <div class="mx-auto max-w-6xl rounded-lg border border-hairline bg-base-300">
-        <div
-          class="flex flex-wrap items-center justify-between gap-2 border-b border-hairline bg-base-200 px-4 py-3"
-        >
-          <h2 class="text-sm font-semibold text-base-content">
-            Run History ({{ filteredHistory.length }})
-          </h2>
-          <input
-            v-model="historySearch"
-            type="text"
-            placeholder="Filter by LoRA name, model family, or dataset..."
-            class="input input-sm w-72 border-hairline-strong bg-base-100 text-xs"
-          />
-        </div>
-
-        <div class="divide-y divide-hairline text-xs">
-          <div
-            v-for="item in filteredHistory"
-            :key="item.id"
-            class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-surface-hover"
-          >
-            <div class="flex items-center gap-3">
-              <span
-                class="rounded px-2 py-0.5 font-mono text-[10px] font-semibold uppercase"
-                :class="
-                  item.status === 'running'
-                    ? 'bg-warning/15 text-warning'
-                    : item.status === 'completed' || item.status === 'done'
-                      ? 'bg-success/15 text-success'
-                      : 'bg-base-200 text-subtle'
-                "
-              >
-                {{ item.status || "saved" }}
-              </span>
-
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-mono text-sm font-semibold text-base-content">
-                    {{ item.lora }}
-                  </span>
-                  <span class="rounded bg-base-200 px-1.5 py-0.5 font-mono text-[10px] text-subtle">
-                    {{ item.family_label || item.family }}
-                  </span>
-                </div>
-                <div class="mt-0.5 font-mono text-[11px] text-muted">
-                  Dataset: {{ item.image_folder }}
-                  <span v-if="item.lowest_loss">
-                    · Lowest loss:
-                    <strong class="text-success">
-                      {{ Number(item.lowest_loss).toFixed(4) }}
-                    </strong>
-                    <template v-if="item.lowest_epoch"> (ep {{ item.lowest_epoch }}) </template>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <svg
-                v-if="item.loss_spark && item.loss_spark.length > 1"
-                width="82"
-                height="24"
-                class="rounded border border-hairline bg-base-100 px-0.5"
-              >
-                <path
-                  :d="renderMiniSparkline(item.loss_spark)"
-                  fill="none"
-                  stroke="var(--color-primary)"
-                  stroke-width="1.5"
-                />
-              </svg>
-
-              <button
-                type="button"
-                class="btn btn-xs btn-ghost border border-hairline bg-base-200"
-                @click="inspectRunSamplesAndLoss(item)"
-              >
-                <Activity class="h-3.5 w-3.5 text-primary" />
-                Inspect Loss &amp; Samples
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-xs btn-ghost border border-hairline bg-base-200"
-                @click="cloneRunToComposer(item)"
-              >
-                <Copy class="h-3.5 w-3.5" />
-                Clone to Composer
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <CockpitHistorySubView
+      v-else
+      :historical-runs="runStore.historicalRuns"
+      @inspect="inspectRunSamplesAndLoss"
+      @clone="cloneRunToComposer"
+    />
 
     <!-- Safe, Explicit Live Preview Override Drawer -->
     <LivePreviewDrawer :open="overrideDrawerOpen" @close="overrideDrawerOpen = false" />

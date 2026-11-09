@@ -213,7 +213,10 @@ export const useComposerStore = defineStore("composer", () => {
 
   async function submitQueueTraining(): Promise<PlanValidationResponse> {
     const plan = await validatePlan();
-    if (plan.problems && plan.problems.length > 0) {
+    if (
+      (plan.problems && plan.problems.length > 0) ||
+      (plan.warnings && plan.warnings.length > 0)
+    ) {
       return plan;
     }
     await apiPost("/api/queue/add", {

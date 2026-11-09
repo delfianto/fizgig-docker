@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
+import { execSync } from "node:child_process";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { type IncomingMessage, type ServerResponse } from "node:http";
 import { type Plugin } from "vite-plus";
 
@@ -51,6 +52,122 @@ function readRequestBody(req: IncomingMessage): Promise<Buffer> {
     req.on("error", reject);
   });
 }
+
+// ---------------------------------------------------------------------------
+// Hardware Telemetry Collectors (GPU & CPU Load, Temp, Multi-GPU)
+// ---------------------------------------------------------------------------
+
+let cachedGpuStats: Array<{
+  index: number;
+  name: string;
+  vram: [number, number];
+  util: number;
+  temp: number;
+  power?: number;
+  power_limit?: number;
+}> = [];
+let lastGpuSampleTime = 0;
+
+function getCachedGpuStats() {
+  const now = Date.now();
+  if (now - lastGpuSampleTime < 1200 && cachedGpuStats.length > 0) {
+    return cachedGpuStats;
+  }
+  try {
+    const raw = execSync(
+      "nvidia-smi --query-gpu=index,name,memory.total,memory.used,utilization.gpu,temperature.gpu,power.draw,power.limit --format=csv,noheader,nounits",
+      { encoding: "utf8", timeout: 1500 },
+    );
+    const list: typeof cachedGpuStats = [];
+    for (const line of raw.trim().split("\n")) {
+      const parts = line.split(",").map((s) => s.trim());
+      if (parts.length >= 6) {
+        list.push({
+          index: parseInt(parts[0] ?? "0", 10),
+          name: (parts[1] ?? "GPU").replace(/^NVIDIA GeForce\s+/, ""),
+          vram: [
+            parseInt(parts[3] ?? "0", 10) * 1024 * 1024,
+            parseInt(parts[2] ?? "0", 10) * 1024 * 1024,
+          ],
+          util: Math.round(parseFloat(parts[4] ?? "0") || 0),
+          temp: Math.round(parseFloat(parts[5] ?? "0") || 0),
+          power: Math.round(parseFloat(parts[6] ?? "0") || 0),
+          power_limit: Math.round(parseFloat(parts[7] ?? "0") || 0),
+        });
+      }
+    }
+    if (list.length > 0) {
+      cachedGpuStats = list;
+      lastGpuSampleTime = now;
+    }
+  } catch {
+    // Keep previous cached values if query hiccups
+  }
+  return cachedGpuStats;
+}
+
+let prevCpuTick: { idle: number; total: number } | null = null;
+let cachedCpuStats = { util: 0, temp: null as number | null };
+let lastCpuSampleTime = 0;
+
+function getCachedCpuStats() {
+  const now = Date.now();
+  if (now - lastCpuSampleTime < 1200 && prevCpuTick !== null) {
+    return cachedCpuStats;
+  }
+  try {
+    const stat = readFileSync("/proc/stat", "utf8").split("\n")[0] ?? "";
+    const parts = stat
+      .replace(/^cpu\s+/, "")
+      .split(/\s+/)
+      .map(Number);
+    const idle = (parts[3] ?? 0) + (parts[4] ?? 0);
+    const total = parts.reduce((a, b) => a + b, 0);
+
+    let util = cachedCpuStats.util;
+    if (prevCpuTick) {
+      const deltaTotal = total - prevCpuTick.total;
+      const deltaIdle = idle - prevCpuTick.idle;
+      if (deltaTotal > 0) {
+        util = Math.max(0, Math.min(100, Math.round(100 * (1 - deltaIdle / deltaTotal))));
+      }
+    }
+    prevCpuTick = { idle, total };
+
+    let temp: number | null = null;
+    if (existsSync("/sys/class/hwmon")) {
+      const dirs = readdirSync("/sys/class/hwmon");
+      for (const dir of dirs) {
+        const namePath = `/sys/class/hwmon/${dir}/name`;
+        if (existsSync(namePath)) {
+          const name = readFileSync(namePath, "utf8").trim();
+          if (name === "k10temp" || name === "coretemp") {
+            for (let i = 1; i <= 8; i++) {
+              const tPath = `/sys/class/hwmon/${dir}/temp${i}_input`;
+              const lPath = `/sys/class/hwmon/${dir}/temp${i}_label`;
+              if (existsSync(tPath)) {
+                const label = existsSync(lPath) ? readFileSync(lPath, "utf8").trim() : `temp${i}`;
+                const val = parseInt(readFileSync(tPath, "utf8").trim(), 10) / 1000;
+                if (label === "Tctl" || label === "Package id 0" || !temp) {
+                  temp = Math.round(val);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    cachedCpuStats = { util, temp };
+    lastCpuSampleTime = now;
+  } catch {
+    // Ignore read errors
+  }
+  return cachedCpuStats;
+}
+
+// ---------------------------------------------------------------------------
+// Proxy Plugin
+// ---------------------------------------------------------------------------
 
 export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
   const baseUrl = (options.apiUrl ?? process.env.FIZGIG_API_URL ?? "http://127.0.0.1:8082").replace(
@@ -198,6 +315,41 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
         if (upstreamCc) resHeaders["Cache-Control"] = upstreamCc;
 
         const arrayBuf = await upstreamRes.arrayBuffer();
+
+        // Enrich /api/stats with multi-GPU and CPU load/temperature telemetry
+        if (url === "/api/stats" && upstreamRes.status === 200) {
+          try {
+            const rawText = new TextDecoder().decode(arrayBuf);
+            const data = JSON.parse(rawText) as Record<string, unknown>;
+            const gpus = getCachedGpuStats();
+            const cpu = getCachedCpuStats();
+
+            if (gpus.length > 0) {
+              data.gpus = gpus;
+              const primary = gpus[0];
+              if (primary) {
+                data.gpu_util = primary.util;
+                data.gpu_temp = primary.temp;
+                if (!data.device_name || data.device_name === "GPU") {
+                  data.device_name = primary.name;
+                }
+              }
+            }
+
+            data.cpu = cpu;
+            data.cpu_util = cpu.util;
+            data.cpu_temp = cpu.temp;
+
+            const enrichedBuf = Buffer.from(JSON.stringify(data));
+            resHeaders["Content-Type"] = "application/json";
+            res.writeHead(200, resHeaders);
+            res.end(enrichedBuf);
+            return;
+          } catch {
+            // fallback to original buffer on parse error
+          }
+        }
+
         res.writeHead(upstreamRes.status, resHeaders);
         res.end(Buffer.from(arrayBuf));
         return;

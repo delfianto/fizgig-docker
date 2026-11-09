@@ -1,24 +1,36 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { useRouter } from "vue-router";
-import { Camera, Cpu, HardDrive, Pause, Play, Save, Square } from "lucide-vue-next";
-import { toast } from "vue-sonner";
+import { computed } from "vue";
+import { Activity, Cpu, HardDrive, Layers } from "lucide-vue-next";
 import { formatBytes } from "@/api/client";
 import { useRunStore } from "@/stores/run";
-import { useSystemStore } from "@/stores/system";
 
-const router = useRouter();
 const runStore = useRunStore();
-const systemStore = useSystemStore();
-const confirmStop = ref(false);
-const busyAction = ref<string | null>(null);
 
-const progress = computed(() => runStore.run?.progress ?? null);
+function cleanGpuName(raw: string): string {
+  return raw
+    .replace(/^NVIDIA\s+/i, "")
+    .replace(/^GeForce\s+/i, "")
+    .trim();
+}
 
-const vramPercent = computed(() => {
-  const v = runStore.stats?.vram;
-  if (!v || !v[1]) return 0;
-  return Math.min(100, Math.round((v[0] / v[1]) * 100));
+const gpus = computed(() => {
+  if (runStore.stats?.gpus && runStore.stats.gpus.length > 0) {
+    return runStore.stats.gpus;
+  }
+  if (runStore.stats?.vram) {
+    return [
+      {
+        index: 0,
+        name: cleanGpuName(runStore.stats.device_name) || "GPU 0",
+        vram: runStore.stats.vram,
+        util: runStore.stats.gpu_util ?? 0,
+        temp: runStore.stats.gpu_temp ?? 0,
+        power: undefined,
+        power_limit: undefined,
+      },
+    ];
+  }
+  return [];
 });
 
 const ramPercent = computed(() => {
@@ -27,305 +39,152 @@ const ramPercent = computed(() => {
   return Math.min(100, Math.round((r[0] / r[1]) * 100));
 });
 
-const sparklinePath = computed(() => {
-  const pts = runStore.lossPoints.slice(-60);
-  if (pts.length < 2) return "";
-  const losses = pts.map((p) => p.loss);
-  const min = Math.min(...losses);
-  const max = Math.max(...losses);
-  const span = Math.max(1e-6, max - min);
-  const w = 68;
-  const h = 18;
-  return pts
-    .map((p, i) => {
-      const x = (i / (pts.length - 1)) * w;
-      const y = h - ((p.loss - min) / span) * (h - 4) - 2;
-      return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
-});
-
-async function handleAction(
-  name: string,
-  fn: () => Promise<void>,
-  successMsg: string,
-): Promise<void> {
-  busyAction.value = name;
-  try {
-    await fn();
-    toast.success(successMsg);
-  } catch (err) {
-    toast.error(err instanceof Error ? err.message : "Action failed");
-  } finally {
-    busyAction.value = null;
-    confirmStop.value = false;
-  }
+function gpuVramPercent(used: number, total: number): number {
+  if (!total) return 0;
+  return Math.min(100, Math.round((used / total) * 100));
 }
 </script>
 
 <template>
   <header
-    class="flex h-11 shrink-0 items-center justify-between border-b border-hairline bg-base-200 px-3.5 text-xs select-none"
+    class="flex h-11 shrink-0 items-center border-b border-hairline bg-base-200 px-3.5 text-xs select-none"
   >
-    <!-- Left Cluster: Live Run Ticker & Instant Controls -->
-    <div class="flex items-center gap-3 overflow-hidden">
-      <template v-if="runStore.isActiveOrStarting && runStore.run">
-        <button
-          type="button"
-          class="flex items-center gap-2 rounded-md border border-warning/30 bg-warning/10 px-2.5 py-1 text-left transition hover:border-warning/60"
-          @click="router.push('/cockpit')"
-        >
-          <span class="relative flex h-2 w-2">
-            <span
-              class="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75"
-            />
-            <span class="relative inline-flex h-2 w-2 rounded-full bg-warning" />
-          </span>
-          <span class="font-semibold text-warning">
-            {{ runStore.run.pause ? "Pausing at Epoch" : runStore.run.stage || "Training" }}
-          </span>
-          <span class="font-mono-num font-semibold text-base-content">
-            {{ runStore.run.lora }}
-          </span>
-          <span class="rounded bg-base-300 px-1.5 py-0.5 font-mono text-[11px] text-subtle">
-            {{ runStore.run.family }}
-          </span>
-        </button>
+    <!-- Telemetry Cluster: Multi-GPU, CPU, RAM, Disk (No redundant brand text) -->
+    <div
+      class="font-mono-num flex shrink-0 items-center gap-1.5 text-xs text-subtle overflow-x-auto scrollbar-none"
+    >
+      <!-- GPUs Telemetry: Primary on all screens, Secondary on lg+ (1024px+) -->
+      <div
+        v-for="gpu in gpus"
+        :key="gpu.index"
+        class="shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-base-300/80 px-2 py-1"
+        :class="gpu.index === 0 ? 'flex' : 'hidden lg:flex'"
+        :title="`${gpu.name} (${gpu.power ? `${gpu.power}W / ${gpu.power_limit}W` : 'Active'})`"
+      >
+        <Cpu
+          class="h-3.5 w-3.5 shrink-0"
+          :class="gpu.index === 0 ? 'text-primary' : 'text-accent'"
+        />
 
-        <div v-if="progress" class="font-mono-num flex items-center gap-3 text-xs text-subtle">
-          <span>
-            Ep
-            <strong class="text-base-content">
-              {{ progress.epoch }}/{{ progress.total_epochs }}
-            </strong>
-          </span>
-          <span class="text-muted">·</span>
-          <span>
-            Step
-            <strong class="text-base-content">
-              {{ progress.step }}/{{ progress.total_steps }}
-            </strong>
-            <span class="ml-1 text-muted"> ({{ progress.percent.toFixed(1) }}%) </span>
-          </span>
-          <span class="text-muted">·</span>
-          <span>
-            Loss
-            <strong class="text-primary">{{ progress.loss }}</strong>
-          </span>
-          <span class="hidden text-muted xl:inline">·</span>
-          <span class="hidden xl:inline">{{ progress.speed }}</span>
-          <span class="text-muted">·</span>
-          <span>
-            ETA <strong class="text-base-content">{{ progress.eta }}</strong>
-          </span>
-        </div>
+        <!-- GPU Name -->
+        <span class="shrink-0 font-sans font-bold text-base-content text-[11px] whitespace-nowrap">
+          {{ cleanGpuName(gpu.name) }}
+        </span>
 
-        <!-- Mini SVG Loss Sparkline -->
-        <svg
-          v-if="sparklinePath"
-          width="70"
-          height="20"
-          class="hidden shrink-0 rounded border border-hairline bg-base-100 px-0.5 lg:block"
-        >
-          <path :d="sparklinePath" fill="none" stroke="var(--color-primary)" stroke-width="1.5" />
-        </svg>
-
-        <!-- Quick Run Controls -->
-        <div class="flex items-center gap-1 border-l border-hairline pl-2.5">
-          <button
-            type="button"
-            class="btn btn-xs btn-ghost border border-hairline bg-base-300 hover:border-hairline-strong"
-            :disabled="busyAction !== null"
-            title="Render sample previews after the current step"
-            @click="
-              handleAction(
-                'sample',
-                () => runStore.triggerSampleNow(),
-                'Requested preview sample after current step',
-              )
-            "
+        <!-- VRAM Used / Total & Meter -->
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span class="shrink-0 text-right font-mono text-[11px] text-muted whitespace-nowrap">
+            {{ formatBytes(gpu.vram[0]).replace(" GB", "") }} /
+            {{ formatBytes(gpu.vram[1]).replace(".0 GB", " GB") }}
+          </span>
+          <div
+            class="h-2 w-10 min-[1380px]:w-14 shrink-0 overflow-hidden rounded-full border border-white/20 bg-base-100"
+            :title="`VRAM: ${formatBytes(gpu.vram[0])} / ${formatBytes(gpu.vram[1])} (${gpuVramPercent(gpu.vram[0], gpu.vram[1])}%)`"
           >
-            <Camera class="h-3.5 w-3.5 text-primary" />
-            <span class="hidden md:inline">Sample Now</span>
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-xs btn-ghost border border-hairline bg-base-300 hover:border-hairline-strong"
-            :disabled="busyAction !== null"
-            title="Save a checkpoint after the current step"
-            @click="
-              handleAction(
-                'save',
-                () => runStore.triggerSaveNow(),
-                'Requested checkpoint save after current step',
-              )
-            "
-          >
-            <Save class="h-3.5 w-3.5 text-success" />
-            <span class="hidden md:inline">Save Now</span>
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-xs btn-ghost border border-hairline bg-base-300 hover:border-warning/50"
-            :disabled="busyAction !== null || runStore.run.pause"
-            title="Request clean pause at next epoch boundary"
-            @click="
-              handleAction(
-                'pause',
-                () => runStore.pauseTraining(),
-                'Pause requested for next epoch boundary',
-              )
-            "
-          >
-            <Pause class="h-3.5 w-3.5 text-warning" />
-            <span class="hidden md:inline">
-              {{ runStore.run.pause ? "Pausing…" : "Pause" }}
-            </span>
-          </button>
-
-          <!-- Two-step Stop Guard -->
-          <div class="relative flex items-center">
-            <button
-              v-if="!confirmStop"
-              type="button"
-              class="btn btn-xs btn-ghost border border-error/30 bg-error/10 text-error hover:bg-error/20"
-              title="Stop active training run"
-              @click="confirmStop = true"
-            >
-              <Square class="h-3 w-3" />
-              <span class="hidden md:inline">Stop</span>
-            </button>
             <div
-              v-else
-              class="flex items-center gap-1 rounded border border-error/50 bg-base-300 px-1.5 py-0.5"
-            >
-              <span class="text-[11px] font-medium text-error">Stop run?</span>
-              <button
-                type="button"
-                class="btn btn-xs btn-error h-5 min-h-0 px-2 text-[11px]"
-                @click="handleAction('stop', () => runStore.stopTraining(), 'Stopped training run')"
-              >
-                Confirm
-              </button>
-              <button
-                type="button"
-                class="btn btn-xs btn-ghost h-5 min-h-0 px-1.5 text-[11px]"
-                @click="confirmStop = false"
-              >
-                Cancel
-              </button>
-            </div>
+              class="h-full rounded-full transition-all duration-300"
+              :class="
+                gpuVramPercent(gpu.vram[0], gpu.vram[1]) > 92
+                  ? 'bg-warning'
+                  : gpu.index === 0
+                    ? 'bg-primary'
+                    : 'bg-accent'
+              "
+              :style="{ width: `${gpuVramPercent(gpu.vram[0], gpu.vram[1])}%` }"
+            />
           </div>
         </div>
-      </template>
 
-      <template v-else>
-        <div class="flex items-center gap-2.5 text-subtle">
-          <span
-            class="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-base-300 px-2.5 py-1 text-xs"
-          >
-            <span class="h-2 w-2 rounded-full bg-muted" />
-            <span>Trainer Idle</span>
-          </span>
+        <!-- GPU Load Badge -->
+        <span
+          class="badge badge-xs w-9 shrink-0 justify-center font-mono font-semibold text-[10px] px-0"
+          :class="gpu.util > 80 ? 'badge-primary' : 'bg-base-200 text-subtle'"
+        >
+          {{ gpu.util }}%
+        </span>
 
-          <button
-            v-if="runStore.run?.resume"
-            type="button"
-            class="btn btn-xs btn-primary"
-            @click="handleAction('resume', () => runStore.resumeTraining(), 'Resumed training run')"
-          >
-            <Play class="h-3 w-3" />
-            Resume ({{ runStore.run.resume }})
-          </button>
+        <!-- GPU Temp -->
+        <span
+          v-if="gpu.temp"
+          class="w-8.5 shrink-0 text-right font-mono text-[11px]"
+          :class="
+            gpu.temp >= 80
+              ? 'text-error font-bold'
+              : gpu.temp >= 68
+                ? 'text-warning font-semibold'
+                : 'text-subtle'
+          "
+        >
+          {{ gpu.temp }}°C
+        </span>
 
-          <span class="text-muted">
-            Queue:
-            <strong class="font-mono-num text-base-content">
-              {{ runStore.run?.web_queue?.items?.length ?? 0 }}
-            </strong>
-            pending
-            <span v-if="runStore.run?.web_queue?.held" class="text-warning"> (Held) </span>
-          </span>
-        </div>
-      </template>
-    </div>
+        <!-- GPU Power (Live Watts) -->
+        <span
+          v-if="gpu.power"
+          class="shrink-0 text-right font-mono text-[10px] text-muted whitespace-nowrap"
+          :title="`Power: ${gpu.power}W / ${gpu.power_limit}W`"
+        >
+          {{ gpu.power }}W
+        </span>
+      </div>
 
-    <!-- Right Cluster: GPU VRAM, System RAM & Disk Telemetry + Font Scale -->
-    <div class="font-mono-num flex shrink-0 items-center gap-3 text-xs text-subtle">
+      <!-- CPU Telemetry -->
+      <div
+        v-if="runStore.stats?.cpu_util !== undefined"
+        class="hidden sm:flex shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-base-300/80 px-2 py-1"
+        title="Host CPU Telemetry"
+      >
+        <Activity class="h-3.5 w-3.5 text-info shrink-0" />
+        <span class="font-sans font-bold text-base-content text-[11px]">CPU</span>
+
+        <!-- CPU Load -->
+        <span class="w-8 shrink-0 text-right font-mono text-[11px] text-base-content font-semibold">
+          {{ runStore.stats.cpu_util }}%
+        </span>
+
+        <!-- CPU Temp -->
+        <span
+          v-if="runStore.stats?.cpu_temp"
+          class="w-8.5 shrink-0 text-right font-mono text-[11px]"
+          :class="
+            runStore.stats.cpu_temp >= 80
+              ? 'text-error font-bold'
+              : runStore.stats.cpu_temp >= 70
+                ? 'text-warning font-semibold'
+                : 'text-subtle'
+          "
+        >
+          {{ runStore.stats.cpu_temp }}°C
+        </span>
+      </div>
+
+      <!-- System RAM Telemetry: Enclosed Pill Format Matching Others -->
       <div
         v-if="runStore.stats"
-        class="flex items-center gap-2"
-        :title="runStore.stats.device_name"
+        class="hidden md:flex shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-base-300/80 px-2 py-1"
+        :title="`Host System RAM: ${formatBytes(runStore.stats.ram[0])} / ${formatBytes(runStore.stats.ram[1])} (${ramPercent}%)`"
       >
-        <Cpu class="h-4 w-4 text-primary" />
-        <span class="hidden font-sans font-medium text-base-content 2xl:inline">
-          {{ runStore.stats.device_name.replace("NVIDIA GeForce ", "") }}
+        <Layers class="h-3.5 w-3.5 text-info shrink-0" />
+        <span class="font-sans font-bold text-base-content text-[11px]">RAM</span>
+
+        <!-- RAM Used / Total -->
+        <span class="shrink-0 font-mono text-[11px] text-muted whitespace-nowrap">
+          {{ formatBytes(runStore.stats.ram[0]).replace(" GB", "") }} /
+          {{ formatBytes(runStore.stats.ram[1]).replace(".0 GB", " GB") }}
         </span>
-        <div class="flex flex-col gap-0.5">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-[11px] text-muted">VRAM</span>
-            <span class="font-semibold text-base-content">
-              {{ formatBytes(runStore.stats.vram[0]) }} /
-              {{ formatBytes(runStore.stats.vram[1]) }}
-            </span>
-          </div>
-          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-base-100">
-            <div
-              class="h-full transition-all duration-300"
-              :class="vramPercent > 92 ? 'bg-warning' : 'bg-primary'"
-              :style="{ width: `${vramPercent}%` }"
-            />
-          </div>
-        </div>
       </div>
 
-      <div v-if="runStore.stats" class="hidden flex-col gap-0.5 sm:flex">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-[11px] text-muted">RAM</span>
-          <span>
-            {{ formatBytes(runStore.stats.ram[0]) }} /
-            {{ formatBytes(runStore.stats.ram[1]) }}
-          </span>
-        </div>
-        <div class="h-1.5 w-20 overflow-hidden rounded-full bg-base-100">
-          <div
-            class="h-full bg-info transition-all duration-300"
-            :style="{ width: `${ramPercent}%` }"
-          />
-        </div>
-      </div>
-
+      <!-- Output Disk Free: Pill Format -->
       <div
         v-if="runStore.stats?.disk"
-        class="hidden items-center gap-1.5 rounded border border-hairline bg-base-300 px-2 py-1 xl:flex"
+        class="hidden xl:flex shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-base-300/80 px-2 py-1"
         :title="`Output path: ${runStore.stats.disk.path}`"
       >
-        <HardDrive class="h-3.5 w-3.5 text-muted" />
-        <span>{{ formatBytes(runStore.stats.disk.free) }} free</span>
-      </div>
-
-      <!-- Quick Font Size Switcher -->
-      <button
-        type="button"
-        class="btn btn-xs border border-hairline bg-base-300 px-2.5 py-1 text-xs text-subtle hover:border-primary/50"
-        :title="`Font size: ${systemStore.fontScale}. Click to cycle (Normal → Large → Extra Large)`"
-        @click="systemStore.cycleFontScale()"
-      >
-        <span class="font-bold text-base-content">A</span>
-        <span
-          class="rounded bg-primary/20 px-1 font-mono text-[10px] font-bold text-primary uppercase"
-        >
-          {{
-            systemStore.fontScale === "xlarge"
-              ? "XL"
-              : systemStore.fontScale === "large"
-                ? "L"
-                : "M"
-          }}
+        <HardDrive class="h-3.5 w-3.5 text-muted shrink-0" />
+        <span class="text-right font-mono text-[11px] whitespace-nowrap">
+          {{ Math.round(runStore.stats.disk.free / 1073741824) }} GB free
         </span>
-      </button>
+      </div>
     </div>
   </header>
 </template>

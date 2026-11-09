@@ -133,6 +133,27 @@ const navItems = computed(() => [
         <HelpCircle class="h-4 w-4" />
       </button>
 
+      <!-- Font Size Cycler (Placed directly above UI Density) -->
+      <button
+        type="button"
+        class="flex h-8 w-10 items-center justify-center gap-0.5 rounded-md transition-colors text-subtle hover:bg-surface-hover hover:text-base-content cursor-pointer border border-transparent hover:border-hairline"
+        :title="`Font size: ${systemStore.fontScale} (Click to cycle Normal → Large → Extra Large)`"
+        @click="systemStore.cycleFontScale()"
+      >
+        <span class="font-bold text-xs text-base-content">A</span>
+        <span
+          class="rounded bg-primary/20 px-1 font-mono text-[9px] font-bold text-primary uppercase"
+        >
+          {{
+            systemStore.fontScale === "xlarge"
+              ? "XL"
+              : systemStore.fontScale === "large"
+                ? "L"
+                : "M"
+          }}
+        </span>
+      </button>
+
       <button
         type="button"
         class="flex h-8 w-10 items-center justify-center rounded-md transition-colors"

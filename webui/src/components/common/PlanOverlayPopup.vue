@@ -1,11 +1,34 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { AlertTriangle, CheckCircle2, X } from "lucide-vue-next";
+import { AlertCircle, AlertTriangle, CheckCircle2, X } from "lucide-vue-next";
 import { usePlanOverlayStore } from "@/stores/overlay";
 
 const overlayStore = usePlanOverlayStore();
 
 const isSuccess = computed(() => overlayStore.status === "success");
+const isWarningOnly = computed(
+  () =>
+    overlayStore.status === "warning" ||
+    (overlayStore.status === "attention" &&
+      overlayStore.problems.length === 0 &&
+      overlayStore.warnings.length > 0),
+);
+
+const subtitleText = computed(() => {
+  if (isSuccess.value) {
+    return "Preflight verified • 0 blockers";
+  }
+  if (overlayStore.problems.length > 0 && overlayStore.warnings.length > 0) {
+    return `${overlayStore.problems.length} blocker(s) • ${overlayStore.warnings.length} warning(s)`;
+  }
+  if (overlayStore.problems.length > 0) {
+    return `${overlayStore.problems.length} blocker(s) to resolve`;
+  }
+  if (overlayStore.warnings.length > 0) {
+    return `${overlayStore.warnings.length} advisory warning(s)`;
+  }
+  return "Action prevented • See details below";
+});
 </script>
 
 <template>
@@ -23,10 +46,12 @@ const isSuccess = computed(() => overlayStore.status === "success");
       :class="
         isSuccess
           ? 'border-success/60 bg-[#0a180f]/95 shadow-success/10 text-base-content'
-          : 'border-error/70 bg-[#1c0a0c]/95 shadow-error/15 text-base-content'
+          : isWarningOnly
+            ? 'border-warning/70 bg-[#1c1608]/95 shadow-warning/15 text-base-content'
+            : 'border-error/70 bg-[#1c0a0c]/95 shadow-error/15 text-base-content'
       "
-      role="status"
-      aria-live="polite"
+      role="alert"
+      aria-live="assertive"
       @mouseenter="overlayStore.pauseTimer"
       @mouseleave="overlayStore.resumeTimer"
     >
@@ -34,31 +59,40 @@ const isSuccess = computed(() => overlayStore.status === "success");
       <div class="p-4 space-y-3">
         <!-- Header Strip -->
         <div class="flex items-start justify-between gap-3">
-          <div class="flex items-center gap-2.5">
+          <div class="flex items-center gap-2.5 min-w-0">
             <div
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-              :class="isSuccess ? 'bg-success/20 text-success' : 'bg-error/20 text-error'"
+              :class="
+                isSuccess
+                  ? 'bg-success/20 text-success'
+                  : isWarningOnly
+                    ? 'bg-warning/20 text-warning'
+                    : 'bg-error/20 text-error'
+              "
             >
               <CheckCircle2 v-if="isSuccess" class="h-5 w-5" />
-              <AlertTriangle v-else class="h-5 w-5" />
+              <AlertTriangle v-else-if="isWarningOnly" class="h-5 w-5" />
+              <AlertCircle v-else class="h-5 w-5" />
             </div>
 
-            <div>
+            <div class="min-w-0">
               <h3
-                class="font-bold text-sm leading-tight"
-                :class="isSuccess ? 'text-success' : 'text-error'"
+                class="font-bold text-sm leading-tight truncate"
+                :class="isSuccess ? 'text-success' : isWarningOnly ? 'text-warning' : 'text-error'"
               >
                 {{ overlayStore.title }}
               </h3>
               <p
                 class="text-xs font-mono tracking-tight"
-                :class="isSuccess ? 'text-success/80' : 'text-error/80'"
-              >
-                {{
+                :class="
                   isSuccess
-                    ? "Preflight verified • 0 blockers"
-                    : `${overlayStore.problems.length} blocker(s) • ${overlayStore.warnings.length} warning(s)`
-                }}
+                    ? 'text-success/80'
+                    : isWarningOnly
+                      ? 'text-warning/80'
+                      : 'text-error/80'
+                "
+              >
+                {{ subtitleText }}
               </p>
             </div>
           </div>
@@ -66,18 +100,28 @@ const isSuccess = computed(() => overlayStore.status === "success");
           <!-- Dismiss Button -->
           <button
             type="button"
-            class="flex h-6 w-6 items-center justify-center rounded-md text-muted transition hover:bg-base-300 hover:text-base-content"
-            title="Dismiss popup"
+            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted transition hover:bg-base-300 hover:text-base-content cursor-pointer"
+            title="Dismiss alert"
             @click="overlayStore.dismiss"
           >
             <X class="h-4 w-4" />
           </button>
         </div>
 
-        <!-- Optional Direct Message -->
-        <p v-if="overlayStore.message" class="text-xs text-subtle leading-relaxed">
+        <!-- Direct Message (e.g. Conflicted LoRA name or API error) -->
+        <div
+          v-if="overlayStore.message"
+          class="rounded-md border p-2.5 text-xs font-medium leading-relaxed"
+          :class="
+            isSuccess
+              ? 'border-success/30 bg-success/10 text-success'
+              : isWarningOnly
+                ? 'border-warning/30 bg-warning/10 text-warning'
+                : 'border-error/30 bg-error/10 text-error'
+          "
+        >
           {{ overlayStore.message }}
-        </p>
+        </div>
 
         <!-- Blockers / Problems List -->
         <div v-if="overlayStore.problems.length > 0" class="space-y-1.5 pt-1">
@@ -118,7 +162,7 @@ const isSuccess = computed(() => overlayStore.status === "success");
       <div class="h-0.5 w-full bg-base-300/40">
         <div
           class="h-full transition-all duration-300"
-          :class="isSuccess ? 'bg-success' : 'bg-error'"
+          :class="isSuccess ? 'bg-success' : isWarningOnly ? 'bg-warning' : 'bg-error'"
         />
       </div>
     </div>
