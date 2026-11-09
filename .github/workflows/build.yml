@@ -50,7 +50,7 @@ jobs:
           INPUT_BASE: ${{ inputs.base_image }}
           INPUT_COMMIT: ${{ inputs.upstream_commit }}
         run: |
-          python3 tools/upstream/check.py \
+          python3 mcp/tools/upstream/check.py \
             --image "ghcr.io/${IMAGE_OWNER,,}/fizgig" \
             --base-image "${INPUT_BASE:-ghcr.io/shootthesound/fizgig:latest}" \
             --upstream-commit "$INPUT_COMMIT"
@@ -70,6 +70,9 @@ jobs:
     needs: resolve
     if: needs.resolve.outputs.needs_build == 'true'
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6

@@ -8,6 +8,13 @@ Deployment belongs in the separate Compose
 repository at `ai/fizgig`; credentials, runtime catalogues and weights stay there
 or in appdata. No application code is bind-mounted into production.
 
+## Repository Layout
+
+- [`webui/`](webui/README.md): Modern Linear-dark Web UI front-end built with Vue 3.5, VoidZero Vite+ (`vp`), native TypeScript 7, Tailwind CSS 4, and DaisyUI 5. Provides high-density Cockpit telemetry, progressive-disclosure Composer, and Dataset Studio.
+- [`mcp/`](mcp/README.md): Python project root containing the Model Context Protocol (`fizgig_mcp`) server, container HTTP adapters, and offline model catalog resolver (`fizgig_local`).
+- [`docker/`](docker/): Container entrypoint scripts and dependency manifests for Docker packaging.
+- [`docs/`](docs/): Architecture documentation, UI/UX audits, and MCP protocol specifications.
+
 ## Build
 
 ```sh

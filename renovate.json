@@ -50,6 +50,11 @@
       "groupName": "vite-plus-toolchain"
     },
     {
+      "description": "Keep MCP Python dependencies updated",
+      "matchPaths": ["mcp/**"],
+      "labels": ["dependencies", "python", "mcp"]
+    },
+    {
       "description": "Group GitHub Actions updates",
       "matchManagers": ["github-actions"],
       "groupName": "github-actions",

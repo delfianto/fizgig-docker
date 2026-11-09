@@ -19,7 +19,7 @@ RUN test "${#UPSTREAM_COMMIT}" -eq 40 \
 COPY docker/mcp-requirements.txt /tmp/mcp-requirements.txt
 RUN python3 -m venv /opt/fizgig-mcp \
     && /opt/fizgig-mcp/bin/pip install --no-cache-dir -r /tmp/mcp-requirements.txt
-COPY src /opt/fizgig-local
+COPY mcp/src /opt/fizgig-local
 COPY docker/fizgig-local.pth /tmp/fizgig-local.pth
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN python3 -c 'import pathlib,site,shutil; shutil.copy("/tmp/fizgig-local.pth", pathlib.Path(site.getsitepackages()[0]) / "fizgig-local.pth")' \
