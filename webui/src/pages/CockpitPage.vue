@@ -5,11 +5,15 @@ import {
   Activity,
   ArrowDown,
   ArrowUp,
+  Columns2,
   Copy,
   Download,
+  Eye,
   FileCode2,
   History,
   ListOrdered,
+  PanelRightClose,
+  PanelRightOpen,
   Pause,
   Play,
   RefreshCw,
@@ -35,6 +39,22 @@ const highlightedEpoch = ref<number | null>(null);
 const overrideDrawerOpen = ref(false);
 const historySearch = ref("");
 const inspectingHistoricalRun = ref<HistoricalRun | null>(null);
+
+export type PreviewPaneMode = "collapsed" | "split" | "wide";
+const previewPaneMode = ref<PreviewPaneMode>(
+  (typeof window !== "undefined" &&
+    (localStorage.getItem("fizgig_cockpit_preview_pane") as PreviewPaneMode)) ||
+    "split",
+);
+
+function setPreviewPaneMode(mode: PreviewPaneMode): void {
+  previewPaneMode.value = mode;
+  try {
+    localStorage.setItem("fizgig_cockpit_preview_pane", mode);
+  } catch {
+    // Ignore storage write issues
+  }
+}
 
 const progress = computed(() => runStore.run?.progress ?? null);
 
@@ -205,6 +225,19 @@ onUnmounted(() => {
       </div>
 
       <div class="flex items-center gap-2">
+        <!-- Quick Preview Pane Restore Button when collapsed -->
+        <button
+          v-if="activeSubView === 'live' && previewPaneMode === 'collapsed'"
+          type="button"
+          class="btn btn-xs btn-primary gap-1.5 shadow-xs"
+          title="Restore preview pane"
+          @click="setPreviewPaneMode('split')"
+        >
+          <Eye class="h-3 w-3" />
+          <span>Show Previews ({{ runStore.samples.length }})</span>
+          <PanelRightOpen class="h-3 w-3 ml-0.5 opacity-80" />
+        </button>
+
         <button
           type="button"
           class="btn btn-xs btn-ghost border border-hairline bg-base-300"
@@ -229,10 +262,19 @@ onUnmounted(() => {
     <!-- SUB-VIEW 1: SPLIT-PANE LIVE COCKPIT (Left Telemetry + Right Sample Matrix) -->
     <div
       v-if="activeSubView === 'live'"
-      class="grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-12"
+      class="relative grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-12"
     >
-      <!-- Left Column (7 cols): KPI Strip + Loss Chart + Checkpoints/Console/Spec -->
-      <div class="flex flex-col gap-3 overflow-y-auto border-r border-hairline p-3.5 lg:col-span-7">
+      <!-- Left Column: KPI Strip + Loss Chart + Checkpoints/Console/Spec -->
+      <div
+        class="flex flex-col gap-3 overflow-y-auto border-r border-hairline p-3.5 transition-all duration-200"
+        :class="
+          previewPaneMode === 'collapsed'
+            ? 'lg:col-span-12'
+            : previewPaneMode === 'wide'
+              ? 'lg:col-span-4'
+              : 'lg:col-span-7'
+        "
+      >
         <!-- 6-Card Tabular KPI Strip -->
         <div class="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
           <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
@@ -420,15 +462,41 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Right Column (5 cols): Epoch × Prompt Sample Matrix -->
-      <div class="flex h-full flex-col overflow-hidden lg:col-span-5">
+      <!-- Right Column: Epoch × Prompt Sample Matrix / Carousel -->
+      <div
+        v-if="previewPaneMode !== 'collapsed'"
+        class="flex h-full flex-col overflow-hidden transition-all duration-200"
+        :class="previewPaneMode === 'wide' ? 'lg:col-span-8' : 'lg:col-span-5'"
+      >
         <SampleMatrixGrid
           :items="runStore.samples"
           :prompts="displayedRunPrompts"
           :highlighted-epoch="highlightedEpoch"
           :mode-note="runStore.sampleModeNote"
+          :pane-mode="previewPaneMode"
+          @set-pane-mode="(mode) => setPreviewPaneMode(mode)"
           @open-override-drawer="overrideDrawerOpen = true"
         />
+      </div>
+
+      <!-- Collapsed Right Edge Hover/Expand Strip -->
+      <div
+        v-if="previewPaneMode === 'collapsed'"
+        class="absolute right-0 top-1/2 -translate-y-1/2 z-20"
+      >
+        <button
+          type="button"
+          class="flex items-center gap-1.5 rounded-l-md border-y border-l border-hairline bg-base-300/95 px-1.5 py-3 text-xs text-subtle shadow-lg backdrop-blur hover:bg-base-200 hover:text-primary transition"
+          title="Expand Preview Pane"
+          @click="setPreviewPaneMode('split')"
+        >
+          <PanelRightOpen class="h-4 w-4 text-primary" />
+          <span
+            class="[writing-mode:vertical-rl] font-semibold tracking-wider text-[11px] uppercase"
+          >
+            Previews ({{ runStore.samples.length }})
+          </span>
+        </button>
       </div>
     </div>
 
