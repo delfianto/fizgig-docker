@@ -1,0 +1,46 @@
+name: MCP CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mcp/**'
+      - '.github/workflows/mcp.yml'
+  pull_request:
+    paths:
+      - 'mcp/**'
+      - '.github/workflows/mcp.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: mcp-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test-and-lint:
+    name: Lint & Test MCP Server
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --locked --extra mcp
+
+      - name: Code formatting check (Ruff)
+        run: uv run ruff format --check .
+
+      - name: Code lint check (Ruff)
+        run: uv run ruff check .
+
+      - name: Run MCP & Catalog Unit Tests
+        run: uv run python -m unittest discover -s tests -v

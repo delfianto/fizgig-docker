@@ -122,7 +122,12 @@ class Catalog:
             "sdxl": {"sdxl_checkpoint"},
             "fibo2": {"fibo2_dit", "fibo2_vae", "fibo2_text_encoder"},
             "klein": {"base_dit", "vae", "text_encoder"},
-            "moss_image": {"moss_image_dit", "moss_image_vae", "moss_image_text_encoder", "moss_image_sft_dit"},
+            "moss_image": {
+                "moss_image_dit",
+                "moss_image_vae",
+                "moss_image_text_encoder",
+                "moss_image_sft_dit",
+            },
             "qwen_image21": {"qwen21_dit", "qwen21_vae", "qwen21_text_encoder"},
             "zimage": {"zimage_dit", "zimage_vae", "zimage_text_encoder"},
             "minimax": {"minimax_dit", "minimax_vae", "minimax_text_encoder"},
@@ -141,10 +146,25 @@ class Catalog:
                 "sdxl": {"sdxl_vae", "sdxl_text_encoder"},
                 "fibo2": {"fibo2_turbo_lora"},
                 "klein": {"distilled_dit"},
-                "moss_image": {"moss_image_turbo_lora", "moss_image_sft_dit", "moss_image_sft_look_lora"},
-                "qwen_image21": {"qwen21_training_adapter", "qwen21_turbo_lora", "qwen21_turbo_dit"},
+                "moss_image": {
+                    "moss_image_turbo_lora",
+                    "moss_image_sft_dit",
+                    "moss_image_sft_look_lora",
+                },
+                "qwen_image21": {
+                    "qwen21_training_adapter",
+                    "qwen21_turbo_lora",
+                    "qwen21_turbo_dit",
+                },
                 "zimage": {"zimage_training_adapter"},
-                "minimax": {"minimax_ref_dit", "minimax_audio_vae", "minimax_turbo_lora", "minimax_circlestone_adapter", "minimax_training_adapter", "minimax_ref_training_adapter"},
+                "minimax": {
+                    "minimax_ref_dit",
+                    "minimax_audio_vae",
+                    "minimax_turbo_lora",
+                    "minimax_circlestone_adapter",
+                    "minimax_training_adapter",
+                    "minimax_ref_training_adapter",
+                },
             }[family]
         )
         if set(bindings) - allowed:
@@ -192,10 +212,25 @@ class Catalog:
             "sdxl": ("sdxl_vae", "sdxl_text_encoder"),
             "fibo2": ("fibo2_turbo_lora",),
             "klein": ("distilled_dit",),
-            "moss_image": ("moss_image_turbo_lora", "moss_image_sft_dit", "moss_image_sft_look_lora"),
-            "qwen_image21": ("qwen21_training_adapter", "qwen21_turbo_lora", "qwen21_turbo_dit"),
+            "moss_image": (
+                "moss_image_turbo_lora",
+                "moss_image_sft_dit",
+                "moss_image_sft_look_lora",
+            ),
+            "qwen_image21": (
+                "qwen21_training_adapter",
+                "qwen21_turbo_lora",
+                "qwen21_turbo_dit",
+            ),
             "zimage": ("zimage_training_adapter",),
-            "minimax": ("minimax_ref_dit", "minimax_audio_vae", "minimax_turbo_lora", "minimax_circlestone_adapter", "minimax_training_adapter", "minimax_ref_training_adapter"),
+            "minimax": (
+                "minimax_ref_dit",
+                "minimax_audio_vae",
+                "minimax_turbo_lora",
+                "minimax_circlestone_adapter",
+                "minimax_training_adapter",
+                "minimax_ref_training_adapter",
+            ),
         }
         for family in families:
             for key in optional[family]:
