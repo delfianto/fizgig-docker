@@ -21,8 +21,8 @@ or in appdata. No application code is bind-mounted into production.
 docker build -t local/fizgig:dev -t ghcr.io/delfianto/fizgig:latest .
 ```
 
-The Dockerfile pins both the upstream runtime image digest and Fizgig source
-commit. Source and dependency updates happen at build time. The image never runs
+The Dockerfile defaults to the latest upstream HEAD (or an optional pinned commit
+via `--build-arg UPSTREAM_COMMIT=<sha>`). Source and dependency updates happen at build time. The image never runs
 upstream's cloud entrypoint, clones source at startup, or installs packages on a
 restart. Upstream source and its licence stay in `/opt/Fizgig`. Building pulls the
 runtime image and Python dependencies, but never model weights.

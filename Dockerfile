@@ -1,19 +1,25 @@
 # syntax=docker/dockerfile:1
 ARG BASE_IMAGE=ghcr.io/shootthesound/fizgig@sha256:92aeb5a6041123ae9c9c89060c8f237d9c1a49ef36da00be9cfa0f7bb305abac
 FROM ${BASE_IMAGE}
-ARG UPSTREAM_COMMIT=2b309bd47fdf77216e2bc94dce8d099d58e40998
+ARG UPSTREAM_COMMIT=HEAD
 LABEL org.opencontainers.image.title="Fizgig" \
     org.opencontainers.image.source="https://github.com/delfianto/fizgig-docker" \
     org.opencontainers.image.description="Fizgig with read-only local manifests and offline model workers" \
     io.github.delfianto.fizgig.upstream-revision="${UPSTREAM_COMMIT}"
 WORKDIR /opt/Fizgig
-RUN test "${#UPSTREAM_COMMIT}" -eq 40 \
-    && case "$UPSTREAM_COMMIT" in *[!0-9a-f]*) exit 1 ;; esac \
-    && git init . \
+RUN git init . \
     && git remote add origin https://github.com/shootthesound/Fizgig.git \
-    && git fetch --depth 1 origin "$UPSTREAM_COMMIT" \
-    && git checkout --detach FETCH_HEAD \
-    && test "$(git rev-parse HEAD)" = "$UPSTREAM_COMMIT" \
+    && if [ -z "$UPSTREAM_COMMIT" ] || [ "$UPSTREAM_COMMIT" = "HEAD" ]; then \
+        git fetch --depth 1 origin HEAD \
+        && git checkout --detach FETCH_HEAD; \
+    else \
+        test "${#UPSTREAM_COMMIT}" -eq 40 \
+        && case "$UPSTREAM_COMMIT" in *[!0-9a-f]*) exit 1 ;; esac \
+        && git fetch --depth 1 origin "$UPSTREAM_COMMIT" \
+        && git checkout --detach FETCH_HEAD \
+        && test "$(git rev-parse HEAD)" = "$UPSTREAM_COMMIT"; \
+    fi \
+    && git rev-parse HEAD > /etc/fizgig-upstream-revision \
     && UV_NO_CACHE=1 python3 uv_install_deps.py requirements.txt /opt/venv \
     && rm -rf /root/.cache /workspace/.cache/uv
 COPY docker/mcp-requirements.txt /tmp/mcp-requirements.txt
