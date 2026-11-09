@@ -66,7 +66,12 @@ function autoSuggestLoraName(): void {
 
 function selectDataset(path: string): void {
   composerStore.setImageFolder(path);
-  if (!composerStore.draftValues.LORA_NAME) {
+  const currentName = String(composerStore.draftValues.LORA_NAME ?? "");
+  if (
+    !currentName ||
+    currentName.startsWith("my_lora_") ||
+    currentName.endsWith(`_${composerStore.family}_v1`)
+  ) {
     autoSuggestLoraName();
   }
 }
@@ -223,8 +228,6 @@ onMounted(async () => {
       :parsed-recipe="parsedRecipe"
       :current-preset-note="currentPresetNote"
       :can-process="isDatasetCompletelyTagged"
-      @start-run="handleStartRun"
-      @queue-run="handleQueueRun"
       @switch-to-expert="composerMode = 'expert'"
       @select-dataset="selectDataset"
       @auto-name="autoSuggestLoraName"
