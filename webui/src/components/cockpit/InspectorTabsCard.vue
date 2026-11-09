@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { Download, FileCode2, Terminal } from "lucide-vue-next";
 import { type CheckpointItem, type HistoricalRun } from "@shared/types";
 import { downloadUrl, formatBytes } from "@/api/client";
@@ -11,11 +11,18 @@ const props = defineProps<{
   outputDir: string;
   consoleLog: string;
   inspectingHistoricalRun: HistoricalRun | null;
+  activeLora?: string | null;
+  specValues?: Record<string, unknown> | null;
 }>();
 
 const runStore = useRunStore();
 const bottomTab = ref<"checkpoints" | "console" | "spec">("checkpoints");
 const logContainerRef = ref<HTMLDivElement | null>(null);
+
+const currentSpec = computed(() => {
+  if (props.specValues !== undefined) return props.specValues;
+  return props.inspectingHistoricalRun?.values ?? runStore.run?.values ?? null;
+});
 
 function scrollToBottom(): void {
   if (logContainerRef.value) {
@@ -62,7 +69,7 @@ watch(bottomTab, (tab) => {
       />
 
       <span class="font-mono text-[11px] text-muted truncate max-w-sm">
-        {{ outputDir }}
+        {{ outputDir || "—" }}
       </span>
     </div>
 
@@ -72,7 +79,11 @@ watch(bottomTab, (tab) => {
       class="flex-1 divide-y divide-hairline overflow-y-auto text-xs"
     >
       <div v-if="checkpoints.length === 0" class="p-6 text-center text-muted">
-        No checkpoints saved for this run yet.
+        {{
+          outputDir && outputDir !== "—"
+            ? "No checkpoints saved for this run yet."
+            : "No active run checkpoints. Hardware in standby."
+        }}
       </div>
       <div
         v-for="ckpt in checkpoints"
@@ -119,12 +130,18 @@ watch(bottomTab, (tab) => {
     <div v-else class="flex-1 overflow-y-auto bg-base-100 p-3 font-mono text-[11px] text-subtle">
       <div class="mb-2 flex items-center justify-between">
         <span class="font-sans text-xs font-medium text-base-content">
-          Frozen Launch Values ({{ inspectingHistoricalRun?.lora || runStore.run?.lora }})
+          <template v-if="inspectingHistoricalRun?.lora || activeLora">
+            Frozen Launch Values ({{ inspectingHistoricalRun?.lora || activeLora }})
+          </template>
+          <template v-else> Launch Configuration </template>
         </span>
       </div>
-      <pre class="whitespace-pre-wrap">{{
-        JSON.stringify(inspectingHistoricalRun?.values ?? runStore.run?.values ?? {}, null, 2)
+      <pre v-if="currentSpec && Object.keys(currentSpec).length > 0" class="whitespace-pre-wrap">{{
+        JSON.stringify(currentSpec, null, 2)
       }}</pre>
+      <div v-else class="p-6 text-center text-muted">
+        No active run configuration. Hardware in standby.
+      </div>
     </div>
   </div>
 </template>

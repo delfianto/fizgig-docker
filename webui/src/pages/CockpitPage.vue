@@ -42,15 +42,29 @@ function setPreviewPaneMode(mode: PreviewPaneMode): void {
   }
 }
 
-const sessionDismissed = ref(false);
+const DISMISSED_SESSION_KEY = "fizgig_dismissed_session";
+
+function getInitialDismissedState(): boolean {
+  try {
+    const saved = localStorage.getItem(DISMISSED_SESSION_KEY);
+    return Boolean(saved);
+  } catch {
+    return false;
+  }
+}
+
+const sessionDismissed = ref(getInitialDismissedState());
 const showDismissModal = ref(false);
 
+const isMonitorDismissed = computed(() => sessionDismissed.value && !inspectingHistoricalRun.value);
+
 const progress = computed(() => {
-  if (sessionDismissed.value && !inspectingHistoricalRun.value) return null;
+  if (isMonitorDismissed.value) return null;
   return runStore.run?.progress ?? null;
 });
 
 const displayedRunPrompts = computed(() => {
+  if (isMonitorDismissed.value) return [];
   if (runStore.samplePrompts.length > 0) return runStore.samplePrompts;
   const raw = String(runStore.run?.values?.SAMPLE_PROMPT ?? "");
   return raw
@@ -77,12 +91,25 @@ function requestDismissSession(): void {
 function confirmDismissSession(): void {
   showDismissModal.value = false;
   sessionDismissed.value = true;
+  try {
+    localStorage.setItem(
+      DISMISSED_SESSION_KEY,
+      runStore.run?.history_id || runStore.run?.lora || "true",
+    );
+  } catch {
+    // Ignore storage write issues
+  }
   runStore.clearSessionState();
   toast.success(`Cleared monitor session for "${runStore.run?.lora || "run"}"`);
 }
 
 async function restoreDismissedSession(): Promise<void> {
   sessionDismissed.value = false;
+  try {
+    localStorage.removeItem(DISMISSED_SESSION_KEY);
+  } catch {
+    // Ignore storage issues
+  }
   if (runStore.run) {
     await Promise.all([
       runStore.fetchLiveLoss(runStore.run.history_id || undefined),
@@ -105,19 +132,26 @@ async function inspectRunSamplesAndLoss(item: HistoricalRun): Promise<void> {
 
 async function switchBackToLiveRun(): Promise<void> {
   inspectingHistoricalRun.value = null;
-  sessionDismissed.value = false;
   if (runStore.isActiveOrStarting) {
+    sessionDismissed.value = false;
+    try {
+      localStorage.removeItem(DISMISSED_SESSION_KEY);
+    } catch {
+      // Ignore
+    }
     await Promise.all([
       runStore.fetchLiveLoss(),
       runStore.fetchSamples(),
       runStore.fetchCheckpoints(),
     ]);
   } else if (runStore.isCompleted && runStore.run) {
-    await Promise.all([
-      runStore.fetchLiveLoss(runStore.run.history_id || undefined),
-      runStore.fetchSamples(undefined, runStore.run.lora),
-      runStore.fetchCheckpoints(runStore.run.output_dir),
-    ]);
+    if (!sessionDismissed.value) {
+      await Promise.all([
+        runStore.fetchLiveLoss(runStore.run.history_id || undefined),
+        runStore.fetchSamples(undefined, runStore.run.lora),
+        runStore.fetchCheckpoints(runStore.run.output_dir),
+      ]);
+    }
   } else {
     await Promise.all([
       runStore.fetchLiveLoss(),
@@ -132,6 +166,11 @@ watch(
   (running) => {
     if (running) {
       sessionDismissed.value = false;
+      try {
+        localStorage.removeItem(DISMISSED_SESSION_KEY);
+      } catch {
+        // Ignore
+      }
       if (inspectingHistoricalRun.value) {
         inspectingHistoricalRun.value = null;
         void runStore.fetchLiveLoss();
@@ -149,19 +188,40 @@ onMounted(async () => {
   ]);
 
   if (runStore.isActiveOrStarting) {
+    sessionDismissed.value = false;
+    try {
+      localStorage.removeItem(DISMISSED_SESSION_KEY);
+    } catch {
+      // Ignore
+    }
     inspectingHistoricalRun.value = null;
     await Promise.all([runStore.fetchLiveLoss(), runStore.fetchSamples()]);
   } else if (runStore.isCompleted && runStore.run) {
     inspectingHistoricalRun.value = null;
-    await Promise.all([
-      runStore.fetchLiveLoss(runStore.run.history_id || undefined),
-      runStore.fetchSamples(undefined, runStore.run.lora),
-      runStore.fetchCheckpoints(runStore.run.output_dir),
-    ]);
+    const currentRunKey = runStore.run.history_id || runStore.run.lora;
+    let savedDismissed: string | null = null;
+    try {
+      savedDismissed = localStorage.getItem(DISMISSED_SESSION_KEY);
+    } catch {
+      // Ignore
+    }
+    if (savedDismissed && (savedDismissed === currentRunKey || savedDismissed === "true")) {
+      sessionDismissed.value = true;
+      runStore.clearSessionState();
+    } else {
+      sessionDismissed.value = false;
+      await Promise.all([
+        runStore.fetchLiveLoss(runStore.run.history_id || undefined),
+        runStore.fetchSamples(undefined, runStore.run.lora),
+        runStore.fetchCheckpoints(runStore.run.output_dir),
+      ]);
+    }
   } else {
     await Promise.all([runStore.fetchLiveLoss(), runStore.fetchSamples()]);
   }
-  runStore.startLogStream();
+  if (!isMonitorDismissed.value) {
+    runStore.startLogStream();
+  }
 });
 
 onUnmounted(() => {
@@ -170,7 +230,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col overflow-hidden bg-canvas">
+  <div class="flex h-full w-full flex-col overflow-hidden bg-canvas">
     <!-- Sub-Navigation Header Bar -->
     <div
       class="flex shrink-0 items-center justify-between border-b border-hairline bg-base-200 px-4 py-2"
@@ -224,16 +284,30 @@ onUnmounted(() => {
 
         <BaseButton
           variant="ghost"
+          size="compact"
           title="Refresh telemetry, samples, and checkpoints"
           @click="
-            runStore.pollRun();
-            runStore.fetchLiveLoss(inspectingHistoricalRun?.id);
-            runStore.fetchSamples(
-              inspectingHistoricalRun ? `${inspectingHistoricalRun.output_dir}/sample` : undefined,
-              inspectingHistoricalRun?.lora,
-            );
-            runStore.fetchCheckpoints(inspectingHistoricalRun?.output_dir);
-            runStore.pollLog();
+            async () => {
+              await runStore.pollRun();
+              await runStore.pollStats();
+              if (inspectingHistoricalRun) {
+                runStore.fetchLiveLoss(inspectingHistoricalRun.id);
+                runStore.fetchSamples(
+                  `${inspectingHistoricalRun.output_dir}/sample`,
+                  inspectingHistoricalRun.lora,
+                );
+                runStore.fetchCheckpoints(inspectingHistoricalRun.output_dir);
+                runStore.pollLog();
+              } else if (
+                !isMonitorDismissed &&
+                (runStore.isActiveOrStarting || (runStore.isCompleted && runStore.run))
+              ) {
+                runStore.fetchLiveLoss(runStore.run?.history_id || undefined);
+                runStore.fetchSamples(undefined, runStore.run?.lora);
+                runStore.fetchCheckpoints(runStore.run?.output_dir);
+                runStore.pollLog();
+              }
+            }
           "
         >
           <template #icon-left><RefreshCw class="h-3.5 w-3.5" /></template>
@@ -245,7 +319,7 @@ onUnmounted(() => {
     <!-- SUB-VIEW 1: SPLIT-PANE LIVE COCKPIT (Left Telemetry + Right Sample Matrix) -->
     <div
       v-if="activeSubView === 'live'"
-      class="relative grid flex-1 grid-cols-1 overflow-hidden lg:grid-cols-12"
+      class="relative grid w-full flex-1 grid-cols-1 overflow-hidden lg:grid-cols-12"
     >
       <!-- Left Column: Live Run Banner + KPI Strip + Loss Chart + Inspector Card -->
       <div
@@ -273,16 +347,16 @@ onUnmounted(() => {
         <KpiMetricsStrip
           :progress="progress"
           :inspecting-historical-run="inspectingHistoricalRun"
-          :loss-points="runStore.lossPoints"
-          :lowest-loss-point="runStore.lowestLossPoint"
-          :run-values="runStore.run?.values"
+          :loss-points="isMonitorDismissed ? [] : runStore.lossPoints"
+          :lowest-loss-point="isMonitorDismissed ? null : runStore.lowestLossPoint"
+          :run-values="isMonitorDismissed ? undefined : runStore.run?.values"
           :pane-mode="previewPaneMode"
         />
 
         <!-- Loss Chart Card -->
         <div class="rounded-lg border border-hairline bg-base-300 p-3.5">
           <LossChartCanvas
-            :points="runStore.lossPoints"
+            :points="isMonitorDismissed ? [] : runStore.lossPoints"
             :total-steps="progress?.total_steps"
             :total-epochs="progress?.total_epochs"
             @hover-epoch="(ep) => (highlightedEpoch = ep)"
@@ -291,10 +365,16 @@ onUnmounted(() => {
 
         <!-- Bottom Inspector Card: Checkpoints | Console Log | Active Spec -->
         <InspectorTabsCard
-          :checkpoints="runStore.checkpoints"
-          :output-dir="runStore.activeOutputDir"
-          :console-log="runStore.consoleLog"
+          :checkpoints="isMonitorDismissed ? [] : runStore.checkpoints"
+          :output-dir="isMonitorDismissed ? '—' : runStore.activeOutputDir"
+          :console-log="isMonitorDismissed ? '' : runStore.consoleLog"
           :inspecting-historical-run="inspectingHistoricalRun"
+          :active-lora="isMonitorDismissed ? null : runStore.run?.lora"
+          :spec-values="
+            isMonitorDismissed
+              ? null
+              : (inspectingHistoricalRun?.values ?? runStore.run?.values ?? null)
+          "
         />
       </div>
 
@@ -305,10 +385,10 @@ onUnmounted(() => {
         :class="previewPaneMode === 'wide' ? 'lg:col-span-8' : 'lg:col-span-5'"
       >
         <SampleMatrixGrid
-          :items="runStore.samples"
+          :items="isMonitorDismissed ? [] : runStore.samples"
           :prompts="displayedRunPrompts"
           :highlighted-epoch="highlightedEpoch"
-          :mode-note="runStore.sampleModeNote"
+          :mode-note="isMonitorDismissed ? '' : runStore.sampleModeNote"
           :pane-mode="previewPaneMode"
           @set-pane-mode="(mode) => setPreviewPaneMode(mode)"
           @open-override-drawer="overrideDrawerOpen = true"

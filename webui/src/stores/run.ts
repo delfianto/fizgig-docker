@@ -261,6 +261,7 @@ export const useRunStore = defineStore("run", () => {
   }
 
   function clearSessionState(): void {
+    stopLogStream();
     lossPoints.value = [];
     samples.value = [];
     samplePrompts.value = [];

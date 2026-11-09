@@ -66,4 +66,32 @@ describe("useRunStore", () => {
     expect(store.isActiveOrStarting).toBe(true);
     expect(store.isRunning).toBe(true);
   });
+
+  it("clears session state cleanly upon dismiss", () => {
+    const store = useRunStore();
+    store.lossPoints = [{ step: 10, loss: 0.2 }];
+    store.samples = [{ epoch: 1, prompt_index: 0, path: "/sample.png", name: "s1" }];
+    store.samplePrompts = ["a prompt"];
+    store.sampleModeNote = "note";
+    store.checkpoints = [
+      {
+        name: "ep1.safetensors",
+        path: "/path",
+        run: "my_run",
+        size: 1000,
+        mtime: 12345,
+        epoch: 1,
+      },
+    ];
+    store.consoleLog = "training log line";
+
+    store.clearSessionState();
+
+    expect(store.lossPoints).toEqual([]);
+    expect(store.samples).toEqual([]);
+    expect(store.samplePrompts).toEqual([]);
+    expect(store.sampleModeNote).toBe("");
+    expect(store.checkpoints).toEqual([]);
+    expect(store.consoleLog).toBe("");
+  });
 });

@@ -85,6 +85,8 @@ onUnmounted(() => {
     </div>
 
     <PlanOverlayPopup />
-    <Toaster theme="dark" rich-colors position="bottom-right" />
+    <Teleport to="body">
+      <Toaster theme="dark" rich-colors position="bottom-right" />
+    </Teleport>
   </div>
 </template>

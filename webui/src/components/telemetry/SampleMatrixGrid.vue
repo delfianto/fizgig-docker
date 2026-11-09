@@ -313,10 +313,19 @@ onUnmounted(() => {
         v-if="items.length === 0"
         class="flex h-64 flex-col items-center justify-center gap-1.5 text-center text-xs text-muted"
       >
-        <p class="font-medium text-base-content">No preview samples generated for this run yet.</p>
+        <p class="font-medium text-base-content">
+          {{
+            prompts.length > 0
+              ? "No preview samples generated for this run yet."
+              : "Trainer in standby."
+          }}
+        </p>
         <p class="text-[12px] text-subtle max-w-sm">
-          Click <strong class="text-primary font-semibold">Sample Now</strong> in the top telemetry
-          bar to trigger an immediate preview after the current step.
+          {{
+            prompts.length > 0
+              ? "Click Sample Now in the top telemetry bar to trigger an immediate preview after the current step."
+              : "No active training preview. Launch a job in Composer to begin generating samples."
+          }}
         </p>
       </div>
 
