@@ -4,9 +4,15 @@ import { useComposerStore } from "@/stores/composer";
 import { useRunStore } from "@/stores/run";
 import { useSchemaStore } from "@/stores/schema";
 
-defineProps<{
-  mode: "essential" | "expert";
-}>();
+withDefaults(
+  defineProps<{
+    mode: "essential" | "expert";
+    canProcess?: boolean;
+  }>(),
+  {
+    canProcess: true,
+  },
+);
 
 const emit = defineEmits<{
   (e: "update:mode", mode: "essential" | "expert"): void;
@@ -124,8 +130,14 @@ const runStore = useRunStore();
 
       <button
         type="button"
-        class="btn btn-sm border border-hairline-strong bg-base-300 text-xs hover:border-primary gap-1.5"
-        :class="{ 'btn-primary': runStore.isActiveOrStarting }"
+        class="btn btn-sm border border-hairline-strong bg-base-300 text-xs hover:border-primary gap-1.5 cursor-pointer"
+        :class="{ 'btn-primary': runStore.isActiveOrStarting && canProcess }"
+        :disabled="!canProcess"
+        :title="
+          !canProcess
+            ? 'Selected dataset is not completely tagged — captions required for all images'
+            : 'Add this training configuration to the background queue'
+        "
         @click="emit('queue-run')"
       >
         <ListPlus class="h-4 w-4" />
@@ -134,12 +146,14 @@ const runStore = useRunStore();
 
       <button
         type="button"
-        class="btn btn-sm btn-primary text-xs gap-1.5 font-bold"
-        :disabled="runStore.isActiveOrStarting"
+        class="btn btn-sm btn-primary text-xs gap-1.5 font-bold cursor-pointer"
+        :disabled="!canProcess || runStore.isActiveOrStarting"
         :title="
-          runStore.isActiveOrStarting
-            ? 'A training run is currently active on the GPU — use Add to Queue instead'
-            : 'Validate and start training now'
+          !canProcess
+            ? 'Selected dataset is not completely tagged — captions required for all images'
+            : runStore.isActiveOrStarting
+              ? 'A training run is currently active on the GPU — use Add to Queue instead'
+              : 'Validate and start training now'
         "
         @click="emit('start-run')"
       >

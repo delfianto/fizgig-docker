@@ -54,7 +54,11 @@ export const useSchemaStore = defineStore("schema", () => {
   async function fetchDatasets(): Promise<void> {
     try {
       const res = await apiGet<{ datasets?: DatasetSummary[] }>("/api/datasets");
-      datasets.value = res.datasets ?? [];
+      datasets.value = (res.datasets ?? []).map((d) => {
+        d.count = d.count ?? d.pictures ?? 0;
+        d.captioned = d.captioned ?? 0;
+        return d;
+      });
     } catch {
       // Keep previous list on transient error
     }

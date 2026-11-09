@@ -270,10 +270,12 @@ export interface DatasetSummary {
   name: string;
   path: string;
   count: number;
+  pictures?: number;
   captioned?: number;
   mtime?: number;
   size?: number;
   media?: string;
+  thumbs?: string[];
 }
 
 export interface CaptionEntry {

@@ -6,6 +6,7 @@ import PlanOverlayPopup from "@/components/common/PlanOverlayPopup.vue";
 import ComposerEssentialStudio from "@/components/composer/ComposerEssentialStudio.vue";
 import ComposerExpertTuning from "@/components/composer/ComposerExpertTuning.vue";
 import ComposerHeaderBar from "@/components/composer/ComposerHeaderBar.vue";
+import SubmitQueueModal from "@/components/composer/SubmitQueueModal.vue";
 import { useComposerStore } from "@/stores/composer";
 import { usePlanOverlayStore } from "@/stores/overlay";
 import { useRunStore } from "@/stores/run";
@@ -18,9 +19,20 @@ const runStore = useRunStore();
 const planOverlay = usePlanOverlayStore();
 
 const composerMode = ref<"essential" | "expert">("essential");
+const showQueueModal = ref(false);
+const isSubmittingQueue = ref(false);
 
 const selectedDatasetInfo = computed(() => {
   return schemaStore.datasets.find((d) => d.path === composerStore.imageFolder) ?? null;
+});
+
+const isDatasetCompletelyTagged = computed(() => {
+  const ds = selectedDatasetInfo.value;
+  if (!ds) return false;
+  const count = ds.count ?? ds.pictures ?? 0;
+  if (count <= 0) return false;
+  const captioned = ds.captioned ?? 0;
+  return captioned >= count;
 });
 
 const currentPresetNote = computed(() => {
@@ -96,13 +108,28 @@ async function handleValidatePlan(): Promise<void> {
   }
 }
 
-async function handleQueueRun(): Promise<void> {
+function handleQueueRun(): void {
+  if (!isDatasetCompletelyTagged.value) {
+    planOverlay.show({
+      status: "attention",
+      title: "Dataset Incompletely Tagged",
+      message: `Dataset "${selectedDatasetInfo.value?.name ?? "selected"}" has uncaptioned images (${selectedDatasetInfo.value?.captioned ?? 0}/${selectedDatasetInfo.value?.count ?? 0}). All images must have captions before adding this job to the training queue.`,
+      duration: 8000,
+    });
+    return;
+  }
+  showQueueModal.value = true;
+}
+
+async function confirmQueueSubmission(): Promise<void> {
+  isSubmittingQueue.value = true;
   try {
     const res = await composerStore.submitQueueTraining();
     const hasProblems = Boolean(res.problems && res.problems.length > 0);
     const hasWarnings = Boolean(res.warnings && res.warnings.length > 0);
 
     if (hasProblems || hasWarnings) {
+      showQueueModal.value = false;
       planOverlay.show({
         status: hasProblems ? "attention" : "warning",
         title: hasProblems ? "Cannot Queue: Blockers Detected" : "Cannot Queue: Advisory Warnings",
@@ -112,19 +139,33 @@ async function handleQueueRun(): Promise<void> {
       });
       return;
     }
-    toast.success(`Added "${composerStore.draftValues.LORA_NAME}" to queue`);
+    showQueueModal.value = false;
+    toast.success(`Job "${composerStore.draftValues.LORA_NAME}" submitted to background queue`);
     await runStore.pollRun();
   } catch (err) {
+    showQueueModal.value = false;
     planOverlay.show({
       status: "attention",
       title: "Cannot Add to Queue",
       message: err instanceof Error ? err.message : "Queue submission failed",
       duration: 8000,
     });
+  } finally {
+    isSubmittingQueue.value = false;
   }
 }
 
 async function handleStartRun(): Promise<void> {
+  if (!isDatasetCompletelyTagged.value) {
+    planOverlay.show({
+      status: "attention",
+      title: "Dataset Incompletely Tagged",
+      message: `Dataset "${selectedDatasetInfo.value?.name ?? "selected"}" has uncaptioned images (${selectedDatasetInfo.value?.captioned ?? 0}/${selectedDatasetInfo.value?.count ?? 0}). All images must have captions before starting training.`,
+      duration: 8000,
+    });
+    return;
+  }
+
   try {
     const res = await composerStore.submitStartTraining();
     const hasProblems = Boolean(res.problems && res.problems.length > 0);
@@ -169,6 +210,7 @@ onMounted(async () => {
     <!-- Top Composer Control Bar -->
     <ComposerHeaderBar
       v-model:mode="composerMode"
+      :can-process="isDatasetCompletelyTagged"
       @validate-plan="handleValidatePlan"
       @queue-run="handleQueueRun"
       @start-run="handleStartRun"
@@ -180,6 +222,7 @@ onMounted(async () => {
       :selected-dataset-info="selectedDatasetInfo"
       :parsed-recipe="parsedRecipe"
       :current-preset-note="currentPresetNote"
+      :can-process="isDatasetCompletelyTagged"
       @start-run="handleStartRun"
       @queue-run="handleQueueRun"
       @switch-to-expert="composerMode = 'expert'"
@@ -193,5 +236,22 @@ onMounted(async () => {
 
     <!-- Global Plan Validation & Alert Modal -->
     <PlanOverlayPopup />
+
+    <!-- Confirmation Dialog for Submitting Job to Queue -->
+    <SubmitQueueModal
+      :open="showQueueModal"
+      :lora-name="String(composerStore.draftValues.LORA_NAME || '')"
+      :family="composerStore.family"
+      :family-label="
+        composerStore.currentFamilyDesc?.gui_label || composerStore.currentFamilyDesc?.display_name
+      "
+      :recipe-title="parsedRecipe.title"
+      :dataset-name="selectedDatasetInfo?.name || composerStore.imageFolder || 'Unknown'"
+      :dataset-count="selectedDatasetInfo?.count ?? 0"
+      :epochs="Number(composerStore.draftValues.MAX_TRAIN_EPOCHS ?? 30)"
+      :is-submitting="isSubmittingQueue"
+      @confirm="confirmQueueSubmission"
+      @close="showQueueModal = false"
+    />
   </div>
 </template>

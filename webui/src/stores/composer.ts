@@ -223,6 +223,11 @@ export const useComposerStore = defineStore("composer", () => {
     return plan;
   }
 
+  function setImageFolder(folder: string): void {
+    imageFolder.value = folder;
+    void refreshFormState();
+  }
+
   function loadFromHistoricalRun(run: {
     family: string;
     image_folder?: string;
@@ -263,6 +268,7 @@ export const useComposerStore = defineStore("composer", () => {
     validatePlan,
     submitStartTraining,
     submitQueueTraining,
+    setImageFolder,
     loadFromHistoricalRun,
   };
 });
