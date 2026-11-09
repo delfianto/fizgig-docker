@@ -40,6 +40,7 @@ const emit = defineEmits<{
     },
   ): void;
   (e: "dismiss"): void;
+  (e: "restore-session"): void;
   (e: "view-history"): void;
   (e: "return-to-live"): void;
 }>();
@@ -537,7 +538,18 @@ async function handleAction(
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          v-if="sessionDismissed && runStore.run?.lora"
+          type="button"
+          class="btn btn-xs border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 text-xs gap-1 font-medium"
+          title="Restore the previously dismissed run in the monitor"
+          @click="emit('restore-session')"
+        >
+          <RotateCcw class="h-3 w-3" />
+          <span>Re-open {{ runStore.run.lora }}</span>
+        </button>
+
         <router-link
           to="/composer"
           class="btn btn-xs btn-primary gap-1 text-xs font-semibold shadow-xs"

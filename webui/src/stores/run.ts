@@ -260,6 +260,16 @@ export const useRunStore = defineStore("run", () => {
     await pollRun();
   }
 
+  function clearSessionState(): void {
+    lossPoints.value = [];
+    samples.value = [];
+    samplePrompts.value = [];
+    sampleModeNote.value = "";
+    checkpoints.value = [];
+    consoleLog.value = "";
+    logBytePos.value = 0;
+  }
+
   return {
     run,
     stats,
@@ -296,5 +306,6 @@ export const useRunStore = defineStore("run", () => {
     startQueue,
     removeQueueItem,
     moveQueueItem,
+    clearSessionState,
   };
 });

@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import { Activity, Eye, History, ListOrdered, RefreshCw } from "lucide-vue-next";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Eye,
+  History,
+  ListOrdered,
+  RefreshCw,
+  X,
+} from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { type HistoricalRun } from "@shared/types";
 import CockpitHistorySubView from "@/components/cockpit/CockpitHistorySubView.vue";
@@ -40,7 +49,13 @@ function setPreviewPaneMode(mode: PreviewPaneMode): void {
   }
 }
 
-const progress = computed(() => runStore.run?.progress ?? null);
+const sessionDismissed = ref(false);
+const showDismissModal = ref(false);
+
+const progress = computed(() => {
+  if (sessionDismissed.value && !inspectingHistoricalRun.value) return null;
+  return runStore.run?.progress ?? null;
+});
 
 const displayedRunPrompts = computed(() => {
   if (runStore.samplePrompts.length > 0) return runStore.samplePrompts;
@@ -50,8 +65,6 @@ const displayedRunPrompts = computed(() => {
     .map((s) => s.trim())
     .filter(Boolean);
 });
-
-const sessionDismissed = ref(false);
 
 function cloneRunToComposer(item: {
   family: string;
@@ -64,9 +77,27 @@ function cloneRunToComposer(item: {
   void router.push("/composer");
 }
 
-function dismissCurrentSession(): void {
+function requestDismissSession(): void {
+  showDismissModal.value = true;
+}
+
+function confirmDismissSession(): void {
+  showDismissModal.value = false;
   sessionDismissed.value = true;
-  toast.info("Cleared completed session from view");
+  runStore.clearSessionState();
+  toast.success(`Cleared monitor session for "${runStore.run?.lora || "run"}"`);
+}
+
+async function restoreDismissedSession(): Promise<void> {
+  sessionDismissed.value = false;
+  if (runStore.run) {
+    await Promise.all([
+      runStore.fetchLiveLoss(runStore.run.history_id || undefined),
+      runStore.fetchSamples(undefined, runStore.run.lora),
+      runStore.fetchCheckpoints(runStore.run.output_dir),
+    ]);
+    toast.info(`Restored monitor view for "${runStore.run.lora}"`);
+  }
 }
 
 async function inspectRunSamplesAndLoss(item: HistoricalRun): Promise<void> {
@@ -278,7 +309,8 @@ onUnmounted(() => {
           :inspecting-historical-run="inspectingHistoricalRun"
           :session-dismissed="sessionDismissed"
           @clone="cloneRunToComposer"
-          @dismiss="dismissCurrentSession"
+          @dismiss="requestDismissSession"
+          @restore-session="restoreDismissedSession"
           @view-history="activeSubView = 'history'"
           @return-to-live="switchBackToLiveRun"
         />
@@ -342,5 +374,69 @@ onUnmounted(() => {
 
     <!-- Safe, Explicit Live Preview Override Drawer -->
     <LivePreviewDrawer :open="overrideDrawerOpen" @close="overrideDrawerOpen = false" />
+
+    <!-- Dismiss Session Confirmation Modal -->
+    <dialog v-if="showDismissModal" class="modal modal-open">
+      <div class="modal-box max-w-md border border-hairline bg-base-300 p-5 shadow-2xl">
+        <div class="flex items-center gap-3 border-b border-hairline pb-3">
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/15 border border-warning/30 text-warning shrink-0"
+          >
+            <AlertTriangle class="h-5 w-5" />
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-base-content">Dismiss Completed Run?</h3>
+            <p class="text-xs text-muted">Clear the active monitor and return to standby.</p>
+          </div>
+        </div>
+
+        <div class="py-4 space-y-2.5 text-xs text-subtle leading-relaxed">
+          <p>
+            You are about to dismiss the completed session for
+            <strong class="font-mono text-base-content">{{ runStore.run?.lora }}</strong
+            >.
+          </p>
+          <div class="rounded-lg border border-hairline bg-base-200 p-3 space-y-1.5">
+            <div class="flex items-center gap-1.5 text-success font-medium">
+              <CheckCircle2 class="h-4 w-4 shrink-0" />
+              <span>Safe action: Your weights and logs are preserved</span>
+            </div>
+            <p class="text-[11px] text-muted">
+              All <strong>.safetensors</strong> model weights, checkpoints, and execution history
+              remain permanently stored in
+              <code class="text-xs font-mono">/workspace/output_loras</code> and the
+              <strong>History</strong> tab.
+            </p>
+          </div>
+          <p class="text-[11px] text-muted">
+            This will reset the active loss curves, logs, checkpoints, and sample previews from the
+            monitor screen so you can start clean.
+          </p>
+        </div>
+
+        <div
+          class="modal-action mt-2 flex items-center justify-end gap-2 border-t border-hairline pt-3"
+        >
+          <button
+            type="button"
+            class="btn btn-xs btn-ghost border border-hairline bg-base-200 cursor-pointer"
+            @click="showDismissModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-xs btn-warning gap-1 font-semibold cursor-pointer"
+            @click="confirmDismissSession"
+          >
+            <X class="h-3.5 w-3.5" />
+            <span>Dismiss &amp; Clear Monitor</span>
+          </button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop bg-black/60" @click="showDismissModal = false">
+        <button>close</button>
+      </form>
+    </dialog>
   </div>
 </template>
