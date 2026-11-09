@@ -9,6 +9,7 @@ import {
   Sparkles,
   X,
 } from "lucide-vue-next";
+import { BaseButton } from "@/components/common";
 
 defineProps<{
   open: boolean;
@@ -110,24 +111,16 @@ const emit = defineEmits<{
       <div
         class="modal-action mt-1 flex items-center justify-end gap-2 border-t border-hairline pt-3"
       >
-        <button
-          type="button"
-          class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-hairline bg-base-200 px-3.5 text-xs font-semibold cursor-pointer"
-          :disabled="isSubmitting"
-          @click="emit('close')"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm h-8.5 rounded-lg btn-primary gap-1.5 px-4 text-xs font-bold cursor-pointer shadow-md"
-          :disabled="isSubmitting"
-          @click="emit('confirm')"
-        >
-          <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
-          <ListPlus v-else class="h-4 w-4" />
+        <BaseButton variant="ghost" :disabled="isSubmitting" @click="emit('close')">
+          <span>Cancel</span>
+        </BaseButton>
+        <BaseButton variant="primary" :disabled="isSubmitting" @click="emit('confirm')">
+          <template #icon-left>
+            <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
+            <ListPlus v-else class="h-4 w-4" />
+          </template>
           <span>{{ isSubmitting ? "Submitting..." : "Submit Job to Queue" }}</span>
-        </button>
+        </BaseButton>
       </div>
     </div>
     <form

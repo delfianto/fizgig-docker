@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { AlertTriangle, CheckCircle2, X } from "lucide-vue-next";
+import { BaseButton } from "@/components/common";
 
 defineProps<{
   open: boolean;
@@ -56,21 +57,13 @@ const emit = defineEmits<{
       <div
         class="modal-action mt-2 flex items-center justify-end gap-2 border-t border-hairline pt-3"
       >
-        <button
-          type="button"
-          class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-hairline bg-base-200 px-3.5 text-xs font-semibold cursor-pointer transition"
-          @click="emit('close')"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm h-8.5 rounded-lg btn-warning gap-1.5 px-3.5 text-xs font-semibold cursor-pointer shadow-xs transition"
-          @click="emit('confirm')"
-        >
-          <X class="h-3.5 w-3.5" />
+        <BaseButton variant="ghost" @click="emit('close')">
+          <span>Cancel</span>
+        </BaseButton>
+        <BaseButton variant="warning" @click="emit('confirm')">
+          <template #icon-left><X class="h-3.5 w-3.5" /></template>
           <span>Dismiss &amp; Clear Monitor</span>
-        </button>
+        </BaseButton>
       </div>
     </div>
     <form method="dialog" class="modal-backdrop bg-black/60" @click="emit('close')">

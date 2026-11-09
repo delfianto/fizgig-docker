@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { Camera, Pause, Save, Square } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { type LiveRunResponse } from "@shared/types";
+import { BaseButton } from "@/components/common";
 import { useRunStore } from "@/stores/run";
 
 const props = defineProps<{
@@ -66,9 +67,9 @@ async function handleAction(
 
       <!-- Instant Training Controls -->
       <div class="flex items-center gap-1.5 shrink-0">
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 hover:border-primary/50 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
+        <BaseButton
+          size="compact"
+          variant="ghost"
           :disabled="busyAction !== null"
           title="Render sample previews after current step"
           @click="
@@ -79,13 +80,13 @@ async function handleAction(
             )
           "
         >
-          <Camera class="h-3.5 w-3.5 text-primary" />
+          <template #icon-left><Camera class="h-3.5 w-3.5 text-primary" /></template>
           <span>Sample Now</span>
-        </button>
+        </BaseButton>
 
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 hover:border-success/50 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
+        <BaseButton
+          size="compact"
+          variant="ghost"
           :disabled="busyAction !== null"
           title="Save a checkpoint after current step"
           @click="
@@ -96,13 +97,13 @@ async function handleAction(
             )
           "
         >
-          <Save class="h-3.5 w-3.5 text-success" />
+          <template #icon-left><Save class="h-3.5 w-3.5 text-success" /></template>
           <span>Save Now</span>
-        </button>
+        </BaseButton>
 
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 hover:border-warning/50 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
+        <BaseButton
+          size="compact"
+          variant="ghost"
           :disabled="busyAction !== null || run.pause"
           title="Request clean pause at next epoch boundary"
           @click="
@@ -113,22 +114,22 @@ async function handleAction(
             )
           "
         >
-          <Pause class="h-3.5 w-3.5 text-warning" />
+          <template #icon-left><Pause class="h-3.5 w-3.5 text-warning" /></template>
           <span>{{ run.pause ? "Pausing…" : "Pause" }}</span>
-        </button>
+        </BaseButton>
 
         <!-- Two-step Stop Guard -->
         <div class="relative flex items-center">
-          <button
+          <BaseButton
             v-if="!confirmStop"
-            type="button"
-            class="btn btn-sm h-7.5 rounded-md border border-error/30 bg-error/10 text-error hover:bg-error/20 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
+            size="compact"
+            variant="error"
             title="Stop active training run"
             @click="confirmStop = true"
           >
-            <Square class="h-3 w-3" />
+            <template #icon-left><Square class="h-3 w-3" /></template>
             <span>Stop</span>
-          </button>
+          </BaseButton>
           <div
             v-else
             class="flex items-center gap-1.5 rounded-md border border-error/50 bg-base-200 px-2 h-7.5"

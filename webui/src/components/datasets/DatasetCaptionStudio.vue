@@ -4,6 +4,7 @@ import { AlertTriangle, Replace, Save, Search, Sparkles } from "lucide-vue-next"
 import { toast } from "vue-sonner";
 import { type CaptionEntry } from "@shared/types";
 import { apiPost, thumbUrl } from "@/api/client";
+import { BaseButton, BaseInput, BasePillGroup } from "@/components/common";
 import { useComposerStore } from "@/stores/composer";
 
 const props = defineProps<{
@@ -95,69 +96,29 @@ async function runFindReplace(dryRun: boolean): Promise<void> {
       class="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 bg-base-200/40 px-4 py-2.5"
     >
       <div class="flex items-center gap-2">
-        <div class="relative">
-          <Search
-            class="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-base-content/40"
-          />
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Filter filename or caption..."
-            class="input input-sm h-8.5 rounded-lg border-hairline-strong bg-base-100 pl-8.5 w-60 text-xs focus:border-primary focus:outline-none"
-          />
+        <div class="w-60">
+          <BaseInput v-model="searchQuery" placeholder="Filter filename or caption...">
+            <template #prefix>
+              <Search class="h-3.5 w-3.5" />
+            </template>
+          </BaseInput>
         </div>
 
-        <div
-          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
-        >
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              filterMode === 'all'
-                ? 'bg-neutral text-neutral-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="filterMode = 'all'"
-          >
-            All ({{ entries.length }})
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              filterMode === 'uncaptioned'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="filterMode = 'uncaptioned'"
-          >
-            Uncaptioned
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              filterMode === 'dirty'
-                ? 'bg-warning text-warning-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="filterMode = 'dirty'"
-          >
-            Unsaved ({{ dirtyPaths.size }})
-          </button>
-        </div>
+        <BasePillGroup
+          :model-value="filterMode"
+          :options="[
+            { value: 'all', label: `All (${entries.length})`, variant: 'neutral' },
+            { value: 'uncaptioned', label: 'Uncaptioned' },
+            { value: 'dirty', label: `Unsaved (${dirtyPaths.size})`, variant: 'warning' },
+          ]"
+          @update:model-value="(val) => (filterMode = val as 'all' | 'uncaptioned' | 'dirty')"
+        />
       </div>
 
-      <button
-        v-if="dirtyPaths.size > 0"
-        type="button"
-        class="btn btn-sm h-8.5 rounded-lg btn-primary cursor-pointer gap-1.5 px-3.5 text-xs font-semibold shadow-xs"
-        @click="emit('save-all-dirty')"
-      >
-        <Save class="h-3.5 w-3.5" />
+      <BaseButton v-if="dirtyPaths.size > 0" variant="primary" @click="emit('save-all-dirty')">
+        <template #icon-left><Save class="h-3.5 w-3.5" /></template>
         <span>Save All ({{ dirtyPaths.size }})</span>
-      </button>
+      </BaseButton>
     </div>
 
     <!-- Tokenizer Check & Find/Replace Utility Strip -->
@@ -169,22 +130,24 @@ async function runFindReplace(dryRun: boolean): Promise<void> {
         <span class="text-[11px] font-semibold uppercase tracking-wider text-base-content/50">
           Trigger Token Check:
         </span>
-        <input
-          v-model="triggerWord"
-          type="text"
-          placeholder="e.g. jeje, ohwx"
-          class="input input-sm h-8 rounded-md border-base-300 bg-base-100 font-mono text-xs w-40 focus:border-primary focus:outline-none"
-          @keyup.enter="checkTriggerTokens"
-        />
-        <button
-          type="button"
-          class="btn btn-sm h-8 rounded-md btn-ghost border border-base-300 hover:border-primary px-3 text-xs font-semibold gap-1.5 cursor-pointer"
+        <div class="w-40">
+          <BaseInput
+            v-model="triggerWord"
+            size="compact"
+            mono
+            placeholder="e.g. jeje, ohwx"
+            @keyup.enter="checkTriggerTokens"
+          />
+        </div>
+        <BaseButton
+          size="compact"
+          variant="ghost"
           :disabled="checkingTrigger"
           @click="checkTriggerTokens"
         >
-          <Sparkles class="h-3.5 w-3.5 text-primary" />
+          <template #icon-left><Sparkles class="h-3.5 w-3.5 text-primary" /></template>
           <span>Inspect Tokens</span>
-        </button>
+        </BaseButton>
         <span v-if="triggerResult" class="truncate font-mono text-[11px] text-info">
           {{ triggerResult.note || triggerResult.summary || JSON.stringify(triggerResult) }}
         </span>
@@ -195,33 +158,19 @@ async function runFindReplace(dryRun: boolean): Promise<void> {
         <span class="text-[11px] font-semibold uppercase tracking-wider text-base-content/50">
           Bulk Replace:
         </span>
-        <input
-          v-model="findText"
-          type="text"
-          placeholder="Find text..."
-          class="input input-sm h-8 rounded-md border-base-300 bg-base-100 text-xs w-36 focus:border-primary focus:outline-none"
-        />
-        <input
-          v-model="replaceText"
-          type="text"
-          placeholder="Replace with..."
-          class="input input-sm h-8 rounded-md border-base-300 bg-base-100 text-xs w-36 focus:border-primary focus:outline-none"
-        />
-        <button
-          type="button"
-          class="btn btn-sm h-8 rounded-md btn-ghost border border-base-300 hover:border-base-content/30 px-3 text-xs font-semibold cursor-pointer"
-          @click="runFindReplace(true)"
-        >
-          Dry Run
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm h-8 rounded-md btn-secondary px-3 text-xs font-semibold gap-1.5 cursor-pointer shadow-xs"
-          @click="runFindReplace(false)"
-        >
-          <Replace class="h-3.5 w-3.5" />
+        <div class="w-36">
+          <BaseInput v-model="findText" size="compact" placeholder="Find text..." />
+        </div>
+        <div class="w-36">
+          <BaseInput v-model="replaceText" size="compact" placeholder="Replace with..." />
+        </div>
+        <BaseButton size="compact" variant="ghost" @click="runFindReplace(true)">
+          <span>Dry Run</span>
+        </BaseButton>
+        <BaseButton size="compact" variant="secondary" @click="runFindReplace(false)">
+          <template #icon-left><Replace class="h-3.5 w-3.5" /></template>
           <span>Apply</span>
-        </button>
+        </BaseButton>
         <span v-if="dryRunPreview" class="font-mono text-[11px] text-warning">
           {{ dryRunPreview.note || `${dryRunPreview.changed ?? 0} matches` }}
         </span>
@@ -281,15 +230,15 @@ async function runFindReplace(dryRun: boolean): Promise<void> {
                 >
                   modified
                 </span>
-                <button
-                  type="button"
-                  class="btn btn-xs btn-ghost h-6 min-h-0 px-1.5 text-primary cursor-pointer"
+                <BaseButton
+                  size="icon-xs"
+                  variant="ghost"
                   :disabled="!dirtyPaths.has(item.path)"
                   title="Save caption"
                   @click="emit('save-caption', item)"
                 >
-                  <Save class="h-3.5 w-3.5" />
-                </button>
+                  <Save class="h-3.5 w-3.5 text-primary" />
+                </BaseButton>
               </div>
             </div>
 

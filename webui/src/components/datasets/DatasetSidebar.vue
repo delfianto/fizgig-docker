@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowRight, FolderOpen, RefreshCw } from "lucide-vue-next";
 import { type DatasetSummary } from "@shared/types";
+import { BaseButton } from "@/components/common";
 
 defineProps<{
   datasets: DatasetSummary[];
@@ -23,14 +24,9 @@ const emit = defineEmits<{
           Datasets ({{ datasets.length }})
         </h2>
       </div>
-      <button
-        type="button"
-        class="btn btn-ghost btn-xs text-base-content/60 cursor-pointer"
-        title="Refresh datasets"
-        @click="emit('refresh')"
-      >
+      <BaseButton size="icon-xs" variant="ghost" title="Refresh datasets" @click="emit('refresh')">
         <RefreshCw class="h-3.5 w-3.5" />
-      </button>
+      </BaseButton>
     </div>
 
     <div class="flex-1 overflow-y-auto p-2 space-y-1">

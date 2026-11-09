@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { CheckCircle2, Copy, History, X } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { type LiveRunResponse } from "@shared/types";
+import { BaseButton } from "@/components/common";
 
 const props = defineProps<{
   run: LiveRunResponse;
@@ -78,9 +79,9 @@ async function copyPath(text: string): Promise<void> {
 
       <!-- Post-Run Action Buttons -->
       <div class="flex items-center gap-1.5 shrink-0">
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 hover:border-primary/50 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
+        <BaseButton
+          size="compact"
+          variant="ghost"
           title="Load these settings into Composer to train further or adapt"
           @click="
             emit('clone', {
@@ -91,29 +92,29 @@ async function copyPath(text: string): Promise<void> {
             })
           "
         >
-          <Copy class="h-3.5 w-3.5 text-primary" />
+          <template #icon-left><Copy class="h-3.5 w-3.5 text-primary" /></template>
           <span>Clone to Composer</span>
-        </button>
+        </BaseButton>
 
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition hover:border-base-content/30"
+        <BaseButton
+          size="compact"
+          variant="ghost"
           title="View in History"
           @click="emit('view-history')"
         >
-          <History class="h-3.5 w-3.5" />
+          <template #icon-left><History class="h-3.5 w-3.5" /></template>
           <span>History</span>
-        </button>
+        </BaseButton>
 
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-200 text-subtle hover:text-base-content px-2.5 text-xs font-semibold gap-1.5 cursor-pointer transition"
+        <BaseButton
+          size="compact"
+          variant="ghost"
           title="Dismiss completed summary and return to standby"
           @click="emit('dismiss')"
         >
-          <X class="h-3.5 w-3.5" />
+          <template #icon-left><X class="h-3.5 w-3.5" /></template>
           <span>Dismiss</span>
-        </button>
+        </BaseButton>
       </div>
     </div>
 

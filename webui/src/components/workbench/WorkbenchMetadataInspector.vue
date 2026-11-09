@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseButton from "@/components/common/BaseButton.vue";
+
 defineProps<{
   metadataJson: Record<string, unknown> | null;
   loading: boolean;
@@ -16,14 +18,9 @@ const emit = defineEmits<{
         <h2 class="text-sm font-semibold text-base-content">
           Safetensors Header Metadata (<code class="text-xs font-mono">__metadata__</code>)
         </h2>
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-100 hover:border-primary text-xs font-semibold px-2.5 cursor-pointer transition"
-          :disabled="loading"
-          @click="emit('reload')"
-        >
+        <BaseButton size="compact" variant="ghost" :disabled="loading" @click="emit('reload')">
           Reload Header
-        </button>
+        </BaseButton>
       </div>
       <div v-if="loading" class="text-xs text-base-content/50">Reading safetensors header...</div>
       <pre

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Copy, History, RotateCcw } from "lucide-vue-next";
 import { type HistoricalRun } from "@shared/types";
+import { BaseButton } from "@/components/common";
 
 defineProps<{
   run: HistoricalRun;
@@ -44,29 +45,25 @@ function formatTime(timestamp?: number | null): string {
       </div>
 
       <div class="flex items-center gap-1.5 shrink-0">
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 rounded-md border border-hairline bg-base-200 hover:border-primary/50 text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
+        <BaseButton
+          size="compact"
+          variant="ghost"
           title="Load this historical run's settings into Composer"
           @click="emit('clone', run)"
         >
-          <Copy class="h-3.5 w-3.5 text-primary" />
+          <template #icon-left><Copy class="h-3.5 w-3.5 text-primary" /></template>
           <span>Clone to Composer</span>
-        </button>
+        </BaseButton>
 
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 rounded-md gap-1.5 px-2.5 text-xs font-semibold cursor-pointer transition"
-          :class="
-            isActiveOrStarting
-              ? 'btn-warning animate-pulse'
-              : 'btn-ghost border border-hairline bg-base-200 hover:border-base-content/30'
-          "
+        <BaseButton
+          size="compact"
+          :variant="isActiveOrStarting ? 'warning' : 'ghost'"
+          :class="isActiveOrStarting ? 'animate-pulse' : ''"
           @click="emit('return-to-live')"
         >
-          <RotateCcw class="h-3.5 w-3.5" />
+          <template #icon-left><RotateCcw class="h-3.5 w-3.5" /></template>
           <span>{{ isActiveOrStarting ? "Return to Active Run" : "Close Archive View" }}</span>
-        </button>
+        </BaseButton>
       </div>
     </div>
 

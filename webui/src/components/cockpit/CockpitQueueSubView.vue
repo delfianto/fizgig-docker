@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowDown, ArrowUp, Pause, Play, Trash2 } from "lucide-vue-next";
+import { BaseButton } from "@/components/common";
 import { useRunStore } from "@/stores/run";
 
 const runStore = useRunStore();
@@ -18,24 +19,18 @@ const runStore = useRunStore();
         </div>
 
         <div class="flex items-center gap-2">
-          <button
+          <BaseButton
             v-if="!runStore.run?.web_queue?.held"
-            type="button"
-            class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-warning/40 bg-warning/10 text-warning px-3 text-xs font-semibold gap-1.5 cursor-pointer"
+            variant="warning"
             @click="runStore.holdQueue()"
           >
-            <Pause class="h-3.5 w-3.5" />
+            <template #icon-left><Pause class="h-3.5 w-3.5" /></template>
             <span>Hold Queue Dispatch</span>
-          </button>
-          <button
-            v-else
-            type="button"
-            class="btn btn-sm h-8.5 rounded-lg btn-primary px-3 text-xs font-semibold gap-1.5 cursor-pointer shadow-xs"
-            @click="runStore.startQueue()"
-          >
-            <Play class="h-3.5 w-3.5" />
+          </BaseButton>
+          <BaseButton v-else variant="primary" @click="runStore.startQueue()">
+            <template #icon-left><Play class="h-3.5 w-3.5" /></template>
             <span>Release Hold &amp; Start Queue</span>
-          </button>
+          </BaseButton>
         </div>
       </div>
 
@@ -76,32 +71,32 @@ const runStore = useRunStore();
           </div>
 
           <div class="flex items-center gap-1.5">
-            <button
-              type="button"
-              class="btn btn-sm h-7.5 w-7.5 p-0 rounded-md btn-ghost border border-hairline cursor-pointer flex items-center justify-center"
+            <BaseButton
+              size="square-compact"
+              variant="ghost"
               :disabled="idx === 0"
               title="Move run up in queue"
               @click="runStore.moveQueueItem(item.id, -1)"
             >
               <ArrowUp class="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm h-7.5 w-7.5 p-0 rounded-md btn-ghost border border-hairline cursor-pointer flex items-center justify-center"
+            </BaseButton>
+            <BaseButton
+              size="square-compact"
+              variant="ghost"
               :disabled="idx === (runStore.run?.web_queue?.items?.length ?? 1) - 1"
               title="Move run down in queue"
               @click="runStore.moveQueueItem(item.id, 1)"
             >
               <ArrowDown class="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm h-7.5 w-7.5 p-0 rounded-md btn-ghost border border-error/30 text-error hover:bg-error/15 cursor-pointer flex items-center justify-center"
+            </BaseButton>
+            <BaseButton
+              size="square-compact"
+              variant="error"
               title="Remove from queue"
               @click="runStore.removeQueueItem(item.id)"
             >
               <Trash2 class="h-3.5 w-3.5" />
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>

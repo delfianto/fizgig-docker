@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Sliders } from "lucide-vue-next";
+import { BasePillGroup } from "@/components/common";
 import { useSystemStore } from "@/stores/system";
 
 const systemStore = useSystemStore();
@@ -23,75 +24,26 @@ const systemStore = useSystemStore();
 
       <div class="flex flex-wrap items-center gap-3">
         <!-- Font Scale Selector -->
-        <div
-          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
-        >
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              systemStore.fontScale === 'normal'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="systemStore.setFontScale('normal')"
-          >
-            Normal (16px)
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              systemStore.fontScale === 'large'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="systemStore.setFontScale('large')"
-          >
-            Large (18px)
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              systemStore.fontScale === 'xlarge'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="systemStore.setFontScale('xlarge')"
-          >
-            XL (20px)
-          </button>
-        </div>
+        <BasePillGroup
+          :model-value="systemStore.fontScale"
+          :options="[
+            { value: 'normal', label: 'Normal (16px)' },
+            { value: 'large', label: 'Large (18px)' },
+            { value: 'xlarge', label: 'XL (20px)' },
+          ]"
+          @update:model-value="
+            (val) => systemStore.setFontScale(val as 'normal' | 'large' | 'xlarge')
+          "
+        />
 
-        <div
-          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
-        >
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              systemStore.density === 'default'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="systemStore.density = 'default'"
-          >
-            Standard (34px)
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              systemStore.density === 'compact'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            @click="systemStore.density = 'compact'"
-          >
-            Compact (28px)
-          </button>
-        </div>
+        <BasePillGroup
+          :model-value="systemStore.density"
+          :options="[
+            { value: 'default', label: 'Standard (34px)' },
+            { value: 'compact', label: 'Compact (28px)' },
+          ]"
+          @update:model-value="(val) => (systemStore.density = val as 'default' | 'compact')"
+        />
 
         <label
           class="flex h-8.5 cursor-pointer items-center gap-2 rounded-lg border border-hairline bg-base-300/50 px-3 text-xs select-none hover:border-primary/40 transition"

@@ -3,6 +3,7 @@ import { ref, watch } from "vue";
 import { CheckCircle2 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { apiPost } from "@/api/client";
+import { BaseButton, BaseInput } from "@/components/common";
 
 const props = defineProps<{
   selectedFolder: string;
@@ -54,35 +55,21 @@ async function inspectPrepFolder(): Promise<void> {
             <label class="label py-1 text-xs font-medium text-base-content/75">
               Source Image Folder
             </label>
-            <input
-              v-model="prepInputFolder"
-              type="text"
-              class="input input-sm h-8.5 rounded-lg border-hairline-strong bg-base-100 font-mono text-xs focus:border-primary focus:outline-none w-full"
-            />
+            <BaseInput v-model="prepInputFolder" mono />
           </div>
           <div>
             <label class="label py-1 text-xs font-medium text-base-content/75">
               Prepared Output Folder (Optional)
             </label>
-            <input
-              v-model="prepOutputFolder"
-              type="text"
-              placeholder="/datasets/my_dataset_prepped"
-              class="input input-sm h-8.5 rounded-lg border-hairline-strong bg-base-100 font-mono text-xs focus:border-primary focus:outline-none w-full"
-            />
+            <BaseInput v-model="prepOutputFolder" mono placeholder="/datasets/my_dataset_prepped" />
           </div>
         </div>
 
         <div class="flex items-center gap-2 pt-2">
-          <button
-            type="button"
-            class="btn btn-sm h-8.5 rounded-lg btn-primary cursor-pointer gap-1.5 px-4 text-xs font-semibold shadow-xs"
-            :disabled="loadingPrep"
-            @click="inspectPrepFolder"
-          >
-            <CheckCircle2 class="h-4 w-4" />
+          <BaseButton variant="primary" :disabled="loadingPrep" @click="inspectPrepFolder">
+            <template #icon-left><CheckCircle2 class="h-4 w-4" /></template>
             <span>Inspect Folder Summary</span>
-          </button>
+          </BaseButton>
         </div>
       </div>
 

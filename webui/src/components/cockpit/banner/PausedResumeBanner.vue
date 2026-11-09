@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { Pause, Play } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { type LiveRunResponse } from "@shared/types";
+import { BaseButton } from "@/components/common";
 import { useRunStore } from "@/stores/run";
 
 const props = defineProps<{
@@ -39,14 +40,14 @@ async function handleResume(): Promise<void> {
         </span>
       </div>
     </div>
-    <button
-      type="button"
-      class="btn btn-sm h-7.5 rounded-md btn-primary px-3 text-xs font-semibold gap-1.5 cursor-pointer shadow-xs"
+    <BaseButton
+      size="compact"
+      variant="primary"
       :disabled="busyAction !== null"
       @click="handleResume"
     >
-      <Play class="h-3.5 w-3.5" />
+      <template #icon-left><Play class="h-3.5 w-3.5" /></template>
       <span>Resume Run</span>
-    </button>
+    </BaseButton>
   </section>
 </template>

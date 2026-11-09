@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { CheckCircle2, FolderGit2, Package, RefreshCw } from "lucide-vue-next";
+import { BaseButton } from "@/components/common";
 import { useSystemStore } from "@/stores/system";
 
 const systemStore = useSystemStore();
@@ -43,14 +44,10 @@ function resolveSpecLabel(spec: unknown): string {
           </p>
         </div>
       </div>
-      <button
-        type="button"
-        class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-100 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
-        @click="systemStore.fetchLocalBundles()"
-      >
-        <RefreshCw class="h-3.5 w-3.5" />
+      <BaseButton size="compact" variant="ghost" @click="systemStore.fetchLocalBundles()">
+        <template #icon-left><RefreshCw class="h-3.5 w-3.5" /></template>
         <span>Reload Catalog</span>
-      </button>
+      </BaseButton>
     </div>
 
     <div

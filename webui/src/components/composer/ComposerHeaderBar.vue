@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ListPlus, Play, RotateCcw, ShieldCheck, Sliders, Sparkles } from "lucide-vue-next";
+import BaseButton from "@/components/common/BaseButton.vue";
+import BasePillGroup from "@/components/common/BasePillGroup.vue";
+import BaseSelect from "@/components/common/BaseSelect.vue";
 import { useComposerStore } from "@/stores/composer";
 import { useRunStore } from "@/stores/run";
 import { useSchemaStore } from "@/stores/schema";
@@ -34,23 +37,23 @@ const runStore = useRunStore();
     <div class="flex flex-wrap items-center gap-3">
       <div class="flex items-center gap-2">
         <span class="text-xs font-bold uppercase tracking-wider text-muted"> Model </span>
-        <select
-          :value="composerStore.family"
-          class="select select-sm h-8.5 rounded-lg border-hairline-strong bg-base-300 text-xs font-semibold text-base-content min-w-44 focus:border-primary focus:outline-none"
-          @change="composerStore.selectFamily(($event.target as HTMLSelectElement).value)"
+        <BaseSelect
+          :model-value="composerStore.family"
+          class="min-w-44 font-semibold"
+          @update:model-value="composerStore.selectFamily(String($event))"
         >
           <option v-for="fam in schemaStore.families" :key="fam.key" :value="fam.key">
             {{ fam.gui_label || fam.display_name }}
           </option>
-        </select>
+        </BaseSelect>
       </div>
 
       <div class="flex items-center gap-2">
         <span class="text-xs font-bold uppercase tracking-wider text-muted"> Recipe </span>
-        <select
-          :value="composerStore.presetName"
-          class="select select-sm h-8.5 rounded-lg border-hairline-strong bg-base-300 text-xs text-base-content w-80 lg:w-105 focus:border-primary focus:outline-none"
-          @change="composerStore.applyPreset(($event.target as HTMLSelectElement).value)"
+        <BaseSelect
+          :model-value="composerStore.presetName"
+          class="w-80 lg:w-105"
+          @update:model-value="composerStore.applyPreset(String($event))"
         >
           <optgroup label="Curated Recipes">
             <option
@@ -66,27 +69,27 @@ const runStore = useRunStore();
               {{ up }}
             </option>
           </optgroup>
-        </select>
+        </BaseSelect>
 
         <!-- Reset modified badge -->
-        <button
+        <BaseButton
           v-if="composerStore.modifiedKeys.size > 0"
-          type="button"
-          class="btn btn-sm h-8.5 rounded-lg border border-primary/40 bg-primary/15 text-primary hover:bg-primary hover:text-primary-content text-xs font-semibold px-2.5 gap-1.5 transition cursor-pointer"
+          variant="outline"
+          class="border-primary/40 bg-primary/15 text-primary hover:bg-primary hover:text-primary-content"
           title="Reset all customized parameters back to recipe defaults"
           @click="composerStore.resetAllToPreset()"
         >
-          <RotateCcw class="h-3.5 w-3.5" />
+          <template #icon-left><RotateCcw class="h-3.5 w-3.5" /></template>
           <span>Reset ({{ composerStore.modifiedKeys.size }} modified)</span>
-        </button>
+        </BaseButton>
       </div>
     </div>
 
     <!-- Center: Progressive Disclosure Mode Switcher -->
-    <div class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center">
+    <BasePillGroup>
       <button
         type="button"
-        class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
+        class="btn btn-sm h-7.5 border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
         :class="
           mode === 'essential'
             ? 'bg-primary text-primary-content font-bold shadow-xs'
@@ -99,7 +102,7 @@ const runStore = useRunStore();
       </button>
       <button
         type="button"
-        class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
+        class="btn btn-sm h-7.5 border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
         :class="
           mode === 'expert'
             ? 'bg-primary text-primary-content font-bold shadow-xs'
@@ -116,24 +119,24 @@ const runStore = useRunStore();
           {{ composerStore.modifiedKeys.size }}
         </span>
       </button>
-    </div>
+    </BasePillGroup>
 
     <!-- Right: Preflight & Launch Buttons (Uniform cohesive button set) -->
     <div class="flex items-center gap-2">
-      <button
-        type="button"
-        class="btn btn-sm h-8.5 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold gap-1.5 transition shadow-xs cursor-pointer"
+      <BaseButton
+        variant="outline"
+        class="border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-bold shadow-xs"
         :disabled="composerStore.validatingPlan"
         @click="emit('validate-plan')"
       >
-        <ShieldCheck class="h-4 w-4 shrink-0" />
+        <template #icon-left><ShieldCheck class="h-4 w-4 shrink-0" /></template>
         <span>Check Plan</span>
-      </button>
+      </BaseButton>
 
-      <button
-        type="button"
-        class="btn btn-sm h-8.5 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold gap-1.5 transition shadow-xs cursor-pointer"
-        :class="{ 'btn-primary text-primary-content': runStore.isActiveOrStarting && canProcess }"
+      <BaseButton
+        :variant="runStore.isActiveOrStarting && canProcess ? 'primary' : 'outline'"
+        class="border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-bold shadow-xs"
+        :class="{ 'text-primary-content': runStore.isActiveOrStarting && canProcess }"
         :disabled="!canProcess"
         :title="
           !canProcess
@@ -142,13 +145,13 @@ const runStore = useRunStore();
         "
         @click="emit('queue-run')"
       >
-        <ListPlus class="h-4 w-4 shrink-0" />
+        <template #icon-left><ListPlus class="h-4 w-4 shrink-0" /></template>
         <span>Add to Queue</span>
-      </button>
+      </BaseButton>
 
-      <button
-        type="button"
-        class="btn btn-sm h-8.5 rounded-lg btn-primary text-xs font-bold gap-1.5 shadow-sm cursor-pointer"
+      <BaseButton
+        variant="primary"
+        class="font-bold shadow-sm"
         :disabled="!canProcess || runStore.isActiveOrStarting"
         :title="
           !canProcess
@@ -159,9 +162,9 @@ const runStore = useRunStore();
         "
         @click="emit('start-run')"
       >
-        <Play class="h-4 w-4 fill-current shrink-0" />
+        <template #icon-left><Play class="h-4 w-4 fill-current shrink-0" /></template>
         <span>Start Training</span>
-      </button>
+      </BaseButton>
     </div>
   </header>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowRight, History, RotateCcw, Sparkles } from "lucide-vue-next";
+import { BaseButton } from "@/components/common";
 
 defineProps<{
   sessionDismissed: boolean;
@@ -32,16 +33,17 @@ const emit = defineEmits<{
     </div>
 
     <div class="flex items-center gap-2 flex-wrap">
-      <button
+      <BaseButton
         v-if="sessionDismissed && lastRunLora"
-        type="button"
-        class="btn btn-sm h-7.5 rounded-md border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 text-xs gap-1.5 px-2.5 font-semibold cursor-pointer transition"
+        size="compact"
+        variant="ghost"
+        class="border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
         title="Restore the previously dismissed run in the monitor"
         @click="emit('restore-session')"
       >
-        <RotateCcw class="h-3 w-3" />
+        <template #icon-left><RotateCcw class="h-3 w-3" /></template>
         <span>Re-open {{ lastRunLora }}</span>
-      </button>
+      </BaseButton>
 
       <router-link
         to="/composer"
@@ -51,14 +53,10 @@ const emit = defineEmits<{
         <ArrowRight class="h-3.5 w-3.5" />
       </router-link>
 
-      <button
-        type="button"
-        class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-200 hover:border-base-content/30 text-xs px-2.5 gap-1.5 cursor-pointer font-semibold transition"
-        @click="emit('view-history')"
-      >
-        <History class="h-3.5 w-3.5" />
+      <BaseButton size="compact" variant="ghost" @click="emit('view-history')">
+        <template #icon-left><History class="h-3.5 w-3.5" /></template>
         <span>Browse History</span>
-      </button>
+      </BaseButton>
     </div>
   </section>
 </template>

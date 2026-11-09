@@ -15,6 +15,8 @@ import {
 } from "lucide-vue-next";
 import { type SampleItem } from "@shared/types";
 import { mediaUrl, thumbUrl } from "@/api/client";
+import BaseButton from "@/components/common/BaseButton.vue";
+import BasePillGroup from "@/components/common/BasePillGroup.vue";
 
 const props = defineProps<{
   items: SampleItem[];
@@ -229,71 +231,46 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-1.5">
         <!-- 3-Way View Switcher: Matrix | Carousel | Stream -->
-        <div
-          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
-        >
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              viewMode === 'matrix'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            title="Structured Epoch × Prompt Matrix"
-            @click="viewMode = 'matrix'"
-          >
-            <Columns class="h-3.5 w-3.5" />
-            <span class="hidden sm:inline">Matrix</span>
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              viewMode === 'carousel'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            title="Carousel Spotlight — Clean inspection for multi-prompt batches without scrollbars"
-            @click="viewMode = 'carousel'"
-          >
-            <GalleryHorizontal class="h-3.5 w-3.5" />
-            <span class="hidden sm:inline">Carousel</span>
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3 text-xs font-semibold rounded-md transition cursor-pointer"
-            :class="
-              viewMode === 'chronological'
-                ? 'bg-primary text-primary-content shadow-xs'
-                : 'btn-ghost text-subtle hover:text-base-content'
-            "
-            title="Chronological Stream (Newest First)"
-            @click="viewMode = 'chronological'"
-          >
-            <Grid class="h-3.5 w-3.5" />
-            <span class="hidden sm:inline">Stream</span>
-          </button>
-        </div>
+        <BasePillGroup
+          v-model="viewMode"
+          :options="[
+            {
+              value: 'matrix',
+              label: 'Matrix',
+              icon: Columns,
+              title: 'Structured Epoch × Prompt Matrix',
+            },
+            {
+              value: 'carousel',
+              label: 'Carousel',
+              icon: GalleryHorizontal,
+              title:
+                'Carousel Spotlight — Clean inspection for multi-prompt batches without scrollbars',
+            },
+            {
+              value: 'chronological',
+              label: 'Stream',
+              icon: Grid,
+              title: 'Chronological Stream (Newest First)',
+            },
+          ]"
+        />
 
         <!-- Live Prompts Override Drawer Trigger -->
-        <button
-          type="button"
-          class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-hairline bg-base-300 hover:border-primary/50 px-3 text-xs font-semibold gap-1.5 cursor-pointer transition"
+        <BaseButton
+          variant="ghost"
           title="Safely view or override the active run's live sample prompts"
           @click="emit('openOverrideDrawer')"
         >
-          <Sparkles class="h-3.5 w-3.5 text-primary" />
+          <template #icon-left><Sparkles class="h-3.5 w-3.5 text-primary" /></template>
           <span class="hidden md:inline">Live Prompts…</span>
-        </button>
+        </BaseButton>
 
         <!-- Pane Sizing Controls (Split | 2/3 Wide | Collapse) -->
-        <div
-          class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
-        >
+        <BasePillGroup>
           <button
             type="button"
-            class="btn btn-sm h-7.5 join-item border-0 px-2 rounded-md transition cursor-pointer"
+            class="btn btn-sm h-7.5 border-0 px-2 rounded-md transition cursor-pointer"
             :class="
               paneMode === 'split'
                 ? 'bg-primary text-primary-content shadow-xs'
@@ -306,7 +283,7 @@ onUnmounted(() => {
           </button>
           <button
             type="button"
-            class="btn btn-sm h-7.5 join-item border-0 px-2 rounded-md transition cursor-pointer"
+            class="btn btn-sm h-7.5 border-0 px-2 rounded-md transition cursor-pointer"
             :class="
               paneMode === 'wide'
                 ? 'bg-primary text-primary-content shadow-xs'
@@ -319,13 +296,13 @@ onUnmounted(() => {
           </button>
           <button
             type="button"
-            class="btn btn-sm h-7.5 join-item border-0 btn-ghost text-subtle hover:text-error px-2 rounded-md transition cursor-pointer"
+            class="btn btn-sm h-7.5 border-0 btn-ghost text-subtle hover:text-error px-2 rounded-md transition cursor-pointer"
             title="Collapse Preview Pane to focus fully on Telemetry"
             @click="emit('setPaneMode', 'collapsed')"
           >
             <PanelRightClose class="h-3.5 w-3.5" />
           </button>
-        </div>
+        </BasePillGroup>
       </div>
     </div>
 
@@ -477,12 +454,10 @@ onUnmounted(() => {
           <!-- Epoch Stepper -->
           <div class="flex items-center gap-2">
             <span class="text-xs font-semibold text-muted uppercase tracking-wider">Epoch:</span>
-            <div
-              class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
-            >
+            <BasePillGroup>
               <button
                 type="button"
-                class="btn btn-sm h-7.5 join-item border-0 px-2 rounded-md transition cursor-pointer"
+                class="btn btn-sm h-7.5 border-0 px-2 rounded-md transition cursor-pointer"
                 :disabled="epochsList.indexOf(carouselEpoch) >= epochsList.length - 1"
                 title="Previous / Older Epoch (←)"
                 @click="stepCarouselEpoch(-1)"
@@ -490,7 +465,7 @@ onUnmounted(() => {
                 <ChevronLeft class="h-3.5 w-3.5" />
               </button>
               <span
-                class="font-mono-num join-item flex items-center bg-base-300 px-3 text-xs font-bold text-base-content"
+                class="font-mono-num flex items-center bg-base-300 px-3 text-xs font-bold text-base-content"
               >
                 Ep {{ carouselEpoch }}
                 <span v-if="carouselEpoch === 0" class="ml-1 text-[10px] text-subtle font-normal"
@@ -504,14 +479,14 @@ onUnmounted(() => {
               </span>
               <button
                 type="button"
-                class="btn btn-sm h-7.5 join-item border-0 px-2 rounded-md transition cursor-pointer"
+                class="btn btn-sm h-7.5 border-0 px-2 rounded-md transition cursor-pointer"
                 :disabled="epochsList.indexOf(carouselEpoch) <= 0"
                 title="Next / Newer Epoch (→)"
                 @click="stepCarouselEpoch(1)"
               >
                 <ChevronRight class="h-3.5 w-3.5" />
               </button>
-            </div>
+            </BasePillGroup>
           </div>
 
           <!-- Prompt Switcher Tabs (Handles 1, 2, 4, 8+ prompts effortlessly without scrollbars) -->
@@ -604,14 +579,11 @@ onUnmounted(() => {
                 carouselCurrentSample?.name
               }}
             </p>
-            <button
+            <BaseButton
               v-if="carouselCurrentSample"
-              type="button"
-              class="btn btn-sm h-7.5 rounded-md shrink-0 px-2.5 text-xs font-semibold cursor-pointer gap-1.5 transition"
-              :class="
-                carouselComparePinned?.path === carouselCurrentSample.path
-                  ? 'btn-primary shadow-xs'
-                  : 'btn-ghost border border-hairline hover:border-base-content/30'
+              size="compact"
+              :variant="
+                carouselComparePinned?.path === carouselCurrentSample.path ? 'primary' : 'ghost'
               "
               title="Pin this image to crossfade against other epochs"
               @click="
@@ -621,9 +593,9 @@ onUnmounted(() => {
                     : carouselCurrentSample
               "
             >
-              <Layers class="h-3.5 w-3.5" />
+              <template #icon-left><Layers class="h-3.5 w-3.5" /></template>
               <span>{{ carouselComparePinned ? "Pinned" : "A/B Pin" }}</span>
-            </button>
+            </BaseButton>
           </div>
 
           <!-- Crossfade Slider (when an image is pinned) -->
@@ -737,50 +709,33 @@ onUnmounted(() => {
             <span class="font-mono-num text-sm font-semibold text-base-content mr-1">
               Epoch {{ selectedSample.epoch }} · Prompt {{ promptIdx(selectedSample) + 1 }}
             </span>
-            <button
-              type="button"
-              class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline px-2.5 text-xs font-semibold cursor-pointer transition hover:border-base-content/30"
-              @click="stepEpochInLightbox(-1)"
-            >
+            <BaseButton size="compact" variant="ghost" @click="stepEpochInLightbox(-1)">
               ← Prev Epoch
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline px-2.5 text-xs font-semibold cursor-pointer transition hover:border-base-content/30"
-              @click="stepEpochInLightbox(1)"
-            >
+            </BaseButton>
+            <BaseButton size="compact" variant="ghost" @click="stepEpochInLightbox(1)">
               Next Epoch →
-            </button>
+            </BaseButton>
           </div>
 
           <div class="flex items-center gap-2">
-            <button
-              type="button"
-              class="btn btn-sm h-7.5 rounded-md px-3 text-xs font-semibold gap-1.5 cursor-pointer shadow-xs transition"
-              :class="
-                comparePinned?.path === selectedSample.path
-                  ? 'btn-primary'
-                  : 'btn-ghost border border-hairline hover:border-base-content/30'
-              "
+            <BaseButton
+              size="compact"
+              :variant="comparePinned?.path === selectedSample.path ? 'primary' : 'ghost'"
               @click="
                 comparePinned = comparePinned?.path === selectedSample.path ? null : selectedSample
               "
             >
-              <Layers class="h-3.5 w-3.5" />
+              <template #icon-left><Layers class="h-3.5 w-3.5" /></template>
               {{
                 comparePinned
                   ? `Pinned Ep ${comparePinned.epoch} (Click to clear)`
                   : "Pin for A/B Crossfade"
               }}
-            </button>
+            </BaseButton>
 
-            <button
-              type="button"
-              class="btn btn-sm h-7.5 rounded-md btn-ghost px-2.5 text-xs font-semibold cursor-pointer transition"
-              @click="selectedSample = null"
-            >
+            <BaseButton size="compact" variant="ghost" @click="selectedSample = null">
               Close (Esc)
-            </button>
+            </BaseButton>
           </div>
         </div>
 

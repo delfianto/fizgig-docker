@@ -3,6 +3,7 @@ import { nextTick, ref, watch } from "vue";
 import { Download, FileCode2, Terminal } from "lucide-vue-next";
 import { type CheckpointItem, type HistoricalRun } from "@shared/types";
 import { downloadUrl, formatBytes } from "@/api/client";
+import { BasePillGroup } from "@/components/common";
 import { useRunStore } from "@/stores/run";
 
 const props = defineProps<{
@@ -45,54 +46,20 @@ watch(bottomTab, (tab) => {
     <div
       class="flex items-center justify-between border-b border-hairline bg-base-200 px-3 py-1.5 text-xs"
     >
-      <div
-        class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center"
-      >
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
-          :class="
-            bottomTab === 'checkpoints'
-              ? 'bg-primary text-primary-content shadow-xs'
-              : 'btn-ghost text-subtle hover:text-base-content'
-          "
-          @click="bottomTab = 'checkpoints'"
-        >
-          <Download class="h-3.5 w-3.5" />
-          <span>Checkpoints</span>
-        </button>
-
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
-          :class="
-            bottomTab === 'console'
-              ? 'bg-primary text-primary-content shadow-xs'
-              : 'btn-ghost text-subtle hover:text-base-content'
-          "
-          @click="
-            bottomTab = 'console';
-            runStore.pollLog();
-          "
-        >
-          <Terminal class="h-3.5 w-3.5" />
-          <span>Console Log</span>
-        </button>
-
-        <button
-          type="button"
-          class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
-          :class="
-            bottomTab === 'spec'
-              ? 'bg-primary text-primary-content shadow-xs'
-              : 'btn-ghost text-subtle hover:text-base-content'
-          "
-          @click="bottomTab = 'spec'"
-        >
-          <FileCode2 class="h-3.5 w-3.5" />
-          <span>Launch Spec</span>
-        </button>
-      </div>
+      <BasePillGroup
+        :model-value="bottomTab"
+        :options="[
+          { value: 'checkpoints', label: 'Checkpoints', icon: Download },
+          { value: 'console', label: 'Console Log', icon: Terminal },
+          { value: 'spec', label: 'Launch Spec', icon: FileCode2 },
+        ]"
+        @update:model-value="
+          (val) => {
+            bottomTab = val as 'checkpoints' | 'console' | 'spec';
+            if (val === 'console') runStore.pollLog();
+          }
+        "
+      />
 
       <span class="font-mono text-[11px] text-muted truncate max-w-sm">
         {{ outputDir }}

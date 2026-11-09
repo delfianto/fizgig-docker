@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { RotateCcw, Save, Sparkles } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { apiPost } from "@/api/client";
+import BaseButton from "@/components/common/BaseButton.vue";
 import { useRunStore } from "@/stores/run";
 
 const props = defineProps<{
@@ -146,29 +147,17 @@ async function saveSurgicalLora(): Promise<void> {
           </p>
         </div>
         <div class="flex items-center gap-1.5">
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-100 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
-            @click="applyPresetCurve('identity')"
-          >
-            <Sparkles class="h-3 w-3 text-secondary" />
+          <BaseButton size="compact" variant="ghost" @click="applyPresetCurve('identity')">
+            <template #icon-left><Sparkles class="h-3 w-3 text-secondary" /></template>
             <span>Lock Identity</span>
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-100 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
-            @click="applyPresetCurve('style')"
-          >
+          </BaseButton>
+          <BaseButton size="compact" variant="ghost" @click="applyPresetCurve('style')">
             <span>Style Only</span>
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm h-7.5 rounded-md btn-ghost border border-hairline bg-base-100 hover:border-primary text-xs font-semibold px-2.5 gap-1.5 cursor-pointer transition"
-            @click="resetAllBlocks(1.0)"
-          >
-            <RotateCcw class="h-3 w-3" />
+          </BaseButton>
+          <BaseButton size="compact" variant="ghost" @click="resetAllBlocks(1.0)">
+            <template #icon-left><RotateCcw class="h-3 w-3" /></template>
             <span>Reset 1.0×</span>
-          </button>
+          </BaseButton>
         </div>
       </div>
 
@@ -286,14 +275,10 @@ async function saveSurgicalLora(): Promise<void> {
       </div>
 
       <div class="space-y-2 border-t border-base-300 pt-3">
-        <button
-          type="button"
-          class="btn btn-primary btn-sm h-8.5 rounded-lg w-full cursor-pointer gap-2 text-xs font-semibold shadow-xs"
-          @click="saveSurgicalLora"
-        >
-          <Save class="h-4 w-4" />
+        <BaseButton variant="primary" class="w-full" @click="saveSurgicalLora">
+          <template #icon-left><Save class="h-4 w-4" /></template>
           <span>Export Block-Weighted LoRA</span>
-        </button>
+        </BaseButton>
       </div>
     </div>
   </div>
