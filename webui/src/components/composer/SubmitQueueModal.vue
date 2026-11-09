@@ -112,7 +112,7 @@ const emit = defineEmits<{
       >
         <button
           type="button"
-          class="btn btn-xs btn-ghost border border-hairline bg-base-200 cursor-pointer"
+          class="btn btn-sm h-8.5 rounded-lg btn-ghost border border-hairline bg-base-200 px-3.5 text-xs font-semibold cursor-pointer"
           :disabled="isSubmitting"
           @click="emit('close')"
         >
@@ -120,12 +120,12 @@ const emit = defineEmits<{
         </button>
         <button
           type="button"
-          class="btn btn-xs btn-primary gap-1 font-semibold cursor-pointer shadow-md"
+          class="btn btn-sm h-8.5 rounded-lg btn-primary gap-1.5 px-4 text-xs font-bold cursor-pointer shadow-md"
           :disabled="isSubmitting"
           @click="emit('confirm')"
         >
-          <Loader2 v-if="isSubmitting" class="h-3.5 w-3.5 animate-spin" />
-          <ListPlus v-else class="h-3.5 w-3.5" />
+          <Loader2 v-if="isSubmitting" class="h-4 w-4 animate-spin" />
+          <ListPlus v-else class="h-4 w-4" />
           <span>{{ isSubmitting ? "Submitting..." : "Submit Job to Queue" }}</span>
         </button>
       </div>

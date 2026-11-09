@@ -36,7 +36,7 @@ const runStore = useRunStore();
         <span class="text-xs font-bold uppercase tracking-wider text-muted"> Model </span>
         <select
           :value="composerStore.family"
-          class="select select-sm border-hairline-strong bg-base-300 text-xs font-semibold text-base-content min-w-44"
+          class="select select-sm h-8.5 rounded-lg border-hairline-strong bg-base-300 text-xs font-semibold text-base-content min-w-44 focus:border-primary focus:outline-none"
           @change="composerStore.selectFamily(($event.target as HTMLSelectElement).value)"
         >
           <option v-for="fam in schemaStore.families" :key="fam.key" :value="fam.key">
@@ -49,7 +49,7 @@ const runStore = useRunStore();
         <span class="text-xs font-bold uppercase tracking-wider text-muted"> Recipe </span>
         <select
           :value="composerStore.presetName"
-          class="select select-sm border-hairline-strong bg-base-300 text-xs text-base-content w-80 lg:w-105"
+          class="select select-sm h-8.5 rounded-lg border-hairline-strong bg-base-300 text-xs text-base-content w-80 lg:w-105 focus:border-primary focus:outline-none"
           @change="composerStore.applyPreset(($event.target as HTMLSelectElement).value)"
         >
           <optgroup label="Curated Recipes">
@@ -72,25 +72,25 @@ const runStore = useRunStore();
         <button
           v-if="composerStore.modifiedKeys.size > 0"
           type="button"
-          class="btn btn-xs border border-primary/40 bg-primary/15 text-primary hover:bg-primary hover:text-primary-content"
+          class="btn btn-sm h-8.5 rounded-lg border border-primary/40 bg-primary/15 text-primary hover:bg-primary hover:text-primary-content text-xs font-semibold px-2.5 gap-1.5 transition cursor-pointer"
           title="Reset all customized parameters back to recipe defaults"
           @click="composerStore.resetAllToPreset()"
         >
-          <RotateCcw class="h-3 w-3" />
-          Reset ({{ composerStore.modifiedKeys.size }} modified)
+          <RotateCcw class="h-3.5 w-3.5" />
+          <span>Reset ({{ composerStore.modifiedKeys.size }} modified)</span>
         </button>
       </div>
     </div>
 
     <!-- Center: Progressive Disclosure Mode Switcher -->
-    <div class="join border border-hairline-strong bg-base-300 p-0.5 rounded-md">
+    <div class="join border border-hairline-strong bg-base-300 p-0.5 rounded-lg h-8.5 items-center">
       <button
         type="button"
-        class="btn btn-xs join-item border-0 gap-1.5 px-3"
+        class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
         :class="
           mode === 'essential'
-            ? 'bg-primary text-primary-content font-bold'
-            : 'btn-ghost text-subtle'
+            ? 'bg-primary text-primary-content font-bold shadow-xs'
+            : 'btn-ghost text-subtle hover:bg-base-200'
         "
         @click="emit('update:mode', 'essential')"
       >
@@ -99,9 +99,11 @@ const runStore = useRunStore();
       </button>
       <button
         type="button"
-        class="btn btn-xs join-item border-0 gap-1.5 px-3"
+        class="btn btn-sm h-7.5 join-item border-0 gap-1.5 px-3.5 text-xs font-semibold rounded-md transition cursor-pointer"
         :class="
-          mode === 'expert' ? 'bg-primary text-primary-content font-bold' : 'btn-ghost text-subtle'
+          mode === 'expert'
+            ? 'bg-primary text-primary-content font-bold shadow-xs'
+            : 'btn-ghost text-subtle hover:bg-base-200'
         "
         @click="emit('update:mode', 'expert')"
       >
@@ -109,7 +111,7 @@ const runStore = useRunStore();
         <span>Expert Tuning</span>
         <span
           v-if="composerStore.modifiedKeys.size > 0"
-          class="badge badge-xs badge-warning font-mono"
+          class="badge badge-xs badge-warning font-mono ml-0.5"
         >
           {{ composerStore.modifiedKeys.size }}
         </span>

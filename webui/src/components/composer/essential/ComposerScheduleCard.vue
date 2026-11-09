@@ -38,7 +38,7 @@ const epochTicks = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
             v-for="ep in [15, 30, 50, 75]"
             :key="ep"
             type="button"
-            class="btn btn-xs h-5 min-h-0 px-2 text-[10px]"
+            class="btn btn-sm h-7 min-h-0 px-2.5 text-xs rounded-md cursor-pointer font-medium"
             :class="currentEpochs === ep ? 'btn-primary' : 'btn-ghost border border-hairline'"
             @click="emit('set-quick-epochs', ep)"
           >
@@ -49,7 +49,7 @@ const epochTicks = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
             type="number"
             min="1"
             max="300"
-            class="input input-xs w-14 border-hairline-strong bg-base-100 font-mono text-center font-bold text-base-content h-5 text-[11px]"
+            class="input input-sm h-7 w-16 border-hairline-strong bg-base-100 font-mono text-center font-bold text-base-content text-xs rounded-md focus:border-primary focus:outline-none"
             @input="
               composerStore.setFieldValue(
                 'MAX_TRAIN_EPOCHS',

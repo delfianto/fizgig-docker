@@ -374,17 +374,17 @@ function updateValue(val: unknown): void {
       <!-- Segmented Pills for <= 3 short options in radio mode -->
       <div
         v-if="row.kind === 'radio' && row.choices.length <= 3"
-        class="join flex w-full rounded-md border border-hairline-strong bg-base-100 p-0.5"
+        class="join flex w-full rounded-lg border border-hairline-strong bg-base-100 p-0.5 h-8.5 items-center"
       >
         <button
           v-for="ch in row.choices"
           :key="ch"
           type="button"
-          class="btn btn-xs join-item flex-1 border-0"
+          class="btn btn-sm h-7.5 join-item flex-1 border-0 text-xs font-semibold rounded-md transition cursor-pointer"
           :class="
             selectedChoice === ch
-              ? 'bg-primary text-primary-content font-bold'
-              : 'btn-ghost text-subtle'
+              ? 'bg-primary text-primary-content font-bold shadow-xs'
+              : 'btn-ghost text-subtle hover:bg-base-200'
           "
           @click="updateValue(ch)"
         >
@@ -396,7 +396,7 @@ function updateValue(val: unknown): void {
       <select
         v-else
         :value="selectedChoice"
-        class="select select-sm w-full border-hairline-strong bg-base-100 text-xs text-base-content focus:border-primary focus:outline-none"
+        class="select select-sm h-8.5 w-full rounded-lg border-hairline-strong bg-base-100 text-xs text-base-content focus:border-primary focus:outline-none"
         :class="{ 'font-mono-num': isNumericLike }"
         @change="updateValue(($event.target as HTMLSelectElement).value)"
       >
@@ -414,14 +414,13 @@ function updateValue(val: unknown): void {
 
     <!-- Blocks to train (e.g. TRAINING_BLOCKS) -->
     <template v-else-if="row.kind === 'blocks'">
-      <div class="rounded border border-hairline bg-base-100/70 p-2 text-xs text-subtle space-y-1">
-        <div class="flex items-center justify-between font-mono text-[11px]">
+      <div
+        class="rounded-lg border border-hairline bg-base-100/70 p-2 text-xs text-subtle space-y-1 h-8.5 flex items-center justify-between"
+      >
+        <div class="flex items-center justify-between w-full font-mono text-[11px]">
           <span>Block Selection</span>
           <span class="badge badge-xs badge-neutral">Managed by Area</span>
         </div>
-        <p class="text-[10px] text-muted">
-          Blocks train according to the selected Model Area (Full Model, Identity, Style, Details).
-        </p>
       </div>
     </template>
 
@@ -430,7 +429,7 @@ function updateValue(val: unknown): void {
       <textarea
         :value="String(currentValue)"
         :rows="row.lines || 3"
-        class="textarea textarea-bordered w-full border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed text-base-content focus:border-primary focus:outline-none"
+        class="textarea textarea-bordered w-full rounded-lg border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed text-base-content focus:border-primary focus:outline-none"
         @input="updateValue(($event.target as HTMLTextAreaElement).value)"
       />
     </template>
@@ -443,7 +442,7 @@ function updateValue(val: unknown): void {
         :placeholder="
           composerStore.formState.placeholders?.[row.key] || formatDecimalValue(row.default) || ''
         "
-        class="input input-sm w-full border-hairline-strong bg-base-100 text-xs text-base-content focus:border-primary focus:outline-none"
+        class="input input-sm h-8.5 w-full rounded-lg border-hairline-strong bg-base-100 text-xs text-base-content focus:border-primary focus:outline-none"
         :class="{
           'font-mono-num': isNumericLike || row.kind === 'folder' || row.kind === 'path',
         }"

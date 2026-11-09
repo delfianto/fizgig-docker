@@ -220,7 +220,7 @@ function onSelectDataset(path: string): void {
           :value="String(composerStore.draftValues.LORA_NAME ?? '')"
           type="text"
           placeholder="e.g. jeje_krea2_v1"
-          class="input input-sm w-full border-hairline-strong bg-base-100 font-mono text-xs text-base-content focus:border-primary"
+          class="input input-sm h-8.5 w-full rounded-lg border-hairline-strong bg-base-100 font-mono text-xs text-base-content focus:border-primary focus:outline-none"
           @input="
             composerStore.setFieldValue('LORA_NAME', ($event.target as HTMLInputElement).value)
           "
@@ -243,7 +243,7 @@ function onSelectDataset(path: string): void {
           :value="String(composerStore.draftValues.CAPTION_TRIGGER_WORD ?? '')"
           type="text"
           placeholder="e.g. jeje"
-          class="input input-sm w-full border-hairline-strong bg-base-100 font-mono text-xs text-base-content focus:border-primary"
+          class="input input-sm h-8.5 w-full rounded-lg border-hairline-strong bg-base-100 font-mono text-xs text-base-content focus:border-primary focus:outline-none"
           @input="
             composerStore.setFieldValue(
               'CAPTION_TRIGGER_WORD',
