@@ -120,11 +120,11 @@ const runStore = useRunStore();
     <div class="flex items-center gap-2">
       <button
         type="button"
-        class="btn btn-sm h-8.5 rounded-lg border border-hairline bg-base-300 hover:bg-base-100 text-base-content text-xs font-semibold gap-1.5 transition shadow-xs cursor-pointer"
+        class="btn btn-sm h-8.5 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold gap-1.5 transition shadow-xs cursor-pointer"
         :disabled="composerStore.validatingPlan"
         @click="emit('validate-plan')"
       >
-        <ShieldCheck class="h-4 w-4 text-info shrink-0" />
+        <ShieldCheck class="h-4 w-4 shrink-0" />
         <span>Check Plan</span>
       </button>
 
