@@ -20,5 +20,11 @@
       "@shared/*": ["./shared/*"]
     }
   },
+  "contentMappers": [
+    {
+      "package": "@vue/content-mapper",
+      "extensions": [".vue"]
+    }
+  ],
   "include": ["src/**/*.ts", "src/**/*.vue", "shared/**/*.ts"]
 }
