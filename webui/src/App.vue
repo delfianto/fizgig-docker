@@ -4,6 +4,7 @@ import { RouterView, useRouter } from "vue-router";
 import { Toaster } from "vue-sonner";
 import AppIconRail from "@/components/shell/AppIconRail.vue";
 import TopTelemetryBar from "@/components/shell/TopTelemetryBar.vue";
+import PlanOverlayPopup from "@/components/common/PlanOverlayPopup.vue";
 import { useSchemaStore } from "@/stores/schema";
 import { useRunStore } from "@/stores/run";
 import { useComposerStore } from "@/stores/composer";
@@ -83,6 +84,7 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <PlanOverlayPopup />
     <Toaster theme="dark" rich-colors position="bottom-right" />
   </div>
 </template>

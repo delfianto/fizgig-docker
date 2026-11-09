@@ -21,7 +21,11 @@ const router = createRouter({
   ],
 });
 
+const pinia = createPinia();
 const app = createApp(App);
-app.use(createPinia());
+app.use(pinia);
 app.use(router);
+if (import.meta.env.DEV) {
+  (window as unknown as { devPinia: unknown }).devPinia = pinia;
+}
 app.mount("#app");

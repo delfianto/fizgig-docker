@@ -20,6 +20,7 @@ import { toast } from "vue-sonner";
 import { type SchemaRow } from "@shared/types";
 import SchemaField from "@/components/schema/SchemaField.vue";
 import { useComposerStore } from "@/stores/composer";
+import { usePlanOverlayStore } from "@/stores/overlay";
 import { useRunStore } from "@/stores/run";
 import { useSchemaStore } from "@/stores/schema";
 
@@ -27,6 +28,7 @@ const router = useRouter();
 const schemaStore = useSchemaStore();
 const composerStore = useComposerStore();
 const runStore = useRunStore();
+const planOverlay = usePlanOverlayStore();
 
 // Progressive Disclosure Mode: Essential (clean 80/20) vs Expert (full 35+ knobs)
 const composerMode = ref<"essential" | "expert">(
@@ -215,16 +217,33 @@ function setQuickEpochs(n: number): void {
 async function handleValidatePlan(): Promise<void> {
   try {
     const res = await composerStore.validatePlan();
-    if (
-      (!res.problems || res.problems.length === 0) &&
-      (!res.warnings || res.warnings.length === 0)
-    ) {
-      toast.success("Preflight plan validated cleanly — ready to train or queue");
+    const hasProblems = Boolean(res.problems && res.problems.length > 0);
+    const hasWarnings = Boolean(res.warnings && res.warnings.length > 0);
+
+    if (!hasProblems && !hasWarnings) {
+      planOverlay.show({
+        status: "success",
+        title: "Plan Validated Cleanly",
+        message:
+          "All hyperparameters, dataset paths, and compute device tolerances are in the green.",
+        duration: 4000,
+      });
     } else {
-      toast.warning("Preflight returned warnings or blockers — check preflight card");
+      planOverlay.show({
+        status: "attention",
+        title: hasProblems ? "Plan Blockers Detected" : "Plan Advisory Warnings",
+        problems: res.problems ?? [],
+        warnings: res.warnings ?? [],
+        duration: 6500,
+      });
     }
   } catch (err) {
-    toast.error(err instanceof Error ? err.message : "Plan validation failed");
+    planOverlay.show({
+      status: "attention",
+      title: "Plan Validation Error",
+      message: err instanceof Error ? err.message : "Plan validation failed",
+      duration: 6500,
+    });
   }
 }
 
@@ -232,7 +251,13 @@ async function handleQueueRun(): Promise<void> {
   try {
     const res = await composerStore.submitQueueTraining();
     if (res.problems && res.problems.length > 0) {
-      toast.error("Fix preflight blockers before queueing");
+      planOverlay.show({
+        status: "attention",
+        title: "Cannot Queue: Blockers Detected",
+        problems: res.problems,
+        warnings: res.warnings ?? [],
+        duration: 6500,
+      });
       return;
     }
     toast.success(`Added "${composerStore.draftValues.LORA_NAME}" to queue`);
@@ -246,7 +271,13 @@ async function handleStartRun(): Promise<void> {
   try {
     const res = await composerStore.submitStartTraining();
     if ((res.problems && res.problems.length > 0) || (res.warnings && res.warnings.length > 0)) {
-      toast.warning("Review preflight warnings before starting");
+      planOverlay.show({
+        status: "attention",
+        title: "Cannot Start: Attention Needed",
+        problems: res.problems ?? [],
+        warnings: res.warnings ?? [],
+        duration: 6500,
+      });
       return;
     }
     toast.success(`Started training "${composerStore.draftValues.LORA_NAME}"`);
@@ -720,35 +751,6 @@ onMounted(async () => {
                   ~11.8 GB / 16.0 GB (Comfortable)
                 </span>
               </div>
-            </div>
-
-            <!-- Preflight Plan Diagnostics Banner -->
-            <div
-              v-if="composerStore.planResult"
-              class="rounded-lg border p-3 text-xs"
-              :class="
-                composerStore.planResult.problems && composerStore.planResult.problems.length > 0
-                  ? 'border-error/50 bg-error/10 text-error'
-                  : composerStore.planResult.warnings &&
-                      composerStore.planResult.warnings.length > 0
-                    ? 'border-warning/50 bg-warning/10 text-warning'
-                    : 'border-success/50 bg-success/10 text-success'
-              "
-            >
-              <div class="font-bold">
-                {{
-                  composerStore.planResult.problems && composerStore.planResult.problems.length > 0
-                    ? "Plan Blockers Detected"
-                    : composerStore.planResult.warnings &&
-                        composerStore.planResult.warnings.length > 0
-                      ? "Plan Warnings"
-                      : "Preflight Plan Validated Successfully"
-                }}
-              </div>
-              <ul class="mt-1 list-disc pl-4 space-y-0.5">
-                <li v-for="p in composerStore.planResult.problems ?? []" :key="p">{{ p }}</li>
-                <li v-for="w in composerStore.planResult.warnings ?? []" :key="w">{{ w }}</li>
-              </ul>
             </div>
 
             <!-- Main Launch Actions -->
