@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { HelpCircle, Info, Lightbulb, RotateCcw } from "lucide-vue-next";
 import { type SchemaRow } from "@shared/types";
-import { BaseButton, BaseInput, BasePillGroup, BaseSelect, BaseToggle } from "@/components/common";
+import { BaseButton, BaseInput, BaseSelect, BaseToggle } from "@/components/common";
 import { formatDecimal } from "@/utils";
 import { useComposerStore } from "@/stores/composer";
 import { useSystemStore } from "@/stores/system";

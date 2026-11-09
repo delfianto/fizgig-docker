@@ -16,6 +16,7 @@ defineProps<{
   loraName: string;
   family: string;
   familyLabel?: string;
+  gpuName?: string;
   recipeTitle: string;
   datasetName: string;
   datasetCount: number;
@@ -71,8 +72,8 @@ const emit = defineEmits<{
 
           <div class="grid grid-cols-2 gap-2 text-xs">
             <div class="flex items-center gap-1.5 text-subtle">
-              <Cpu class="h-3.5 w-3.5 text-muted shrink-0" />
-              <span class="truncate">{{ familyLabel || family }}</span>
+              <Cpu class="h-3.5 w-3.5 text-primary shrink-0" />
+              <span class="truncate font-semibold">{{ gpuName || familyLabel || family }}</span>
             </div>
             <div class="flex items-center gap-1.5 text-subtle">
               <Sparkles class="h-3.5 w-3.5 text-secondary shrink-0" />

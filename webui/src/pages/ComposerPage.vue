@@ -41,6 +41,17 @@ const currentPresetNote = computed(() => {
   return fam.preset_notes[composerStore.presetName] ?? null;
 });
 
+const selectedGpuName = computed(() => {
+  const statGpus = runStore.stats?.gpus;
+  if (Array.isArray(statGpus)) {
+    const found = statGpus.find((g) => g.index === composerStore.selectedGpuIndex);
+    if (found) {
+      return `${found.name.replace(/^NVIDIA GeForce\s+/, "")} (GPU ${found.index})`;
+    }
+  }
+  return `GPU ${composerStore.selectedGpuIndex}`;
+});
+
 const parsedRecipe = computed(() => {
   const raw = composerStore.presetName || "Custom Recipe";
   const match = raw.match(/^(.*?)(?:\s*\((.*?)\)\s*)?$/);
@@ -251,6 +262,7 @@ onMounted(async () => {
       :family-label="
         composerStore.currentFamilyDesc?.gui_label || composerStore.currentFamilyDesc?.display_name
       "
+      :gpu-name="selectedGpuName"
       :recipe-title="parsedRecipe.title"
       :dataset-name="selectedDatasetInfo?.name || composerStore.imageFolder || 'Unknown'"
       :dataset-count="selectedDatasetInfo?.count ?? 0"

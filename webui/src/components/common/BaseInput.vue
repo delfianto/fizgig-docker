@@ -93,7 +93,7 @@ function handleChange(event: Event): void {
 
     <div
       v-if="$slots.suffix"
-      class="pointer-events-none absolute right-2.5 flex items-center text-subtle z-1 [&>*]:pointer-events-auto"
+      class="pointer-events-none absolute right-2.5 flex items-center text-subtle z-1 *:pointer-events-auto"
     >
       <slot name="suffix" />
     </div>

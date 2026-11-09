@@ -58,7 +58,10 @@ const isSelectedDatasetReady = computed(() => {
       <!-- RIGHT COLUMN (5 cols): Preview Prompts & Compute Preflight Telemetry -->
       <div class="flex flex-col gap-2.5 lg:col-span-5">
         <ComposerPromptsCard />
-        <ComposerReadinessCard :is-selected-dataset-ready="isSelectedDatasetReady" />
+        <ComposerReadinessCard
+          :selected-dataset-info="selectedDatasetInfo"
+          :is-selected-dataset-ready="isSelectedDatasetReady"
+        />
       </div>
     </div>
   </main>

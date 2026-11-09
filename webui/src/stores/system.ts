@@ -1,7 +1,7 @@
 import { ref, watch } from "vue";
 import { defineStore } from "pinia";
 import { type LocalBundlesResponse } from "@shared/types";
-import { apiGet } from "@/api/client";
+import { apiGet, apiPost } from "@/api/client";
 
 export type UiDensity = "default" | "compact";
 export type FontScale = "normal" | "large" | "xlarge";
@@ -59,6 +59,17 @@ export const useSystemStore = defineStore("system", () => {
     }
   }
 
+  async function updatePrefs(changes: Record<string, unknown>): Promise<boolean> {
+    try {
+      await apiPost("/api/prefs", { changes });
+      await fetchPrefs();
+      return true;
+    } catch (err) {
+      console.error("Failed to update preferences:", err);
+      return false;
+    }
+  }
+
   function toggleDensity(): void {
     density.value = density.value === "compact" ? "default" : "compact";
   }
@@ -81,6 +92,7 @@ export const useSystemStore = defineStore("system", () => {
     prefs,
     fetchLocalBundles,
     fetchPrefs,
+    updatePrefs,
     toggleDensity,
     cycleFontScale,
     setFontScale,
