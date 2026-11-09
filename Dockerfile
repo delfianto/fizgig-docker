@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG BASE_IMAGE=ghcr.io/shootthesound/fizgig@sha256:92aeb5a6041123ae9c9c89060c8f237d9c1a49ef36da00be9cfa0f7bb305abac
+ARG BASE_IMAGE=ghcr.io/shootthesound/fizgig:latest
 FROM ${BASE_IMAGE}
 ARG UPSTREAM_COMMIT=HEAD
 LABEL org.opencontainers.image.title="Fizgig" \
