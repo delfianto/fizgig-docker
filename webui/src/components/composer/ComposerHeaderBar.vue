@@ -116,22 +116,22 @@ const runStore = useRunStore();
       </button>
     </div>
 
-    <!-- Right: Preflight & Launch Buttons -->
+    <!-- Right: Preflight & Launch Buttons (Uniform cohesive button set) -->
     <div class="flex items-center gap-2">
       <button
         type="button"
-        class="btn btn-sm btn-ghost border border-hairline-strong bg-base-300 text-xs gap-1.5"
+        class="btn btn-sm h-8.5 rounded-lg border border-hairline bg-base-300 hover:bg-base-100 text-base-content text-xs font-semibold gap-1.5 transition shadow-xs cursor-pointer"
         :disabled="composerStore.validatingPlan"
         @click="emit('validate-plan')"
       >
-        <ShieldCheck class="h-4 w-4 text-info" />
+        <ShieldCheck class="h-4 w-4 text-info shrink-0" />
         <span>Check Plan</span>
       </button>
 
       <button
         type="button"
-        class="btn btn-sm border border-hairline-strong bg-base-300 text-xs hover:border-primary gap-1.5 cursor-pointer"
-        :class="{ 'btn-primary': runStore.isActiveOrStarting && canProcess }"
+        class="btn btn-sm h-8.5 rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold gap-1.5 transition shadow-xs cursor-pointer"
+        :class="{ 'btn-primary text-primary-content': runStore.isActiveOrStarting && canProcess }"
         :disabled="!canProcess"
         :title="
           !canProcess
@@ -140,13 +140,13 @@ const runStore = useRunStore();
         "
         @click="emit('queue-run')"
       >
-        <ListPlus class="h-4 w-4" />
+        <ListPlus class="h-4 w-4 shrink-0" />
         <span>Add to Queue</span>
       </button>
 
       <button
         type="button"
-        class="btn btn-sm btn-primary text-xs gap-1.5 font-bold cursor-pointer"
+        class="btn btn-sm h-8.5 rounded-lg btn-primary text-xs font-bold gap-1.5 shadow-sm cursor-pointer"
         :disabled="!canProcess || runStore.isActiveOrStarting"
         :title="
           !canProcess
@@ -157,7 +157,7 @@ const runStore = useRunStore();
         "
         @click="emit('start-run')"
       >
-        <Play class="h-4 w-4 fill-current" />
+        <Play class="h-4 w-4 fill-current shrink-0" />
         <span>Start Training</span>
       </button>
     </div>
