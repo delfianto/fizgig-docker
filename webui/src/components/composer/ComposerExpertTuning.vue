@@ -27,8 +27,13 @@ interface VisibleSection {
 
 const visibleSections = computed<VisibleSection[]>(() => {
   const raw = composerStore.currentFamilyDesc?.form.sections ?? [];
+  const kind = composerStore.formState.kind || "standard";
   const out: VisibleSection[] = [];
   for (const sec of raw) {
+    if (sec.id && hiddenKeySet.value.has(sec.id)) continue;
+    if (sec.id === "slider" && kind !== "slider") continue;
+    if (sec.id === "finetune" && kind !== "finetune") continue;
+    if (sec.id === "edit" && kind !== "edit") continue;
     const rows = sec.rows.filter(isRowVisible);
     // Keep sections that have at least one non-note parameter row
     const hasInteractiveRow = rows.some((r) => r.kind !== "note");

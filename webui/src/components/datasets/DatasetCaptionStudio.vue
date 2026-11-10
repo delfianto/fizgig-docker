@@ -461,7 +461,7 @@ async function runFindReplace(dryRun: boolean): Promise<void> {
       </div>
 
       <div class="flex items-center gap-2">
-        <span class="text-muted">Per page:</span>
+        <span class="text-muted whitespace-nowrap shrink-0">Per page:</span>
         <BaseSelect
           :model-value="pageSize"
           size="compact"
@@ -483,7 +483,7 @@ async function runFindReplace(dryRun: boolean): Promise<void> {
           >
             <ChevronLeft class="h-3.5 w-3.5" />
           </BaseButton>
-          <span class="px-2.5 font-mono text-xs text-base-content">
+          <span class="px-2.5 font-mono text-xs text-base-content whitespace-nowrap shrink-0">
             Page {{ currentPage }} / {{ totalPages }}
           </span>
           <BaseButton
