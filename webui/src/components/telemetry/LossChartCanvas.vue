@@ -181,6 +181,32 @@ const epochTicks = computed(() => {
   return ticks;
 });
 
+const labeledEpochTicks = computed(() => {
+  const all = epochTicks.value;
+  if (all.length === 0) return [];
+  const minLabelGapPx = 36;
+  const maxLabels = Math.max(2, Math.floor(plotW.value / minLabelGapPx));
+  if (all.length <= maxLabels) {
+    return all.map((t) => ({ epoch: t.epoch, step: t.step, x: t.x, showLabel: true }));
+  }
+
+  // Pick a clean human stride (2, 5, 10, 20, 25, 50) so labels stay evenly spaced
+  const rawStep = Math.ceil(all.length / maxLabels);
+  const niceSteps = [2, 3, 5, 10, 15, 20, 25, 50, 100];
+  const stride = niceSteps.find((s) => s >= rawStep) ?? rawStep;
+
+  let lastLabeledX = -Infinity;
+  return all.map((t, idx) => {
+    const isMilestone = idx === 0 || idx === all.length - 1 || t.epoch % stride === 0;
+    const fits = t.x - lastLabeledX >= minLabelGapPx;
+    if (isMilestone && fits) {
+      lastLabeledX = t.x;
+      return { epoch: t.epoch, step: t.step, x: t.x, showLabel: true };
+    }
+    return { epoch: t.epoch, step: t.step, x: t.x, showLabel: false };
+  });
+});
+
 const yTicks = computed(() => {
   const { minLoss, maxLoss } = bounds.value;
   return [0, 0.25, 0.5, 0.75, 1].map((t) => {
@@ -306,17 +332,18 @@ function onMouseLeave(): void {
           </text>
         </g>
 
-        <!-- Vertical Epoch Boundary Lines -->
-        <g v-for="ep in epochTicks" :key="ep.epoch">
+        <!-- Vertical Epoch Boundary Lines (with decimated labels) -->
+        <g v-for="ep in labeledEpochTicks" :key="ep.epoch">
           <line
             :x1="ep.x"
             :x2="ep.x"
             :y1="pad.top"
             :y2="height - pad.bottom"
-            stroke="rgba(255,255,255,0.06)"
+            :stroke="ep.showLabel ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.035)'"
             stroke-dasharray="2,3"
           />
           <text
+            v-if="ep.showLabel"
             :x="ep.x"
             :y="height - 10"
             text-anchor="middle"

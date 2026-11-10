@@ -38,7 +38,11 @@ const stepDisplay = computed(() => {
   if (props.progress) {
     return `${props.progress.step} / ${props.progress.total_steps}`;
   }
-  return props.lossPoints.length || "—";
+  const lastPt = props.lossPoints.at(-1);
+  if (lastPt && typeof lastPt.step === "number") {
+    return String(lastPt.step);
+  }
+  return "—";
 });
 
 const speedDisplay = computed(() => {
@@ -93,21 +97,30 @@ const learnRateDisplay = computed(() => {
 
     <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
       <div class="text-xs font-semibold tracking-wider text-muted uppercase">Loss</div>
-      <div class="font-mono-num mt-1 text-xl font-bold text-primary">
+      <div
+        class="font-mono-num mt-1 text-xl font-bold"
+        :class="lossDisplay === '—' ? 'text-muted' : 'text-primary'"
+      >
         {{ lossDisplay }}
       </div>
     </div>
 
     <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
       <div class="text-xs font-semibold tracking-wider text-muted uppercase">Grad Norm</div>
-      <div class="font-mono-num mt-1 text-xl font-bold text-base-content">
+      <div
+        class="font-mono-num mt-1 text-xl font-bold"
+        :class="gradNormDisplay === '—' ? 'text-muted' : 'text-base-content'"
+      >
         {{ gradNormDisplay }}
       </div>
     </div>
 
     <div class="rounded-lg border border-hairline bg-base-300 px-3.5 py-2.5">
       <div class="text-xs font-semibold tracking-wider text-muted uppercase">Learn Rate</div>
-      <div class="font-mono-num mt-1 text-xl font-bold text-warning">
+      <div
+        class="font-mono-num mt-1 text-xl font-bold"
+        :class="learnRateDisplay === '—' ? 'text-muted' : 'text-warning'"
+      >
         {{ learnRateDisplay }}
       </div>
     </div>

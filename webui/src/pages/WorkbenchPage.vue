@@ -24,7 +24,7 @@ const profilerStatus = ref<Record<string, unknown> | null>(null);
 const royaleStatus = ref<Record<string, unknown> | null>(null);
 
 const selectedCheckpoint = computed<CheckpointItem | undefined>(() =>
-  runStore.checkpoints.find((c) => c.path === selectedLoraPath.value),
+  runStore.allCheckpoints.find((c) => c.path === selectedLoraPath.value),
 );
 
 async function inspectSafetensorsMetadata(): Promise<void> {
@@ -56,8 +56,8 @@ async function loadProfilerAndRoyale(): Promise<void> {
 
 onMounted(async () => {
   await runStore.fetchCheckpoints();
-  if (!selectedLoraPath.value && runStore.checkpoints.length > 0) {
-    selectedLoraPath.value = runStore.checkpoints[0]!.path;
+  if (!selectedLoraPath.value && runStore.allCheckpoints.length > 0) {
+    selectedLoraPath.value = runStore.allCheckpoints[0]!.path;
   }
   await loadProfilerAndRoyale();
 });
@@ -68,7 +68,7 @@ onMounted(async () => {
     <WorkbenchHeaderBar
       :active-tool="activeTool"
       :selected-lora-path="selectedLoraPath"
-      :checkpoints="runStore.checkpoints"
+      :checkpoints="runStore.allCheckpoints"
       :selected-checkpoint="selectedCheckpoint"
       @set-tool="
         (tool) => {
@@ -89,7 +89,7 @@ onMounted(async () => {
 
     <WorkbenchLoraRoyale
       v-else-if="activeTool === 'royale'"
-      :checkpoints="runStore.checkpoints"
+      :checkpoints="runStore.allCheckpoints"
       :royale-status="royaleStatus"
     />
 

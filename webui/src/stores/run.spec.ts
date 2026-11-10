@@ -94,4 +94,40 @@ describe("useRunStore", () => {
     expect(store.checkpoints).toEqual([]);
     expect(store.consoleLog).toBe("");
   });
+
+  it("does not leak historicalRuns[0] into activeLoraName when trainer is idle", () => {
+    const store = useRunStore();
+    store.historicalRuns = [
+      {
+        id: "hist_1",
+        lora: "archived_lora_v1",
+        family: "krea2",
+        image_folder: "/datasets/a",
+        output_dir: "/workspace/output_loras",
+        started_at: 1700000000,
+        values: {},
+      },
+    ];
+    store.run = {
+      running: false,
+      state: "idle",
+      stage: "",
+      lora: "",
+      history_id: "",
+      output_dir: "",
+      family: "",
+      values: {},
+      image_folder: "",
+      pause: false,
+      resume: "",
+      resume_mode: "off",
+      progress: null,
+      started_at: null,
+      training_at: null,
+      web_queue: { items: [], held: false, reason: "", waiting: "" },
+    };
+
+    expect(store.hasLiveSession).toBe(false);
+    expect(store.activeLoraName).toBe("");
+  });
 });

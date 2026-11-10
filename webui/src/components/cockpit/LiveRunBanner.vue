@@ -11,10 +11,12 @@ withDefaults(
   defineProps<{
     inspectingHistoricalRun?: HistoricalRun | null;
     sessionDismissed?: boolean;
+    latestHistoricalRun?: HistoricalRun | null;
   }>(),
   {
     inspectingHistoricalRun: null,
     sessionDismissed: false,
+    latestHistoricalRun: null,
   },
 );
 
@@ -30,6 +32,7 @@ const emit = defineEmits<{
   ): void;
   (e: "dismiss"): void;
   (e: "restore-session"): void;
+  (e: "inspect-latest"): void;
   (e: "view-history"): void;
   (e: "return-to-live"): void;
 }>();
@@ -71,7 +74,9 @@ const runStore = useRunStore();
       v-else
       :session-dismissed="sessionDismissed"
       :last-run-lora="runStore.run?.lora"
+      :latest-historical-lora="latestHistoricalRun?.lora"
       @restore-session="emit('restore-session')"
+      @inspect-latest="emit('inspect-latest')"
       @view-history="emit('view-history')"
     />
   </div>

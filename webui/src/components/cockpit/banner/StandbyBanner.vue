@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { ArrowRight, History, RotateCcw, Sparkles } from "lucide-vue-next";
+import { Activity, ArrowRight, History, RotateCcw, Sparkles } from "lucide-vue-next";
 import { BaseButton } from "@/components/common";
 
 defineProps<{
   sessionDismissed: boolean;
   lastRunLora?: string;
+  latestHistoricalLora?: string;
 }>();
 
 const emit = defineEmits<{
   (e: "restore-session"): void;
+  (e: "inspect-latest"): void;
   (e: "view-history"): void;
 }>();
 </script>
@@ -52,6 +54,18 @@ const emit = defineEmits<{
         <span>Launch Run in Composer</span>
         <ArrowRight class="h-3.5 w-3.5" />
       </router-link>
+
+      <BaseButton
+        v-if="latestHistoricalLora && !(sessionDismissed && lastRunLora)"
+        size="compact"
+        variant="ghost"
+        class="border-primary/30 text-base-content hover:border-primary"
+        :title="`Inspect loss curves, checkpoints, and preview samples from ${latestHistoricalLora}`"
+        @click="emit('inspect-latest')"
+      >
+        <template #icon-left><Activity class="h-3.5 w-3.5 text-primary" /></template>
+        <span>Inspect Last ({{ latestHistoricalLora }})</span>
+      </BaseButton>
 
       <BaseButton size="compact" variant="ghost" @click="emit('view-history')">
         <template #icon-left><History class="h-3.5 w-3.5" /></template>

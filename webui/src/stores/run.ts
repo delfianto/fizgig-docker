@@ -24,6 +24,7 @@ export const useRunStore = defineStore("run", () => {
   const samplePrompts = ref<string[]>([]);
   const sampleModeNote = ref<string>("");
   const checkpoints = ref<CheckpointItem[]>([]);
+  const allCheckpoints = ref<CheckpointItem[]>([]);
   const historicalRuns = ref<HistoricalRun[]>([]);
   const consoleLog = ref<string>("");
   const logBytePos = ref<number>(0);
@@ -46,9 +47,16 @@ export const useRunStore = defineStore("run", () => {
     );
   });
 
-  const activeLoraName = computed(() => run.value?.lora || historicalRuns.value[0]?.lora || "");
+  const hasLiveSession = computed(
+    () => isActiveOrStarting.value || Boolean(run.value?.resume) || isCompleted.value,
+  );
+
+  const activeLoraName = computed(() => (hasLiveSession.value ? run.value?.lora || "" : ""));
   const activeOutputDir = computed(
-    () => run.value?.output_dir || historicalRuns.value[0]?.output_dir || "/workspace/output_loras",
+    () =>
+      (hasLiveSession.value ? run.value?.output_dir : "") ||
+      historicalRuns.value[0]?.output_dir ||
+      "/workspace/output_loras",
   );
 
   const lowestLossPoint = computed<LossDataPoint | null>(() => {
@@ -81,12 +89,13 @@ export const useRunStore = defineStore("run", () => {
   }
 
   async function fetchLiveLoss(runId?: string): Promise<void> {
+    if (!runId && !hasLiveSession.value) {
+      lossPoints.value = [];
+      return;
+    }
     try {
       const targetId =
-        runId ||
-        (!run.value?.running && historicalRuns.value[0]?.id
-          ? historicalRuns.value[0].id
-          : undefined);
+        runId || (!run.value?.running && run.value?.history_id ? run.value.history_id : undefined);
       const res = await apiGet<unknown>(
         "/api/runs/loss",
         targetId ? { id: targetId } : { live: 1 },
@@ -98,9 +107,14 @@ export const useRunStore = defineStore("run", () => {
   }
 
   async function fetchSamples(customDir?: string, customRun?: string): Promise<void> {
-    const dir = customDir ?? `${activeOutputDir.value}/sample`;
     const runName = customRun ?? activeLoraName.value;
-    if (!runName) return;
+    if (!runName) {
+      samples.value = [];
+      samplePrompts.value = [];
+      sampleModeNote.value = "";
+      return;
+    }
+    const dir = customDir ?? `${activeOutputDir.value}/sample`;
     try {
       const res = await apiGet<unknown>("/api/samples", {
         dir,
@@ -115,14 +129,14 @@ export const useRunStore = defineStore("run", () => {
     }
   }
 
-  async function fetchCheckpoints(customDir?: string): Promise<void> {
+  async function fetchCheckpoints(customDir?: string, targetRunName?: string): Promise<void> {
     const dir = customDir ?? activeOutputDir.value;
     try {
       const res = await apiGet<unknown>("/api/checkpoints", { dir });
       const all = parseCheckpointsResponse(res);
-      checkpoints.value = activeLoraName.value
-        ? all.filter((item) => item.run === activeLoraName.value)
-        : all;
+      allCheckpoints.value = all;
+      const filterRun = targetRunName !== undefined ? targetRunName : activeLoraName.value;
+      checkpoints.value = filterRun ? all.filter((item) => item.run === filterRun) : [];
     } catch {
       // Ignore
     }
@@ -257,12 +271,14 @@ export const useRunStore = defineStore("run", () => {
     samplePrompts,
     sampleModeNote,
     checkpoints,
+    allCheckpoints,
     historicalRuns,
     consoleLog,
     lastError,
     isRunning,
     isActiveOrStarting,
     isCompleted,
+    hasLiveSession,
     activeLoraName,
     activeOutputDir,
     lowestLossPoint,
