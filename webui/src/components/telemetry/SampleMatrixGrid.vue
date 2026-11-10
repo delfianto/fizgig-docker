@@ -229,7 +229,7 @@ onUnmounted(() => {
         </span>
       </div>
 
-      <div class="flex items-center gap-1.5">
+      <div class="flex flex-wrap items-center gap-1.5 min-w-0">
         <!-- 3-Way View Switcher: Matrix | Carousel | Stream -->
         <BasePillGroup
           v-model="viewMode"
@@ -259,11 +259,14 @@ onUnmounted(() => {
         <!-- Live Prompts Override Drawer Trigger -->
         <BaseButton
           variant="ghost"
+          size="compact"
           title="Safely view or override the active run's live sample prompts"
           @click="emit('openOverrideDrawer')"
         >
           <template #icon-left><Sparkles class="h-3.5 w-3.5 text-primary" /></template>
-          <span class="hidden md:inline">Live Prompts…</span>
+          <span :class="paneMode === 'split' ? 'hidden 2xl:inline' : 'hidden sm:inline'">
+            Live Prompts…
+          </span>
         </BaseButton>
 
         <!-- Pane Sizing Controls (Split | 2/3 Wide | Collapse) -->

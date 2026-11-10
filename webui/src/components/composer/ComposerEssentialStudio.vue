@@ -43,7 +43,7 @@ const isSelectedDatasetReady = computed(() => {
       <!-- LEFT COLUMN (7 cols): Data, Recipe Summary, and Schedule -->
       <div class="flex flex-col gap-2.5 lg:col-span-7 lg:min-h-0">
         <ComposerDatasetCard
-          class="flex-1 min-h-90 max-h-170"
+          class="flex-1 min-h-68 max-h-170"
           :selected-dataset-info="selectedDatasetInfo"
           :is-selected-dataset-ready="isSelectedDatasetReady"
           @select-dataset="emit('select-dataset', $event)"
@@ -64,7 +64,7 @@ const isSelectedDatasetReady = computed(() => {
 
       <!-- RIGHT COLUMN (5 cols): Preview Prompts & Compute Device -->
       <div class="flex flex-col gap-2.5 lg:col-span-5 lg:min-h-0">
-        <ComposerPromptsCard class="flex-1 min-h-90 max-h-170" />
+        <ComposerPromptsCard class="flex-1 min-h-68 max-h-170" />
         <ComposerReadinessCard class="shrink-0" />
       </div>
     </div>

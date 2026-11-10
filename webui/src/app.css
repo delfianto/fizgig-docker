@@ -77,6 +77,7 @@
 }
 
 :root {
+  --spacing: 4px; /* Decouple layout spacing from root typography scale (h-8.5 = 34px) */
   font-size: 18px; /* High-readability large default */
 }
 
@@ -93,7 +94,9 @@
 }
 
 :root[data-density="compact"] {
-  font-size: 15.5px;
+  --spacing: 3.3px; /* Scales control heights cleanly (h-8.5 ≈ 28px) without clobbering font-size */
+  --size-selector: 0.19rem;
+  --size-field: 0.19rem;
 }
 
 body {
