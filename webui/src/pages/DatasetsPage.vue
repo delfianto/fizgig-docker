@@ -134,7 +134,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="grid h-full grid-cols-[280px_1fr] overflow-hidden bg-base-100">
+  <div class="grid h-full grid-cols-[280px_1fr] overflow-hidden bg-canvas">
     <!-- Left Sidebar: Dataset Browser -->
     <DatasetSidebar
       :datasets="schemaStore.datasets"
@@ -148,7 +148,7 @@ onMounted(async () => {
     <main class="flex flex-col overflow-hidden">
       <!-- Top Bar Sub-Tab Switcher -->
       <div
-        class="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 bg-base-200/40 px-4 py-2.5"
+        class="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-base-200 px-4 py-2"
       >
         <div class="flex items-center gap-3">
           <BasePillGroup
@@ -160,7 +160,7 @@ onMounted(async () => {
             @update:model-value="(val) => (activeSubTab = val as 'captions' | 'prep')"
           />
 
-          <span v-if="selectedDataset" class="font-mono text-xs text-base-content/60">
+          <span v-if="selectedDataset" class="font-mono text-xs text-subtle">
             {{ selectedDataset.path }}
           </span>
         </div>

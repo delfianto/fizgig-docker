@@ -16,6 +16,7 @@ import {
 import { type SampleItem } from "@shared/types";
 import { mediaUrl, thumbUrl } from "@/api/client";
 import BaseButton from "@/components/common/BaseButton.vue";
+import BaseModal from "@/components/common/BaseModal.vue";
 import BasePillGroup from "@/components/common/BasePillGroup.vue";
 
 const props = defineProps<{
@@ -705,18 +706,15 @@ onUnmounted(() => {
     </div>
 
     <!-- Lightbox & A/B Epoch Crossfade Modal -->
-    <div
-      v-if="selectedSample"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 sm:p-6 backdrop-blur-xs"
-      @click.self="selectedSample = null"
+    <BaseModal
+      :open="Boolean(selectedSample)"
+      max-width="5xl"
+      hide-close-button
+      body-class="p-0"
+      @close="selectedSample = null"
     >
-      <div
-        class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-hairline-strong bg-base-300 shadow-2xl"
-      >
-        <!-- Modal Header -->
-        <div
-          class="flex items-center justify-between border-b border-hairline bg-base-200 px-4 py-2.5 text-xs"
-        >
+      <template #header>
+        <div v-if="selectedSample" class="flex w-full items-center justify-between gap-2 text-xs">
           <div class="flex items-center gap-2">
             <span class="font-mono-num text-sm font-semibold text-base-content mr-1">
               Epoch {{ selectedSample.epoch }} · Prompt {{ promptIdx(selectedSample) + 1 }}
@@ -750,29 +748,30 @@ onUnmounted(() => {
             </BaseButton>
           </div>
         </div>
+      </template>
 
-        <!-- Modal Image Stage -->
-        <div
-          class="relative flex flex-1 items-center justify-center overflow-hidden bg-base-100 p-4"
-        >
-          <div class="relative max-h-[70vh] max-w-full">
-            <img
-              :src="mediaUrl(selectedSample.path)"
-              :alt="selectedSample.name"
-              class="max-h-[70vh] w-auto rounded object-contain"
-            />
-            <img
-              v-if="comparePinned && comparePinned.path !== selectedSample.path"
-              :src="mediaUrl(comparePinned.path)"
-              :alt="comparePinned.name"
-              class="pointer-events-none absolute inset-0 max-h-[70vh] w-full rounded object-contain"
-              :style="{ opacity: crossfadeAlpha }"
-            />
-          </div>
+      <div
+        v-if="selectedSample"
+        class="relative flex items-center justify-center overflow-hidden bg-base-100 p-4"
+      >
+        <div class="relative max-h-[70vh] max-w-full">
+          <img
+            :src="mediaUrl(selectedSample.path)"
+            :alt="selectedSample.name"
+            class="max-h-[70vh] w-auto rounded object-contain"
+          />
+          <img
+            v-if="comparePinned && comparePinned.path !== selectedSample.path"
+            :src="mediaUrl(comparePinned.path)"
+            :alt="comparePinned.name"
+            class="pointer-events-none absolute inset-0 max-h-[70vh] w-full rounded object-contain"
+            :style="{ opacity: crossfadeAlpha }"
+          />
         </div>
+      </div>
 
-        <!-- Crossfade Bar & Prompt Footer -->
-        <div class="flex flex-col gap-2 border-t border-hairline bg-base-200 px-4 py-3 text-xs">
+      <template #footer>
+        <div v-if="selectedSample" class="flex w-full flex-col gap-2 text-xs">
           <div
             v-if="comparePinned && comparePinned.path !== selectedSample.path"
             class="flex items-center gap-3"
@@ -796,7 +795,7 @@ onUnmounted(() => {
             {{ selectedSample.prompt || prompts[promptIdx(selectedSample)] || selectedSample.name }}
           </p>
         </div>
-      </div>
-    </div>
+      </template>
+    </BaseModal>
   </div>
 </template>

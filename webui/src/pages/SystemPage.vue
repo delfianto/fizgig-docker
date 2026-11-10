@@ -16,7 +16,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="h-full overflow-y-auto bg-base-100 p-6">
+  <div class="h-full overflow-y-auto bg-canvas p-6">
     <div class="mx-auto max-w-6xl space-y-6">
       <!-- Section 1: UI Ergonomics & Density -->
       <SystemErgonomicsCard />

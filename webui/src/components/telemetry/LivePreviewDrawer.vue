@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { AlertTriangle, RotateCcw, Sparkles, X } from "lucide-vue-next";
+import { AlertTriangle, RotateCcw, Sparkles } from "lucide-vue-next";
 import { toast } from "vue-sonner";
-import { BaseButton, BaseInput } from "@/components/common";
+import { BaseButton, BaseInput, BaseModal } from "@/components/common";
 import { useRunStore } from "@/stores/run";
 
 const props = defineProps<{
@@ -92,109 +92,95 @@ async function handleClearOverride(): Promise<void> {
 </script>
 
 <template>
-  <div
-    v-if="open"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs"
-    @click.self="emit('close')"
+  <BaseModal
+    :open="open"
+    :title="`Live Run Preview Override (${runStore.run?.lora || 'No active run'})`"
+    max-width="2xl"
+    :prevent-close="saving"
+    @close="emit('close')"
   >
-    <div
-      class="flex w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-hairline-strong bg-base-300 shadow-2xl"
-    >
-      <!-- Drawer Header -->
-      <div class="flex items-center justify-between border-b border-hairline bg-base-200 px-4 py-3">
-        <div class="flex items-center gap-2">
-          <Sparkles class="h-4 w-4 text-primary" />
-          <h3 class="text-sm font-semibold text-base-content">
-            Live Run Preview Override ({{ runStore.run?.lora || "No active run" }})
-          </h3>
-        </div>
-        <button type="button" class="btn btn-xs btn-ghost" @click="emit('close')">
-          <X class="h-4 w-4" />
-        </button>
-      </div>
+    <template #icon>
+      <Sparkles class="h-4 w-4 text-primary shrink-0" />
+    </template>
 
-      <!-- Drawer Body -->
-      <div class="space-y-4 p-4 text-xs">
-        <div
-          class="flex items-start gap-2.5 rounded-lg border border-primary/30 bg-primary/10 p-3 text-subtle"
-        >
-          <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <div>
-            <p class="font-medium text-base-content">Isolated from Composer Drafts</p>
-            <p class="mt-0.5 text-[11px]">
-              Unlike upstream Fizgig, changing presets or prompts in the Composer will
-              <strong>never</strong> overwrite your running job. Changes made here are only written
-              to
-              <code class="font-mono text-base-content">.sample_override.json</code>
-              when you explicitly click <strong>Apply Live Override</strong>.
-            </p>
-          </div>
-        </div>
-
+    <div class="space-y-4 text-xs">
+      <div
+        class="flex items-start gap-2.5 rounded-lg border border-primary/30 bg-primary/10 p-3 text-subtle"
+      >
+        <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         <div>
-          <label class="mb-1 block font-medium text-base-content">
-            Sample Prompts (One prompt per line)
-          </label>
-          <textarea
-            v-model="prompts"
-            rows="5"
-            class="textarea textarea-bordered w-full border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed"
-            placeholder="One sample prompt per line..."
-          />
-        </div>
-
-        <div class="grid grid-cols-3 gap-3 sm:grid-cols-6">
-          <div>
-            <label class="mb-1 block text-[11px] text-subtle">Width</label>
-            <BaseInput v-model="width" mono />
-          </div>
-          <div>
-            <label class="mb-1 block text-[11px] text-subtle">Height</label>
-            <BaseInput v-model="height" mono />
-          </div>
-          <div>
-            <label class="mb-1 block text-[11px] text-subtle">Steps</label>
-            <BaseInput v-model="steps" mono />
-          </div>
-          <div>
-            <label class="mb-1 block text-[11px] text-subtle">CFG</label>
-            <BaseInput v-model="cfg" mono />
-          </div>
-          <div>
-            <label class="mb-1 block text-[11px] text-subtle">Seed</label>
-            <BaseInput v-model="seed" mono />
-          </div>
-          <div>
-            <label class="mb-1 block text-[11px] text-subtle"> Turbo Str </label>
-            <BaseInput v-model="turbo" mono />
-          </div>
+          <p class="font-medium text-base-content">Isolated from Composer Drafts</p>
+          <p class="mt-0.5 text-[11px]">
+            Unlike upstream Fizgig, changing presets or prompts in the Composer will
+            <strong>never</strong> overwrite your running job. Changes made here are only written to
+            <code class="font-mono text-base-content">.sample_override.json</code>
+            when you explicitly click <strong>Apply Live Override</strong>.
+          </p>
         </div>
       </div>
 
-      <!-- Drawer Footer -->
-      <div class="flex items-center justify-between border-t border-hairline bg-base-200 px-4 py-3">
-        <BaseButton
-          variant="warning"
-          :disabled="saving || !runStore.isRunning"
-          @click="handleClearOverride"
-        >
-          <template #icon-left><RotateCcw class="h-3.5 w-3.5" /></template>
-          <span>Clear Override &amp; Restore Launch Prompts</span>
-        </BaseButton>
+      <div>
+        <label class="mb-1 block font-medium text-base-content">
+          Sample Prompts (One prompt per line — blank lines ignored)
+        </label>
+        <textarea
+          v-model="prompts"
+          rows="5"
+          class="textarea textarea-bordered w-full border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed"
+          placeholder="One sample prompt per line..."
+        />
+      </div>
 
-        <div class="flex items-center gap-2">
-          <BaseButton variant="ghost" @click="emit('close')">
-            <span>Cancel</span>
-          </BaseButton>
-          <BaseButton
-            variant="primary"
-            :disabled="saving || !runStore.isRunning"
-            @click="handleApplyOverride"
-          >
-            <span>Apply Live Override</span>
-          </BaseButton>
+      <div class="grid grid-cols-3 gap-3 sm:grid-cols-6">
+        <div>
+          <label class="mb-1 block text-[11px] text-subtle">Width</label>
+          <BaseInput v-model="width" mono />
+        </div>
+        <div>
+          <label class="mb-1 block text-[11px] text-subtle">Height</label>
+          <BaseInput v-model="height" mono />
+        </div>
+        <div>
+          <label class="mb-1 block text-[11px] text-subtle">Steps</label>
+          <BaseInput v-model="steps" mono />
+        </div>
+        <div>
+          <label class="mb-1 block text-[11px] text-subtle">CFG</label>
+          <BaseInput v-model="cfg" mono />
+        </div>
+        <div>
+          <label class="mb-1 block text-[11px] text-subtle">Seed</label>
+          <BaseInput v-model="seed" mono />
+        </div>
+        <div>
+          <label class="mb-1 block text-[11px] text-subtle">Turbo Str</label>
+          <BaseInput v-model="turbo" mono />
         </div>
       </div>
     </div>
-  </div>
+
+    <template #footer>
+      <BaseButton
+        variant="warning"
+        :disabled="saving || !runStore.isRunning"
+        @click="handleClearOverride"
+      >
+        <template #icon-left><RotateCcw class="h-3.5 w-3.5" /></template>
+        <span>Clear Override &amp; Restore Launch Prompts</span>
+      </BaseButton>
+
+      <div class="flex items-center gap-2">
+        <BaseButton variant="ghost" :disabled="saving" @click="emit('close')">
+          <span>Cancel</span>
+        </BaseButton>
+        <BaseButton
+          variant="primary"
+          :disabled="saving || !runStore.isRunning"
+          @click="handleApplyOverride"
+        >
+          <span>Apply Live Override</span>
+        </BaseButton>
+      </div>
+    </template>
+  </BaseModal>
 </template>

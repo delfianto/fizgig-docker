@@ -20,7 +20,7 @@ const emit = defineEmits<{
 
 <template>
   <div
-    class="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 bg-base-200/50 px-4 py-2.5"
+    class="flex flex-wrap items-center justify-between gap-3 border-b border-hairline bg-base-200 px-4 py-2"
   >
     <div class="flex items-center gap-2">
       <BasePillGroup
@@ -39,13 +39,14 @@ const emit = defineEmits<{
 
     <!-- Target LoRA Checkpoint Selector -->
     <div class="flex items-center gap-2">
-      <span class="text-xs font-medium text-base-content/60">Target LoRA:</span>
+      <span class="text-xs font-medium text-subtle">Target LoRA:</span>
       <BaseSelect
         :model-value="selectedLoraPath"
         mono
         select-class="min-w-72"
         @update:model-value="(val) => emit('select-lora', String(val))"
       >
+        <option v-if="checkpoints.length === 0" value="">No saved checkpoints found</option>
         <option v-for="ckpt in checkpoints" :key="ckpt.path" :value="ckpt.path">
           {{ ckpt.run ? `[${ckpt.run}] ` : "" }}{{ ckpt.name }}
         </option>

@@ -97,7 +97,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col overflow-hidden bg-base-100">
+  <div class="flex h-full flex-col overflow-hidden bg-canvas">
     <WorkbenchHeaderBar
       :active-tool="activeTool"
       :selected-lora-path="selectedLoraPath"

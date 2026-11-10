@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Sliders } from "lucide-vue-next";
-import { BasePillGroup, BaseToggle } from "@/components/common";
+import { BaseCard, BasePillGroup, BaseToggle } from "@/components/common";
 import { useSystemStore } from "@/stores/system";
 
 const systemStore = useSystemStore();
 </script>
 
 <template>
-  <section class="rounded-lg border border-base-300 bg-base-200/80 p-5">
+  <BaseCard>
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-2.5">
         <Sliders class="h-4 w-4 text-primary" />
@@ -15,9 +15,9 @@ const systemStore = useSystemStore();
           <h2 class="text-sm font-semibold text-base-content">
             UI Density &amp; Pedagogical Prose Mode
           </h2>
-          <p class="text-xs text-base-content/60">
-            Customize control spacing and whether upstream Fizgig's verbose tutorial prose blocks
-            are shown inline.
+          <p class="text-xs text-muted">
+            Customize typography scale, control spacing, and whether inline parameter guides are
+            expanded by default.
           </p>
         </div>
       </div>
@@ -46,11 +46,11 @@ const systemStore = useSystemStore();
         />
 
         <div
-          class="flex h-8.5 items-center gap-2 rounded-lg border border-hairline bg-base-300/50 px-3 text-xs select-none hover:border-primary/40 transition"
+          class="flex h-8.5 items-center gap-2 rounded-lg border border-hairline bg-base-300/60 px-3 text-xs select-none hover:border-primary/40 transition"
         >
           <BaseToggle v-model="systemStore.explainMode" size="compact" label="Show Explain Prose" />
         </div>
       </div>
     </div>
-  </section>
+  </BaseCard>
 </template>
