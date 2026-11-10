@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDecimal, formatLearnRate, formatLoss } from "./format";
+import { formatDecimal, formatLearnRate, formatLoss, splitSamplePrompts } from "./format";
 
 describe("formatDecimal & formatLearnRate", () => {
   it("converts scientific notation strings to clean decimals", () => {
@@ -47,5 +47,17 @@ describe("formatLoss", () => {
     expect(formatLoss(0.12)).toBe("0.1200");
     expect(formatLoss(undefined)).toBe("—");
     expect(formatLoss(null)).toBe("—");
+  });
+});
+
+describe("splitSamplePrompts", () => {
+  it("treats each non-empty line as one prompt and ignores blank lines", () => {
+    expect(splitSamplePrompts("portrait of ohwx\n\nwide shot of ohwx\ncandid photo")).toEqual([
+      "portrait of ohwx",
+      "wide shot of ohwx",
+      "candid photo",
+    ]);
+    expect(splitSamplePrompts("   \n  ")).toEqual([]);
+    expect(splitSamplePrompts(undefined)).toEqual([]);
   });
 });

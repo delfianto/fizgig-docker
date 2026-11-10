@@ -14,6 +14,7 @@ import LivePreviewDrawer from "@/components/telemetry/LivePreviewDrawer.vue";
 import LossChartCanvas from "@/components/telemetry/LossChartCanvas.vue";
 import SampleMatrixGrid from "@/components/telemetry/SampleMatrixGrid.vue";
 import { BaseButton, BasePillGroup } from "@/components/common";
+import { splitSamplePrompts } from "@/utils";
 import { useComposerStore } from "@/stores/composer";
 import { useRunStore } from "@/stores/run";
 
@@ -66,11 +67,7 @@ const progress = computed(() => {
 const displayedRunPrompts = computed(() => {
   if (isMonitorDismissed.value) return [];
   if (runStore.samplePrompts.length > 0) return runStore.samplePrompts;
-  const raw = String(runStore.run?.values?.SAMPLE_PROMPT ?? "");
-  return raw
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  return splitSamplePrompts(runStore.run?.values?.SAMPLE_PROMPT);
 });
 
 function cloneRunToComposer(item: {

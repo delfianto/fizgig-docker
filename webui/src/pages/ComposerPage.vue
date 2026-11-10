@@ -68,27 +68,11 @@ const parsedRecipe = computed(() => {
 });
 
 function autoSuggestLoraName(asBaseline = true): void {
-  const ds = selectedDatasetInfo.value?.name;
-  if (!ds) return;
-  const clean = ds.toLowerCase().replace(/[^a-z0-9_-]/g, "_");
-  const fam = composerStore.family;
-  const name = `${clean}_${fam}_v1`;
-  composerStore.setFieldValue("LORA_NAME", name);
-  if (asBaseline || !composerStore.modifiedKeys.has("LORA_NAME")) {
-    composerStore.baselineValues.LORA_NAME = name;
-  }
+  composerStore.autoSuggestLoraName(asBaseline);
 }
 
 function selectDataset(path: string): void {
-  composerStore.setImageFolder(path);
-  const currentName = String(composerStore.draftValues.LORA_NAME ?? "");
-  if (
-    !currentName ||
-    currentName.startsWith("my_lora_") ||
-    currentName.endsWith(`_${composerStore.family}_v1`)
-  ) {
-    autoSuggestLoraName(true);
-  }
+  composerStore.selectDataset(path, true);
 }
 
 function setQuickEpochs(epochs: number): void {
@@ -141,24 +125,38 @@ function handleQueueRun(): void {
   showQueueModal.value = true;
 }
 
-async function confirmQueueSubmission(): Promise<void> {
+async function confirmQueueSubmission(forceIgnoreWarnings = false): Promise<void> {
   isSubmittingQueue.value = true;
   try {
-    const res = await composerStore.submitQueueTraining();
+    const res = await composerStore.submitQueueTraining(forceIgnoreWarnings);
     const hasProblems = Boolean(res.problems && res.problems.length > 0);
     const hasWarnings = Boolean(res.warnings && res.warnings.length > 0);
 
-    if (hasProblems || hasWarnings) {
+    if (hasProblems) {
       showQueueModal.value = false;
       planOverlay.show({
-        status: hasProblems ? "attention" : "warning",
-        title: hasProblems ? "Cannot Queue: Blockers Detected" : "Cannot Queue: Advisory Warnings",
+        status: "attention",
+        title: "Cannot Queue: Blockers Detected",
         problems: res.problems ?? [],
         warnings: res.warnings ?? [],
         duration: 8000,
       });
       return;
     }
+
+    if (hasWarnings && !forceIgnoreWarnings) {
+      showQueueModal.value = false;
+      planOverlay.show({
+        status: "warning",
+        title: "Advisory Warnings Before Queueing",
+        warnings: res.warnings ?? [],
+        duration: 10000,
+        actionLabel: "Queue Anyway",
+        onAction: () => confirmQueueSubmission(true),
+      });
+      return;
+    }
+
     showQueueModal.value = false;
     toast.success(`Job "${composerStore.draftValues.LORA_NAME}" submitted to background queue`);
     await runStore.pollRun();
@@ -175,7 +173,7 @@ async function confirmQueueSubmission(): Promise<void> {
   }
 }
 
-async function handleStartRun(): Promise<void> {
+async function handleStartRun(forceIgnoreWarnings = false): Promise<void> {
   if (!isDatasetCompletelyTagged.value) {
     planOverlay.show({
       status: "attention",
@@ -187,20 +185,33 @@ async function handleStartRun(): Promise<void> {
   }
 
   try {
-    const res = await composerStore.submitStartTraining();
+    const res = await composerStore.submitStartTraining(forceIgnoreWarnings);
     const hasProblems = Boolean(res.problems && res.problems.length > 0);
     const hasWarnings = Boolean(res.warnings && res.warnings.length > 0);
 
-    if (hasProblems || hasWarnings) {
+    if (hasProblems) {
       planOverlay.show({
-        status: hasProblems ? "attention" : "warning",
-        title: hasProblems ? "Cannot Start: Blockers Detected" : "Cannot Start: Advisory Warnings",
+        status: "attention",
+        title: "Cannot Start: Blockers Detected",
         problems: res.problems ?? [],
         warnings: res.warnings ?? [],
         duration: 8000,
       });
       return;
     }
+
+    if (hasWarnings && !forceIgnoreWarnings) {
+      planOverlay.show({
+        status: "warning",
+        title: "Advisory Warnings Before Start",
+        warnings: res.warnings ?? [],
+        duration: 10000,
+        actionLabel: "Start Anyway",
+        onAction: () => handleStartRun(true),
+      });
+      return;
+    }
+
     toast.success(`Started training "${composerStore.draftValues.LORA_NAME}"`);
     await runStore.pollRun();
     void router.push("/cockpit");
@@ -215,13 +226,18 @@ async function handleStartRun(): Promise<void> {
 }
 
 onMounted(async () => {
-  await Promise.all([schemaStore.fetchSchema(), schemaStore.fetchDatasets()]);
-  if (Object.keys(composerStore.draftValues).length === 0) {
-    await composerStore.selectFamily(composerStore.family || "krea2");
+  await Promise.all([
+    schemaStore.fetchSchema(),
+    schemaStore.fetchDatasets(),
+    systemStore.fetchLocalBundles(),
+  ]);
+  if (!composerStore.family || Object.keys(composerStore.draftValues).length === 0) {
+    const fam = composerStore.family || composerStore.resolvePreferredFamily();
+    if (fam) {
+      await composerStore.selectFamily(fam);
+    }
   }
-  if (!composerStore.imageFolder && schemaStore.datasets.length > 0) {
-    selectDataset(schemaStore.datasets[0]!.path);
-  }
+  composerStore.ensureValidDatasetSelected();
 });
 </script>
 

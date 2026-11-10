@@ -50,7 +50,6 @@ const filteredDatasets = computed(() => {
 });
 
 function onSelectDataset(path: string): void {
-  composerStore.setImageFolder(path);
   emit("select-dataset", path);
 }
 </script>

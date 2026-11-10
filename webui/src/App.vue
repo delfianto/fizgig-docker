@@ -59,12 +59,15 @@ onMounted(async () => {
     systemStore.fetchLocalBundles(),
   ]);
 
-  // Initialize composer with active run family or default
+  // Initialize composer with active run family, active local bundle family, or schema default
   const initialFamily =
-    runStore.run?.family && schemaStore.getFamily(runStore.run.family)
+    runStore.run?.running && runStore.run.family && schemaStore.getFamily(runStore.run.family)
       ? runStore.run.family
-      : (schemaStore.order[0] ?? "flux");
-  await composerStore.selectFamily(initialFamily);
+      : composerStore.resolvePreferredFamily();
+  if (initialFamily) {
+    await composerStore.selectFamily(initialFamily);
+  }
+  composerStore.ensureValidDatasetSelected();
 
   pollTimer = setInterval(() => {
     void runStore.pollRun();

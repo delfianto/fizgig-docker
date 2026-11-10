@@ -93,7 +93,7 @@ async function saveAllDirty(): Promise<void> {
 }
 
 function sendToComposer(folderPath: string): void {
-  composerStore.imageFolder = folderPath;
+  composerStore.selectDataset(folderPath, true);
   toast.success(`Selected ${folderPath} in Run Composer`);
   void router.push("/composer");
 }

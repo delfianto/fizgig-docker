@@ -67,3 +67,14 @@ export function formatLoss(val: unknown, fallback = "—", decimals = 4): string
   }
   return num.toFixed(decimals);
 }
+
+/**
+ * Parses multiline SAMPLE_PROMPT strings identically to upstream Fizgig's server.py:
+ * each non-empty line is one sample prompt (blank lines are ignored).
+ */
+export function splitSamplePrompts(raw: unknown): string[] {
+  return String(raw ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}

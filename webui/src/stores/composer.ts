@@ -89,10 +89,10 @@ export const useComposerStore = defineStore("composer", () => {
   const schemaStore = useSchemaStore();
   const systemStore = useSystemStore();
 
-  const family = ref<string>("krea2");
+  const family = ref<string>("");
   const presetName = ref<string>("");
   const userPresets = ref<string[]>([]);
-  const imageFolder = ref<string>("/datasets/jeje_v1");
+  const imageFolder = ref<string>("");
   const selectedGpuIndex = ref<number>(0);
 
   const baselineValues = ref<Record<string, unknown>>({});
@@ -159,6 +159,7 @@ export const useComposerStore = defineStore("composer", () => {
     await schemaStore.fetchSchema();
     const desc = schemaStore.getFamily(famKey);
     if (!desc) return;
+    const prevFamily = family.value;
     family.value = famKey;
     selectedSectionIndex.value = 0;
     planResult.value = null;
@@ -174,6 +175,16 @@ export const useComposerStore = defineStore("composer", () => {
       draftValues.value = deepClone(defaults);
       presetName.value = "";
       await refreshFormState();
+    }
+
+    const curName = String(draftValues.value.LORA_NAME ?? "");
+    if (
+      imageFolder.value &&
+      (!curName ||
+        curName.startsWith("my_lora_") ||
+        (prevFamily && curName.endsWith(`_${prevFamily}_v1`)))
+    ) {
+      autoSuggestLoraName(true);
     }
   }
 
@@ -281,12 +292,12 @@ export const useComposerStore = defineStore("composer", () => {
     }
   }
 
-  async function submitStartTraining(): Promise<PlanValidationResponse> {
+  async function submitStartTraining(forceIgnoreWarnings = false): Promise<PlanValidationResponse> {
     const plan = await validatePlan();
-    if (
-      (plan.problems && plan.problems.length > 0) ||
-      (plan.warnings && plan.warnings.length > 0)
-    ) {
+    if (plan.problems && plan.problems.length > 0) {
+      return plan;
+    }
+    if (!forceIgnoreWarnings && plan.warnings && plan.warnings.length > 0) {
       return plan;
     }
     await apiPost("/api/start", {
@@ -298,12 +309,12 @@ export const useComposerStore = defineStore("composer", () => {
     return plan;
   }
 
-  async function submitQueueTraining(): Promise<PlanValidationResponse> {
+  async function submitQueueTraining(forceIgnoreWarnings = false): Promise<PlanValidationResponse> {
     const plan = await validatePlan();
-    if (
-      (plan.problems && plan.problems.length > 0) ||
-      (plan.warnings && plan.warnings.length > 0)
-    ) {
+    if (plan.problems && plan.problems.length > 0) {
+      return plan;
+    }
+    if (!forceIgnoreWarnings && plan.warnings && plan.warnings.length > 0) {
       return plan;
     }
     await apiPost("/api/queue/add", {
@@ -329,6 +340,53 @@ export const useComposerStore = defineStore("composer", () => {
   function setImageFolder(folder: string): void {
     imageFolder.value = folder;
     void refreshFormState();
+  }
+
+  function autoSuggestLoraName(asBaseline = true): void {
+    const ds = schemaStore.datasets.find((d) => d.path === imageFolder.value)?.name;
+    if (!ds || !family.value) return;
+    const clean = ds.toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+    const name = `${clean}_${family.value}_v1`;
+    setFieldValue("LORA_NAME", name);
+    if (asBaseline || !modifiedKeys.value.has("LORA_NAME")) {
+      baselineValues.value.LORA_NAME = name;
+    }
+  }
+
+  function selectDataset(path: string, asBaseline = true): void {
+    setImageFolder(path);
+    const currentName = String(draftValues.value.LORA_NAME ?? "");
+    const isAutoNamed =
+      !currentName || currentName.startsWith("my_lora_") || /_[a-z0-9]+_v1$/i.test(currentName);
+    if (isAutoNamed) {
+      autoSuggestLoraName(asBaseline);
+    }
+  }
+
+  function ensureValidDatasetSelected(): void {
+    const list = schemaStore.datasets;
+    if (list.length === 0) return;
+    const hasCurrent = Boolean(imageFolder.value) && list.some((d) => d.path === imageFolder.value);
+    if (!hasCurrent) {
+      const readyDs = list.find((d) => d.count > 0 && (d.captioned ?? 0) >= d.count);
+      const fallback = readyDs ?? list[0];
+      if (fallback) {
+        selectDataset(fallback.path, true);
+      }
+    }
+  }
+
+  function resolvePreferredFamily(): string {
+    const bundles = systemStore.localBundles;
+    if (bundles?.available && Array.isArray(bundles.active)) {
+      for (const bundleKey of bundles.active) {
+        const famKey = bundles.bundles[bundleKey]?.family;
+        if (famKey && schemaStore.getFamily(famKey)) {
+          return famKey;
+        }
+      }
+    }
+    return schemaStore.order[0] ?? schemaStore.families[0]?.key ?? "";
   }
 
   function loadFromHistoricalRun(run: {
@@ -376,6 +434,10 @@ export const useComposerStore = defineStore("composer", () => {
     submitQueueTraining,
     setSelectedGpu,
     setImageFolder,
+    autoSuggestLoraName,
+    selectDataset,
+    ensureValidDatasetSelected,
+    resolvePreferredFamily,
     loadFromHistoricalRun,
   };
 });

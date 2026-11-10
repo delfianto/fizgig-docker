@@ -30,6 +30,10 @@ const composerStore = useComposerStore();
       </div>
     </div>
 
+    <p v-if="currentPresetNote" class="text-[11px] text-subtle leading-snug">
+      {{ currentPresetNote }}
+    </p>
+
     <!-- Compact Parameter Badges in 1 row -->
     <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
       <div class="rounded-lg border border-hairline bg-base-200/60 px-2 py-1">

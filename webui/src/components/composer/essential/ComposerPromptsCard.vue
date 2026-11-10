@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Eye } from "lucide-vue-next";
+import { splitSamplePrompts } from "@/utils";
 import { useComposerStore } from "@/stores/composer";
 
 const composerStore = useComposerStore();
 
 const samplePromptCount = computed(() => {
-  const text = String(composerStore.draftValues.SAMPLE_PROMPT ?? "").trim();
-  if (!text) return 0;
-  return text.split(/\n\s*\n/).filter((p) => p.trim().length > 0).length;
+  return splitSamplePrompts(composerStore.draftValues.SAMPLE_PROMPT).length;
 });
 </script>
 
@@ -39,7 +38,7 @@ const samplePromptCount = computed(() => {
     <!-- Generous sample prompt editor matching dataset selector container height for uniform UI -->
     <textarea
       :value="String(composerStore.draftValues.SAMPLE_PROMPT ?? '')"
-      placeholder="A close-up portrait of trigger, looking at camera, neutral background...&#10;&#10;A dynamic wide shot of trigger outdoors in the city, golden hour lighting..."
+      placeholder="A close-up portrait of trigger, looking at camera, neutral background...&#10;A dynamic wide shot of trigger outdoors in the city, golden hour lighting..."
       class="textarea textarea-bordered w-full flex-1 min-h-36 resize-y border-hairline-strong bg-base-100 font-mono text-xs leading-relaxed text-base-content focus:border-primary p-3"
       @input="
         composerStore.setFieldValue('SAMPLE_PROMPT', ($event.target as HTMLTextAreaElement).value)
@@ -47,7 +46,7 @@ const samplePromptCount = computed(() => {
     />
 
     <div class="flex items-center justify-between text-[11px] text-muted pt-0.5 shrink-0">
-      <span>Separate multiple prompts with a blank line.</span>
+      <span>One prompt per line (blank lines ignored).</span>
       <span class="font-mono">Renders per checkpoint</span>
     </div>
   </section>

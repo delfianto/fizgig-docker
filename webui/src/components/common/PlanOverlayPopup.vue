@@ -173,6 +173,27 @@ const subtitleText = computed(() => {
               </li>
             </ul>
           </div>
+
+          <!-- Optional Override Action (e.g. Proceed Despite Advisory Warnings) -->
+          <div
+            v-if="overlayStore.actionLabel"
+            class="flex items-center justify-end gap-2 border-t border-hairline/70 pt-2.5"
+          >
+            <button
+              type="button"
+              class="btn btn-xs h-7 rounded-md btn-ghost border border-hairline px-2.5 text-xs text-subtle hover:text-base-content cursor-pointer"
+              @click="overlayStore.dismiss"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-xs h-7 rounded-md border border-warning/50 bg-warning text-warning-content font-semibold px-3 text-xs hover:brightness-105 cursor-pointer"
+              @click="overlayStore.triggerAction"
+            >
+              {{ overlayStore.actionLabel }}
+            </button>
+          </div>
         </div>
 
         <!-- Animated Auto-fade Countdown Bar -->

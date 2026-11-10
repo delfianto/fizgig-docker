@@ -10,6 +10,8 @@ export interface PlanOverlayPayload {
   problems?: string[];
   warnings?: string[];
   duration?: number; // In milliseconds, defaults to 5000
+  actionLabel?: string;
+  onAction?: () => void | Promise<void>;
 }
 
 export const usePlanOverlayStore = defineStore("planOverlay", () => {
@@ -20,8 +22,10 @@ export const usePlanOverlayStore = defineStore("planOverlay", () => {
   const problems = ref<string[]>([]);
   const warnings = ref<string[]>([]);
   const duration = ref(5000);
+  const actionLabel = ref<string | undefined>(undefined);
   const paused = ref(false);
   const seq = ref(0);
+  let actionHandler: (() => void | Promise<void>) | undefined;
   let dismissTimer: ReturnType<typeof setTimeout> | null = null;
   let startedAt = 0;
   let remainingMs = 0;
@@ -38,6 +42,8 @@ export const usePlanOverlayStore = defineStore("planOverlay", () => {
     problems.value = payload.problems ? [...payload.problems] : [];
     warnings.value = payload.warnings ? [...payload.warnings] : [];
     duration.value = payload.duration ?? 5000;
+    actionLabel.value = payload.actionLabel;
+    actionHandler = payload.onAction;
     paused.value = false;
     seq.value += 1;
     visible.value = true;
@@ -57,7 +63,17 @@ export const usePlanOverlayStore = defineStore("planOverlay", () => {
       dismissTimer = null;
     }
     paused.value = false;
+    actionLabel.value = undefined;
+    actionHandler = undefined;
     visible.value = false;
+  }
+
+  async function triggerAction(): Promise<void> {
+    const fn = actionHandler;
+    dismiss();
+    if (fn) {
+      await fn();
+    }
   }
 
   function pauseTimer(): void {
@@ -89,10 +105,12 @@ export const usePlanOverlayStore = defineStore("planOverlay", () => {
     problems,
     warnings,
     duration,
+    actionLabel,
     paused,
     seq,
     show,
     dismiss,
+    triggerAction,
     pauseTimer,
     resumeTimer,
   };
