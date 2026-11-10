@@ -124,11 +124,14 @@ onMounted(async () => {
       v-else-if="activeTool === 'royale'"
       :checkpoints="runStore.allCheckpoints"
       :royale-status="royaleStatus"
+      @refresh-status="loadProfilerAndRoyale"
     />
 
     <WorkbenchBlockProfiler
       v-else-if="activeTool === 'profiler'"
+      :selected-lora-path="selectedLoraPath"
       :profiler-status="profilerStatus"
+      @refresh-status="loadProfilerAndRoyale"
     />
 
     <WorkbenchMetadataInspector
