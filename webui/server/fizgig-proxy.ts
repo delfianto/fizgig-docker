@@ -1,10 +1,13 @@
-import { execSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { type IncomingMessage, type ServerResponse } from "node:http";
 import { Readable } from "node:stream";
+import { promisify } from "node:util";
 import { type Plugin } from "vite-plus";
 
-interface ProxyOptions {
+const execFileAsync = promisify(execFile);
+
+export interface ProxyOptions {
   apiUrl?: string;
   passwordFile?: string;
   catalogFile?: string;
@@ -55,10 +58,10 @@ function readRequestBody(req: IncomingMessage): Promise<Buffer> {
 }
 
 // ---------------------------------------------------------------------------
-// Hardware Telemetry Collectors (GPU & CPU Load, Temp, Multi-GPU)
+// Non-Blocking Hardware Telemetry Collectors (GPU & CPU Load, Temp, Multi-GPU)
 // ---------------------------------------------------------------------------
 
-let cachedGpuStats: Array<{
+interface CachedGpuEntry {
   index: number;
   name: string;
   vram: [number, number];
@@ -66,45 +69,62 @@ let cachedGpuStats: Array<{
   temp: number;
   power?: number;
   power_limit?: number;
-}> = [];
-let lastGpuSampleTime = 0;
+}
 
-function getCachedGpuStats() {
+let cachedGpuStats: CachedGpuEntry[] = [];
+let lastGpuSampleTime = 0;
+let gpuRefreshPromise: Promise<CachedGpuEntry[]> | null = null;
+
+async function getCachedGpuStatsAsync(): Promise<CachedGpuEntry[]> {
   const now = Date.now();
   if (now - lastGpuSampleTime < 1200 && cachedGpuStats.length > 0) {
     return cachedGpuStats;
   }
-  try {
-    const raw = execSync(
-      "nvidia-smi --query-gpu=index,name,memory.total,memory.used,utilization.gpu,temperature.gpu,power.draw,power.limit --format=csv,noheader,nounits",
-      { encoding: "utf8", timeout: 1500 },
-    );
-    const list: typeof cachedGpuStats = [];
-    for (const line of raw.trim().split("\n")) {
-      const parts = line.split(",").map((s) => s.trim());
-      if (parts.length >= 6) {
-        list.push({
-          index: parseInt(parts[0] ?? "0", 10),
-          name: (parts[1] ?? "GPU").replace(/^NVIDIA GeForce\s+/, ""),
-          vram: [
-            parseInt(parts[3] ?? "0", 10) * 1024 * 1024,
-            parseInt(parts[2] ?? "0", 10) * 1024 * 1024,
-          ],
-          util: Math.round(parseFloat(parts[4] ?? "0") || 0),
-          temp: Math.round(parseFloat(parts[5] ?? "0") || 0),
-          power: Math.round(parseFloat(parts[6] ?? "0") || 0),
-          power_limit: Math.round(parseFloat(parts[7] ?? "0") || 0),
-        });
-      }
-    }
-    if (list.length > 0) {
-      cachedGpuStats = list;
-      lastGpuSampleTime = now;
-    }
-  } catch {
-    // Keep previous cached values if query hiccups
+  if (gpuRefreshPromise) {
+    return gpuRefreshPromise;
   }
-  return cachedGpuStats;
+
+  gpuRefreshPromise = (async () => {
+    try {
+      const { stdout } = await execFileAsync(
+        "nvidia-smi",
+        [
+          "--query-gpu=index,name,memory.total,memory.used,utilization.gpu,temperature.gpu,power.draw,power.limit",
+          "--format=csv,noheader,nounits",
+        ],
+        { encoding: "utf8", timeout: 1500 },
+      );
+      const list: CachedGpuEntry[] = [];
+      for (const line of stdout.trim().split("\n")) {
+        const parts = line.split(",").map((s) => s.trim());
+        if (parts.length >= 6) {
+          list.push({
+            index: Number.parseInt(parts[0] ?? "0", 10),
+            name: (parts[1] ?? "GPU").replace(/^NVIDIA\s+(?:GeForce\s+)?/i, ""),
+            vram: [
+              Number.parseInt(parts[3] ?? "0", 10) * 1024 * 1024,
+              Number.parseInt(parts[2] ?? "0", 10) * 1024 * 1024,
+            ],
+            util: Math.round(Number.parseFloat(parts[4] ?? "0") || 0),
+            temp: Math.round(Number.parseFloat(parts[5] ?? "0") || 0),
+            power: Math.round(Number.parseFloat(parts[6] ?? "0") || 0),
+            power_limit: Math.round(Number.parseFloat(parts[7] ?? "0") || 0),
+          });
+        }
+      }
+      if (list.length > 0) {
+        cachedGpuStats = list;
+        lastGpuSampleTime = Date.now();
+      }
+    } catch {
+      // Keep previous cached values if nvidia-smi is absent or transiently busy
+    } finally {
+      gpuRefreshPromise = null;
+    }
+    return cachedGpuStats;
+  })();
+
+  return gpuRefreshPromise;
 }
 
 let prevCpuTick: { idle: number; total: number } | null = null;
@@ -148,7 +168,7 @@ function getCachedCpuStats() {
               const lPath = `/sys/class/hwmon/${dir}/temp${i}_label`;
               if (existsSync(tPath)) {
                 const label = existsSync(lPath) ? readFileSync(lPath, "utf8").trim() : `temp${i}`;
-                const val = parseInt(readFileSync(tPath, "utf8").trim(), 10) / 1000;
+                const val = Number.parseInt(readFileSync(tPath, "utf8").trim(), 10) / 1000;
                 if (label === "Tctl" || label === "Package id 0" || !temp) {
                   temp = Math.round(val);
                 }
@@ -167,10 +187,10 @@ function getCachedCpuStats() {
 }
 
 // ---------------------------------------------------------------------------
-// Proxy Plugin
+// Reusable Request Handler (Vite Middleware + Standalone Production Server)
 // ---------------------------------------------------------------------------
 
-export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
+export function createFizgigRequestHandler(options: ProxyOptions = {}) {
   const baseUrl = (options.apiUrl ?? process.env.FIZGIG_API_URL ?? "http://127.0.0.1:8082").replace(
     /\/+$/,
     "",
@@ -182,6 +202,7 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
   let sessionToken = "";
   let sessionCookie = "";
   let loginPromise: Promise<void> | null = null;
+  let activeCudaDeviceIndex = 0;
 
   async function ensureAuthenticated(force = false): Promise<void> {
     if (sessionToken && !force) return;
@@ -214,9 +235,20 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
           if (!loginRes.ok) {
             throw new Error(`Fizgig /api/login failed with HTTP ${loginRes.status}`);
           }
-          const setCookie = loginRes.headers.get("set-cookie");
-          if (setCookie) {
-            sessionCookie = setCookie.split(";")[0] ?? "";
+          const rawCookies =
+            typeof loginRes.headers.getSetCookie === "function"
+              ? loginRes.headers.getSetCookie()
+              : [];
+          if (rawCookies.length > 0) {
+            sessionCookie = rawCookies
+              .map((c) => c.split(";")[0]?.trim())
+              .filter(Boolean)
+              .join("; ");
+          } else {
+            const setCookie = loginRes.headers.get("set-cookie");
+            if (setCookie) {
+              sessionCookie = setCookie.split(";")[0] ?? "";
+            }
           }
         }
       } finally {
@@ -227,15 +259,21 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
     return loginPromise;
   }
 
-  async function handleRequest(
+  return async function handleRequest(
     req: IncomingMessage,
     res: ServerResponse,
     next: () => void,
   ): Promise<void> {
-    const url = req.url ?? "/";
+    const rawUrl = req.url ?? "/";
+    let pathname = rawUrl;
+    try {
+      pathname = new URL(rawUrl, "http://localhost").pathname;
+    } catch {
+      pathname = rawUrl.split("?")[0] ?? "/";
+    }
 
     // Local manifest catalog inspection endpoint
-    if (url === "/ui-api/local/bundles" && req.method === "GET") {
+    if (pathname === "/ui-api/local/bundles" && req.method === "GET") {
       try {
         if (!catalogPath || !existsSync(catalogPath)) {
           res.writeHead(200, { "Content-Type": "application/json" });
@@ -274,7 +312,7 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
       return;
     }
 
-    if (!url.startsWith("/api/")) {
+    if (!pathname.startsWith("/api/")) {
       next();
       return;
     }
@@ -283,6 +321,21 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
       await ensureAuthenticated(false);
       const method = req.method ?? "GET";
       const bodyBuf = method !== "GET" && method !== "HEAD" ? await readRequestBody(req) : null;
+
+      // Track cuda_device preference updates when posted
+      if (pathname === "/api/prefs" && method === "POST" && bodyBuf && bodyBuf.length > 0) {
+        try {
+          const parsedBody = JSON.parse(bodyBuf.toString("utf8")) as {
+            changes?: Record<string, unknown>;
+          };
+          const nextCuda = Number(parsedBody.changes?.cuda_device);
+          if (Number.isFinite(nextCuda) && nextCuda >= 0) {
+            activeCudaDeviceIndex = nextCuda;
+          }
+        } catch {
+          // Ignore malformed body
+        }
+      }
 
       for (let attempt = 0; attempt < 2; attempt++) {
         const headers: Record<string, string> = {
@@ -304,7 +357,7 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
           headers["Last-Event-ID"] = lastEventId;
         }
 
-        const upstreamRes = await fetch(`${baseUrl}${url}`, {
+        const upstreamRes = await fetch(`${baseUrl}${rawUrl}`, {
           method,
           headers,
           body: bodyBuf && bodyBuf.length > 0 ? new Uint8Array(bodyBuf) : undefined,
@@ -323,10 +376,10 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
         const upstreamCc = upstreamRes.headers.get("cache-control");
         if (upstreamCc) resHeaders["Cache-Control"] = upstreamCc;
 
-        // Stream SSE or real-time event streams without buffering the entire body
+        // Stream SSE or real-time event streams without buffering
         const isEventStream =
           upstreamCt?.includes("text/event-stream") ||
-          (url.startsWith("/api/log") && upstreamRes.status === 200);
+          (pathname.startsWith("/api/log") && upstreamRes.status === 200);
 
         if (isEventStream && upstreamRes.body) {
           resHeaders["Content-Type"] = upstreamCt || "text/event-stream";
@@ -365,22 +418,41 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
 
         const arrayBuf = await upstreamRes.arrayBuffer();
 
-        // Enrich /api/stats with multi-GPU and CPU load/temperature telemetry
-        if (url === "/api/stats" && upstreamRes.status === 200) {
+        // Sync active cuda_device when /api/prefs is fetched
+        if (pathname === "/api/prefs" && upstreamRes.status === 200) {
+          try {
+            const prefsJson = JSON.parse(new TextDecoder().decode(arrayBuf)) as Record<
+              string,
+              unknown
+            >;
+            const savedCuda = Number(prefsJson.cuda_device);
+            if (Number.isFinite(savedCuda) && savedCuda >= 0) {
+              activeCudaDeviceIndex = savedCuda;
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        // Enrich /api/stats with async multi-GPU and CPU load/temperature telemetry
+        if (pathname === "/api/stats" && upstreamRes.status === 200) {
           try {
             const rawText = new TextDecoder().decode(arrayBuf);
             const data = JSON.parse(rawText) as Record<string, unknown>;
-            const gpus = getCachedGpuStats();
-            const cpu = getCachedCpuStats();
+            const [gpus, cpu] = await Promise.all([
+              getCachedGpuStatsAsync(),
+              Promise.resolve(getCachedCpuStats()),
+            ]);
 
             if (gpus.length > 0) {
               data.gpus = gpus;
-              const primary = gpus[0];
-              if (primary) {
-                data.gpu_util = primary.util;
-                data.gpu_temp = primary.temp;
+              const targetGpu =
+                gpus.find((g) => g.index === activeCudaDeviceIndex) ?? gpus[0] ?? null;
+              if (targetGpu) {
+                data.gpu_util = targetGpu.util;
+                data.gpu_temp = targetGpu.temp;
                 if (!data.device_name || data.device_name === "GPU") {
-                  data.device_name = primary.name;
+                  data.device_name = targetGpu.name;
                 }
               }
             }
@@ -414,7 +486,11 @@ export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
         }),
       );
     }
-  }
+  };
+}
+
+export function fizgigProxyPlugin(options: ProxyOptions = {}): Plugin {
+  const handleRequest = createFizgigRequestHandler(options);
 
   return {
     name: "fizgig-authenticated-proxy",
