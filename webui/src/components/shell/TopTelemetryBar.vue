@@ -2,47 +2,18 @@
 import { computed } from "vue";
 import { Activity, Cpu, HardDrive, Layers } from "lucide-vue-next";
 import { formatBytes } from "@/api/client";
+import { cleanGpuName, gpuVramPercent, resolveAvailableGpus } from "@/utils";
 import { useRunStore } from "@/stores/run";
 
 const runStore = useRunStore();
 
-function cleanGpuName(raw: string): string {
-  return raw
-    .replace(/^NVIDIA\s+/i, "")
-    .replace(/^GeForce\s+/i, "")
-    .trim();
-}
-
-const gpus = computed(() => {
-  if (runStore.stats?.gpus && runStore.stats.gpus.length > 0) {
-    return runStore.stats.gpus;
-  }
-  if (runStore.stats?.vram) {
-    return [
-      {
-        index: 0,
-        name: cleanGpuName(runStore.stats.device_name) || "GPU 0",
-        vram: runStore.stats.vram,
-        util: runStore.stats.gpu_util ?? 0,
-        temp: runStore.stats.gpu_temp ?? 0,
-        power: undefined,
-        power_limit: undefined,
-      },
-    ];
-  }
-  return [];
-});
+const gpus = computed(() => resolveAvailableGpus(runStore.stats));
 
 const ramPercent = computed(() => {
   const r = runStore.stats?.ram;
   if (!r || !r[1]) return 0;
-  return Math.min(100, Math.round((r[0] / r[1]) * 100));
+  return gpuVramPercent(r[0], r[1]);
 });
-
-function gpuVramPercent(used: number, total: number): number {
-  if (!total) return 0;
-  return Math.min(100, Math.round((used / total) * 100));
-}
 </script>
 
 <template>
@@ -59,7 +30,7 @@ function gpuVramPercent(used: number, total: number): number {
         :key="gpu.index"
         class="shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-base-300/80 px-2 py-1"
         :class="gpu.index === 0 ? 'flex' : 'hidden lg:flex'"
-        :title="`${gpu.name} (${gpu.power ? `${gpu.power}W / ${gpu.power_limit}W` : 'Active'})`"
+        :title="`${gpu.name} (${gpu.power ? `${gpu.power}W / ${gpu.powerLimit}W` : 'Active'})`"
       >
         <Cpu
           class="h-3.5 w-3.5 shrink-0"
@@ -74,23 +45,23 @@ function gpuVramPercent(used: number, total: number): number {
         <!-- VRAM Used / Total & Meter -->
         <div class="flex items-center gap-1.5 shrink-0">
           <span class="shrink-0 text-right font-mono text-[11px] text-muted whitespace-nowrap">
-            {{ formatBytes(gpu.vram[0]).replace(" GB", "") }} /
-            {{ formatBytes(gpu.vram[1]).replace(".0 GB", " GB") }}
+            {{ formatBytes(gpu.vramUsedBytes).replace(" GB", "") }} /
+            {{ formatBytes(gpu.vramTotalBytes).replace(".0 GB", " GB") }}
           </span>
           <div
             class="h-2 w-10 min-[1380px]:w-14 shrink-0 overflow-hidden rounded-full border border-white/20 bg-base-100"
-            :title="`VRAM: ${formatBytes(gpu.vram[0])} / ${formatBytes(gpu.vram[1])} (${gpuVramPercent(gpu.vram[0], gpu.vram[1])}%)`"
+            :title="`VRAM: ${formatBytes(gpu.vramUsedBytes)} / ${formatBytes(gpu.vramTotalBytes)} (${gpuVramPercent(gpu.vramUsedBytes, gpu.vramTotalBytes)}%)`"
           >
             <div
               class="h-full rounded-full transition-all duration-300"
               :class="
-                gpuVramPercent(gpu.vram[0], gpu.vram[1]) > 92
+                gpuVramPercent(gpu.vramUsedBytes, gpu.vramTotalBytes) > 92
                   ? 'bg-warning'
                   : gpu.index === 0
                     ? 'bg-primary'
                     : 'bg-accent'
               "
-              :style="{ width: `${gpuVramPercent(gpu.vram[0], gpu.vram[1])}%` }"
+              :style="{ width: `${gpuVramPercent(gpu.vramUsedBytes, gpu.vramTotalBytes)}%` }"
             />
           </div>
         </div>
@@ -122,7 +93,7 @@ function gpuVramPercent(used: number, total: number): number {
         <span
           v-if="gpu.power"
           class="shrink-0 text-right font-mono text-[10px] text-muted whitespace-nowrap"
-          :title="`Power: ${gpu.power}W / ${gpu.power_limit}W`"
+          :title="`Power: ${gpu.power}W / ${gpu.powerLimit}W`"
         >
           {{ gpu.power }}W
         </span>

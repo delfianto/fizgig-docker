@@ -5,6 +5,7 @@ import { Scissors } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { type CaptionEntry, type DatasetSummary } from "@shared/types";
 import { apiGet, apiPost } from "@/api/client";
+import { parseCaptionEntriesResponse } from "@/api/schemas";
 import { BasePillGroup } from "@/components/common";
 import { useSchemaStore } from "@/stores/schema";
 import { useComposerStore } from "@/stores/composer";
@@ -31,11 +32,8 @@ async function loadDatasetCaptions(folderPath: string): Promise<void> {
   if (!folderPath) return;
   loadingCaptions.value = true;
   try {
-    const res = await apiGet<{
-      items?: CaptionEntry[];
-      images?: CaptionEntry[];
-    }>("/api/captions", { folder: folderPath });
-    const list = res.items ?? res.images ?? [];
+    const res = await apiGet<unknown>("/api/captions", { folder: folderPath });
+    const list = parseCaptionEntriesResponse(res);
     entries.value = list;
     const map: Record<string, string> = {};
     for (const item of list) {

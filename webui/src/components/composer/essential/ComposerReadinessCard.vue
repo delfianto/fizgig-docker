@@ -2,6 +2,7 @@
 import { computed, onMounted } from "vue";
 import { AlertTriangle, Cpu } from "lucide-vue-next";
 import { BaseSelect } from "@/components/common";
+import { evaluateVramHeadroom, resolveAvailableGpus } from "@/utils";
 import { useComposerStore } from "@/stores/composer";
 import { useRunStore } from "@/stores/run";
 import { useSystemStore } from "@/stores/system";
@@ -9,17 +10,6 @@ import { useSystemStore } from "@/stores/system";
 const runStore = useRunStore();
 const systemStore = useSystemStore();
 const composerStore = useComposerStore();
-
-interface GpuOption {
-  index: number;
-  name: string;
-  vramUsedBytes: number;
-  vramTotalBytes: number;
-  vramFreeBytes: number;
-  vramUsedGb: number;
-  vramTotalGb: number;
-  vramFreeGb: number;
-}
 
 onMounted(async () => {
   if (!systemStore.prefs.gpus) {
@@ -31,73 +21,7 @@ onMounted(async () => {
   }
 });
 
-const availableGpus = computed<GpuOption[]>(() => {
-  // 1. From enriched runStore.stats?.gpus (real-time telemetry from nvidia-smi)
-  const statGpus = runStore.stats?.gpus;
-  if (Array.isArray(statGpus) && statGpus.length > 0) {
-    return statGpus.map((g) => {
-      const used = g.vram[0] || 0;
-      const total = g.vram[1] || 1;
-      const free = Math.max(0, total - used);
-      return {
-        index: g.index,
-        name: g.name.replace(/^NVIDIA GeForce\s+/, ""),
-        vramUsedBytes: used,
-        vramTotalBytes: total,
-        vramFreeBytes: free,
-        vramUsedGb: Math.round((used / (1024 * 1024 * 1024)) * 10) / 10,
-        vramTotalGb: Math.round(total / (1024 * 1024 * 1024)),
-        vramFreeGb: Math.round((free / (1024 * 1024 * 1024)) * 10) / 10,
-      };
-    });
-  }
-
-  // 2. Fallback to systemStore.prefs?.gpus
-  const prefGpus = (
-    systemStore.prefs as {
-      gpus?: Array<{
-        index: number;
-        name: string;
-        total_gb: number;
-        used_gb: number;
-      }>;
-    }
-  ).gpus;
-  if (Array.isArray(prefGpus) && prefGpus.length > 0) {
-    return prefGpus.map((g) => {
-      const total = (g.total_gb || 16) * 1024 * 1024 * 1024;
-      const used = (g.used_gb || 0) * 1024 * 1024 * 1024;
-      const free = Math.max(0, total - used);
-      return {
-        index: g.index,
-        name: g.name.replace(/^NVIDIA GeForce\s+/, ""),
-        vramUsedBytes: used,
-        vramTotalBytes: total,
-        vramFreeBytes: free,
-        vramUsedGb: Math.round((g.used_gb || 0) * 10) / 10,
-        vramTotalGb: Math.round(g.total_gb || 16),
-        vramFreeGb: Math.round(((g.total_gb || 16) - (g.used_gb || 0)) * 10) / 10,
-      };
-    });
-  }
-
-  // 3. Fallback to primary GPU
-  const used = runStore.stats?.vram?.[0] || 0;
-  const total = runStore.stats?.vram?.[1] || 16 * 1024 * 1024 * 1024;
-  const free = Math.max(0, total - used);
-  return [
-    {
-      index: 0,
-      name: (runStore.stats?.device_name || "NVIDIA RTX 4080").replace(/^NVIDIA GeForce\s+/, ""),
-      vramUsedBytes: used,
-      vramTotalBytes: total,
-      vramFreeBytes: free,
-      vramUsedGb: Math.round((used / (1024 * 1024 * 1024)) * 10) / 10,
-      vramTotalGb: Math.round(total / (1024 * 1024 * 1024)),
-      vramFreeGb: Math.round((free / (1024 * 1024 * 1024)) * 10) / 10,
-    },
-  ];
-});
+const availableGpus = computed(() => resolveAvailableGpus(runStore.stats, systemStore.prefs));
 
 const gpuSelectOptions = computed(() => {
   return availableGpus.value.map((g) => ({
@@ -120,31 +44,7 @@ function onSelectGpu(value: string | number): void {
 
 const estVramGb = computed(() => composerStore.estimatedVramGb);
 
-const vramStatus = computed(() => {
-  if (!selectedGpu.value) {
-    return { ok: true, headroomGb: 4.0, isOomRisk: false, isSevereOom: false };
-  }
-  const total = selectedGpu.value.vramTotalGb;
-  const free = selectedGpu.value.vramFreeGb;
-  const required = estVramGb.value;
-
-  // Headroom against total VRAM minus a 0.8GB system safety margin
-  const usableTotal = Math.max(0, total - 0.8);
-  const headroomVsTotal = Math.round((usableTotal - required) * 10) / 10;
-  const headroomVsFree = Math.round((free - required) * 10) / 10;
-
-  // Severe OOM: required exceeds physical total capacity of the card
-  const isSevereOom = required > usableTotal;
-  // OOM Risk: required exceeds currently free memory, though card total might fit if unloaded
-  const isOomRisk = required > free || isSevereOom;
-
-  return {
-    ok: !isOomRisk,
-    headroomGb: isOomRisk ? headroomVsFree : headroomVsTotal,
-    isOomRisk,
-    isSevereOom,
-  };
-});
+const vramStatus = computed(() => evaluateVramHeadroom(selectedGpu.value, estVramGb.value));
 
 const computeStatus = computed(() => {
   if (vramStatus.value.ok) {

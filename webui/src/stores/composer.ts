@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import { useDebounceFn } from "@vueuse/core";
 import { type FormStateResponse, type PlanValidationResponse } from "@shared/types";
 import { apiGet, apiPost } from "@/api/client";
+import { estimateVramGb } from "@/utils";
 import { useRunStore } from "./run";
 import { useSchemaStore } from "./schema";
 import { useSystemStore } from "./system";
@@ -315,51 +316,7 @@ export const useComposerStore = defineStore("composer", () => {
   }
 
   const estimatedVramGb = computed<number>(() => {
-    const fam = family.value.toLowerCase();
-    let base = 12.0;
-    if (fam.includes("krea2")) {
-      base = 11.5;
-    } else if (fam.includes("flux")) {
-      base = 17.5;
-    } else if (fam.includes("moss") || fam.includes("minimax") || fam.includes("qwen")) {
-      base = 20.0;
-    } else if (
-      fam.includes("chroma") ||
-      fam.includes("sdxl") ||
-      fam.includes("pony") ||
-      fam.includes("illustrious")
-    ) {
-      base = 9.5;
-    } else if (fam.includes("lumina") || fam.includes("auraflow")) {
-      base = 13.5;
-    } else if (fam.includes("hunyuan")) {
-      base = 17.5;
-    } else if (fam.includes("wan")) {
-      base = 15.5;
-    }
-
-    const mp = Number(draftValues.value.DATASET_MEGAPIXELS ?? 1.0);
-    if (mp > 1.0) {
-      base += (mp - 1.0) * 1.5;
-    } else if (mp < 0.5) {
-      base -= 0.8;
-    }
-
-    const dim = Number(draftValues.value.NETWORK_DIM ?? 16);
-    if (dim >= 64) {
-      base += 1.6;
-    } else if (dim > 32) {
-      base += 0.8;
-    } else if (dim <= 8) {
-      base -= 0.5;
-    }
-
-    const batch = Number(draftValues.value.BATCH_SIZE ?? 1);
-    if (batch > 1) {
-      base += (batch - 1) * 2.0;
-    }
-
-    return Math.round(base * 10) / 10;
+    return estimateVramGb(family.value, draftValues.value);
   });
 
   async function setSelectedGpu(index: number): Promise<void> {

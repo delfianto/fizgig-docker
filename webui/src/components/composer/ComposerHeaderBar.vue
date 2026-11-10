@@ -15,9 +15,11 @@ import { type DatasetSummary } from "@shared/types";
 import BaseButton from "@/components/common/BaseButton.vue";
 import BasePillGroup from "@/components/common/BasePillGroup.vue";
 import BaseSelect from "@/components/common/BaseSelect.vue";
+import { evaluateVramHeadroom, resolveAvailableGpus } from "@/utils";
 import { useComposerStore } from "@/stores/composer";
 import { useRunStore } from "@/stores/run";
 import { useSchemaStore } from "@/stores/schema";
+import { useSystemStore } from "@/stores/system";
 
 const props = withDefaults(
   defineProps<{
@@ -41,42 +43,15 @@ const emit = defineEmits<{
 const schemaStore = useSchemaStore();
 const composerStore = useComposerStore();
 const runStore = useRunStore();
+const systemStore = useSystemStore();
 
 const selectedGpu = computed(() => {
-  const statGpus = runStore.stats?.gpus;
-  if (Array.isArray(statGpus) && statGpus.length > 0) {
-    const found = statGpus.find((g) => g.index === composerStore.selectedGpuIndex);
-    if (found) {
-      const freeGb =
-        Math.round(
-          (Math.max(0, (found.vram[1] || 0) - (found.vram[0] || 0)) / (1024 * 1024 * 1024)) * 10,
-        ) / 10;
-      const totalGb = Math.round((found.vram[1] || 0) / (1024 * 1024 * 1024));
-      return {
-        name: found.name.replace(/^NVIDIA GeForce\s+/, ""),
-        index: found.index,
-        freeGb,
-        totalGb,
-      };
-    }
-  }
-  return null;
+  const gpus = resolveAvailableGpus(runStore.stats, systemStore.prefs);
+  return gpus.find((g) => g.index === composerStore.selectedGpuIndex) ?? gpus[0] ?? null;
 });
 
 const vramStatus = computed(() => {
-  if (!selectedGpu.value) return { ok: true, isOomRisk: false };
-  const free = selectedGpu.value.freeGb;
-  const total = selectedGpu.value.totalGb;
-  const required = composerStore.estimatedVramGb;
-  const usableTotal = Math.max(0, total - 0.8);
-  const isSevereOom = required > usableTotal;
-  const isOomRisk = required > free || isSevereOom;
-  return {
-    ok: !isOomRisk,
-    isOomRisk,
-    isSevereOom,
-    headroomGb: Math.round((usableTotal - required) * 10) / 10,
-  };
+  return evaluateVramHeadroom(selectedGpu.value, composerStore.estimatedVramGb);
 });
 
 const headerStatusMessage = computed(() => {
@@ -101,7 +76,7 @@ const headerStatusMessage = computed(() => {
     return {
       kind: "warning",
       title: "High OOM Risk",
-      text: `Est. ~${composerStore.estimatedVramGb} GB exceeds free ${selectedGpu.value.freeGb} GB on ${selectedGpu.value.name}.`,
+      text: `Est. ~${composerStore.estimatedVramGb} GB exceeds free ${selectedGpu.value.vramFreeGb} GB on ${selectedGpu.value.name}.`,
     };
   }
 

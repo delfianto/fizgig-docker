@@ -10,11 +10,14 @@ import { useComposerStore } from "@/stores/composer";
 import { usePlanOverlayStore } from "@/stores/overlay";
 import { useRunStore } from "@/stores/run";
 import { useSchemaStore } from "@/stores/schema";
+import { useSystemStore } from "@/stores/system";
+import { resolveAvailableGpus } from "@/utils";
 
 const router = useRouter();
 const schemaStore = useSchemaStore();
 const composerStore = useComposerStore();
 const runStore = useRunStore();
+const systemStore = useSystemStore();
 const planOverlay = usePlanOverlayStore();
 
 const composerMode = ref<"essential" | "expert">("essential");
@@ -41,12 +44,10 @@ const currentPresetNote = computed(() => {
 });
 
 const selectedGpuName = computed(() => {
-  const statGpus = runStore.stats?.gpus;
-  if (Array.isArray(statGpus)) {
-    const found = statGpus.find((g) => g.index === composerStore.selectedGpuIndex);
-    if (found) {
-      return `${found.name.replace(/^NVIDIA GeForce\s+/, "")} (GPU ${found.index})`;
-    }
+  const gpus = resolveAvailableGpus(runStore.stats, systemStore.prefs);
+  const found = gpus.find((g) => g.index === composerStore.selectedGpuIndex);
+  if (found) {
+    return `${found.name} (GPU ${found.index})`;
   }
   return `GPU ${composerStore.selectedGpuIndex}`;
 });

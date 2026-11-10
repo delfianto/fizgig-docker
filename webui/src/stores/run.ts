@@ -6,11 +6,15 @@ import {
   type HistoricalRun,
   type LiveRunResponse,
   type LossDataPoint,
-  type RunLossResponse,
   type SampleItem,
-  type SamplesResponse,
 } from "@shared/types";
 import { apiGet, apiPost } from "@/api/client";
+import {
+  parseCheckpointsResponse,
+  parseHistoricalRunsResponse,
+  parseLossResponse,
+  parseSamplesResponse,
+} from "@/api/schemas";
 
 export const useRunStore = defineStore("run", () => {
   const run = ref<LiveRunResponse | null>(null);
@@ -83,38 +87,11 @@ export const useRunStore = defineStore("run", () => {
         (!run.value?.running && historicalRuns.value[0]?.id
           ? historicalRuns.value[0].id
           : undefined);
-      const res = await apiGet<RunLossResponse>(
+      const res = await apiGet<unknown>(
         "/api/runs/loss",
         targetId ? { id: targetId } : { live: 1 },
       );
-      const parsed: LossDataPoint[] = [];
-      if (Array.isArray(res.points)) {
-        for (const item of res.points) {
-          if (Array.isArray(item)) {
-            const [step, epoch, loss, lr] = item;
-            if (typeof step === "number" && typeof loss === "number") {
-              parsed.push({ step, loss, epoch, lr });
-            }
-          } else if (
-            item &&
-            typeof item === "object" &&
-            typeof item.step === "number" &&
-            typeof item.loss === "number"
-          ) {
-            parsed.push(item);
-          }
-        }
-      } else if (Array.isArray(res.steps) && Array.isArray(res.losses)) {
-        const len = Math.min(res.steps.length, res.losses.length);
-        for (let i = 0; i < len; i++) {
-          const step = res.steps[i];
-          const loss = res.losses[i];
-          if (typeof step === "number" && typeof loss === "number") {
-            parsed.push({ step, loss, lr: res.lr?.[i] });
-          }
-        }
-      }
-      lossPoints.value = parsed;
+      lossPoints.value = parseLossResponse(res);
     } catch {
       // Keep existing points
     }
@@ -125,13 +102,14 @@ export const useRunStore = defineStore("run", () => {
     const runName = customRun ?? activeLoraName.value;
     if (!runName) return;
     try {
-      const res = await apiGet<SamplesResponse>("/api/samples", {
+      const res = await apiGet<unknown>("/api/samples", {
         dir,
         run: runName,
       });
-      samples.value = res.items ?? [];
-      samplePrompts.value = res.prompts ?? [];
-      sampleModeNote.value = res.mode ?? "";
+      const parsed = parseSamplesResponse(res);
+      samples.value = parsed.items;
+      samplePrompts.value = parsed.prompts ?? [];
+      sampleModeNote.value = parsed.mode ?? "";
     } catch {
       // Ignore if sample dir doesn't exist yet
     }
@@ -140,8 +118,8 @@ export const useRunStore = defineStore("run", () => {
   async function fetchCheckpoints(customDir?: string): Promise<void> {
     const dir = customDir ?? activeOutputDir.value;
     try {
-      const res = await apiGet<{ items?: CheckpointItem[] }>("/api/checkpoints", { dir });
-      const all = res.items ?? [];
+      const res = await apiGet<unknown>("/api/checkpoints", { dir });
+      const all = parseCheckpointsResponse(res);
       checkpoints.value = activeLoraName.value
         ? all.filter((item) => item.run === activeLoraName.value)
         : all;
@@ -152,8 +130,8 @@ export const useRunStore = defineStore("run", () => {
 
   async function fetchHistoricalRuns(): Promise<void> {
     try {
-      const res = await apiGet<{ runs?: HistoricalRun[] }>("/api/runs");
-      historicalRuns.value = res.runs ?? [];
+      const res = await apiGet<unknown>("/api/runs");
+      historicalRuns.value = parseHistoricalRunsResponse(res);
     } catch {
       // Ignore
     }

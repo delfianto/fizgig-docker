@@ -7,6 +7,7 @@ import {
   type SchemaRow,
 } from "@shared/types";
 import { apiGet } from "@/api/client";
+import { parseDatasetsResponse } from "@/api/schemas";
 
 const SUPPRESSED_KEYS = new Set([
   "__SAMPLE_LIVE",
@@ -53,12 +54,8 @@ export const useSchemaStore = defineStore("schema", () => {
 
   async function fetchDatasets(): Promise<void> {
     try {
-      const res = await apiGet<{ datasets?: DatasetSummary[] }>("/api/datasets");
-      datasets.value = (res.datasets ?? []).map((d) => {
-        d.count = d.count ?? d.pictures ?? 0;
-        d.captioned = d.captioned ?? 0;
-        return d;
-      });
+      const res = await apiGet<unknown>("/api/datasets");
+      datasets.value = parseDatasetsResponse(res);
     } catch {
       // Keep previous list on transient error
     }
