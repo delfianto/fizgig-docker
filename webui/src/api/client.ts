@@ -12,7 +12,8 @@ export async function apiGet<T>(
   path: string,
   params?: Record<string, string | number | boolean | undefined>,
 ): Promise<T> {
-  const url = new URL(path, window.location.origin);
+  const baseOrigin = typeof window !== "undefined" ? window.location.origin : "http://127.0.0.1";
+  const url = new URL(path, baseOrigin);
   if (params) {
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined) {

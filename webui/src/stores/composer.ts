@@ -23,41 +23,44 @@ export function deepClone<T>(obj: T): T {
   }
 }
 
+function canonicalizeJson(val: unknown): string {
+  if (val === null || typeof val !== "object") {
+    return JSON.stringify(val);
+  }
+  if (Array.isArray(val)) {
+    return `[${val.map((item) => canonicalizeJson(item)).join(",")}]`;
+  }
+  const entries = Object.entries(val as Record<string, unknown>)
+    .filter(([, v]) => v !== undefined)
+    .toSorted(([a], [b]) => a.localeCompare(b));
+  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalizeJson(v)}`).join(",")}}`;
+}
+
 export function isValueEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (a === undefined && b === undefined) return true;
   if (a === null && b === null) return true;
 
-  // Normalize booleans (handles true vs "true", 1 vs true, false vs "false", "0" vs false, etc.)
-  const isBoolLikeA =
-    typeof a === "boolean" ||
-    a === "true" ||
-    a === "false" ||
-    a === 1 ||
-    a === 0 ||
-    a === "1" ||
-    a === "0";
-  const isBoolLikeB =
-    typeof b === "boolean" ||
-    b === "true" ||
-    b === "false" ||
-    b === 1 ||
-    b === 0 ||
-    b === "1" ||
-    b === "0";
-  if (
-    isBoolLikeA &&
-    isBoolLikeB &&
-    (typeof a === "boolean" ||
-      typeof b === "boolean" ||
-      a === "true" ||
-      a === "false" ||
-      b === "true" ||
-      b === "false")
-  ) {
-    const boolA = a === true || a === "true" || a === 1 || a === "1";
-    const boolB = b === true || b === "true" || b === 1 || b === "1";
+  // Normalize booleans strictly between actual booleans and string "true"/"false"
+  const isExplicitBoolA = typeof a === "boolean" || a === "true" || a === "false";
+  const isExplicitBoolB = typeof b === "boolean" || b === "true" || b === "false";
+  if (isExplicitBoolA && isExplicitBoolB) {
+    const boolA = a === true || a === "true";
+    const boolB = b === true || b === "true";
     return boolA === boolB;
+  }
+
+  // Deep comparison for objects/dictionaries (key-order independent, e.g. TRAINING_BLOCKS)
+  if (typeof a === "object" && typeof b === "object" && a !== null && b !== null) {
+    try {
+      return canonicalizeJson(a) === canonicalizeJson(b);
+    } catch {
+      return false;
+    }
+  }
+
+  if (typeof a === "boolean" || typeof b === "boolean") {
+    return false;
   }
 
   // Normalize numeric & scientific notation (e.g. 0.0001 <-> 1e-4, 1 <-> 1.0, 30 <-> "30")
@@ -70,15 +73,6 @@ export function isValueEqual(a: unknown, b: unknown): boolean {
     const numB = Number(strB);
     if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
       return numA === numB;
-    }
-  }
-
-  // Deep comparison for objects/dictionaries (e.g. blocks)
-  if (typeof a === "object" && typeof b === "object" && a !== null && b !== null) {
-    try {
-      return JSON.stringify(a) === JSON.stringify(b);
-    } catch {
-      return false;
     }
   }
 

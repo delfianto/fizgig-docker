@@ -1,34 +1,74 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { Search, Sliders, ToggleRight, X } from "lucide-vue-next";
 import { type SchemaRow, type SchemaSection } from "@shared/types";
 import { BaseInput } from "@/components/common";
 import SchemaField from "@/components/schema/SchemaField.vue";
 import { useComposerStore } from "@/stores/composer";
+import { SUPPRESSED_KEYS } from "@/stores/schema";
 
 const composerStore = useComposerStore();
 
+const paramFilter = ref("");
+
+const hiddenKeySet = computed(() => new Set(composerStore.formState.hidden ?? []));
+
+function isRowVisible(row: SchemaRow | null): row is SchemaRow {
+  if (!row || !row.key) return false;
+  if (SUPPRESSED_KEYS.has(row.key)) return false;
+  if (hiddenKeySet.value.has(row.key)) return false;
+  return true;
+}
+
+interface VisibleSection {
+  section: SchemaSection;
+  rows: SchemaRow[];
+}
+
+const visibleSections = computed<VisibleSection[]>(() => {
+  const raw = composerStore.currentFamilyDesc?.form.sections ?? [];
+  const out: VisibleSection[] = [];
+  for (const sec of raw) {
+    const rows = sec.rows.filter(isRowVisible);
+    // Keep sections that have at least one non-note parameter row
+    const hasInteractiveRow = rows.some((r) => r.kind !== "note");
+    if (rows.length > 0 && hasInteractiveRow) {
+      out.push({ section: sec, rows });
+    }
+  }
+  return out;
+});
+
 const selectedSectionIndex = computed({
-  get: () => composerStore.selectedSectionIndex,
+  get: () => {
+    const maxIdx = Math.max(0, visibleSections.value.length - 1);
+    return Math.min(composerStore.selectedSectionIndex, maxIdx);
+  },
   set: (val: number) => {
     composerStore.selectedSectionIndex = val;
   },
 });
-const paramFilter = ref("");
 
-const sections = computed<SchemaSection[]>(() => {
-  return composerStore.currentFamilyDesc?.form.sections ?? [];
+watch(
+  () => visibleSections.value.length,
+  (len) => {
+    if (len > 0 && composerStore.selectedSectionIndex >= len) {
+      composerStore.selectedSectionIndex = 0;
+    }
+  },
+);
+
+const currentVisibleSection = computed<VisibleSection | null>(() => {
+  if (visibleSections.value.length === 0) return null;
+  return visibleSections.value[selectedSectionIndex.value] ?? visibleSections.value[0] ?? null;
 });
 
-const currentSection = computed<SchemaSection | null>(() => {
-  if (sections.value.length === 0) return null;
-  return sections.value[selectedSectionIndex.value] ?? sections.value[0] ?? null;
-});
-
-function modifiedCountInSection(sec: SchemaSection): number {
+function modifiedCountInSection(rows: SchemaRow[]): number {
   let count = 0;
-  for (const r of sec.rows) {
-    if (r && r.key && composerStore.modifiedKeys.has(r.key)) {
+  for (const r of rows) {
+    if (composerStore.modifiedKeys.has(r.key)) {
+      count++;
+    } else if (r.parts?.some((p) => p.key && composerStore.modifiedKeys.has(p.key))) {
       count++;
     }
   }
@@ -39,20 +79,19 @@ function shouldSpanFull(row: SchemaRow): boolean {
   if (row.kind === "note") return true;
   if (row.kind === "text") return true;
   if (row.kind === "blocks") return true;
+  if (row.kind === "cadence" || row.kind === "split") return true;
   if (row.kind === "folder" || row.kind === "path") return true;
   if (row.kind === "radio" && (row.choices?.length ?? 0) > 2) return true;
   return false;
 }
 
-// All rows across all sections if searching globally, or rows of the current section
+// All visible rows across all sections if searching globally, or rows of the current visible section
 const displayedRows = computed<SchemaRow[]>(() => {
   const query = paramFilter.value.trim().toLowerCase();
   if (query) {
-    // Global search across all sections
     const matches: SchemaRow[] = [];
-    for (const sec of sections.value) {
-      for (const r of sec.rows) {
-        if (!r || !r.key) continue;
+    for (const { rows } of visibleSections.value) {
+      for (const r of rows) {
         const keyMatch = r.key.toLowerCase().includes(query);
         const labelMatch = r.label ? r.label.toLowerCase().includes(query) : false;
         const hintMatch = r.hint ? r.hint.toLowerCase().includes(query) : false;
@@ -64,9 +103,7 @@ const displayedRows = computed<SchemaRow[]>(() => {
     return matches;
   }
 
-  // Current section rows
-  if (!currentSection.value) return [];
-  return currentSection.value.rows.filter((r): r is SchemaRow => r !== null && Boolean(r.key));
+  return currentVisibleSection.value?.rows ?? [];
 });
 
 const toggleRows = computed<SchemaRow[]>(() => {
@@ -102,16 +139,16 @@ const activeToggleCount = computed(() => {
         class="mb-2 px-2 pt-1 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted"
       >
         <span>Expert Sections</span>
-        <span class="badge badge-xs font-mono font-normal">{{ sections.length }}</span>
+        <span class="badge badge-xs font-mono font-normal">{{ visibleSections.length }}</span>
       </div>
 
-      <div v-if="sections.length === 0" class="py-6 text-center text-xs text-muted">
+      <div v-if="visibleSections.length === 0" class="py-6 text-center text-xs text-muted">
         Loading schema sections...
       </div>
 
       <button
-        v-for="(sec, idx) in sections"
-        :key="sec.title || idx"
+        v-for="({ section: sec, rows }, idx) in visibleSections"
+        :key="sec.id || sec.title || idx"
         type="button"
         class="flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition cursor-pointer"
         :class="
@@ -126,11 +163,11 @@ const activeToggleCount = computed(() => {
       >
         <span class="truncate">{{ sec.title || `Section ${idx + 1}` }}</span>
         <span
-          v-if="modifiedCountInSection(sec) > 0"
+          v-if="modifiedCountInSection(rows) > 0"
           class="badge badge-xs font-mono"
           :class="selectedSectionIndex === idx && !paramFilter ? 'badge-warning' : 'badge-primary'"
         >
-          {{ modifiedCountInSection(sec) }}
+          {{ modifiedCountInSection(rows) }}
         </span>
       </button>
     </aside>
@@ -149,7 +186,11 @@ const activeToggleCount = computed(() => {
               <Sliders class="h-3.5 w-3.5" />
             </div>
             <h2 class="text-sm font-bold tracking-tight text-base-content truncate">
-              {{ paramFilter ? `Search Results ("${paramFilter}")` : currentSection?.title }}
+              {{
+                paramFilter
+                  ? `Search Results ("${paramFilter}")`
+                  : currentVisibleSection?.section.title
+              }}
             </h2>
             <span class="badge badge-sm badge-neutral font-mono text-[11px] shrink-0">
               {{ displayedRows.length }} params
@@ -158,13 +199,13 @@ const activeToggleCount = computed(() => {
           <p class="text-xs text-muted pl-8.5 leading-relaxed">
             {{
               paramFilter
-                ? `Found ${displayedRows.length} parameter(s) matching "${paramFilter}" across all sections.`
-                : `Fine-tune underlying hyperparameters for ${composerStore.family} while preserving recipe baseline defaults.`
+                ? `Found ${displayedRows.length} parameter(s) matching "${paramFilter}" across active sections.`
+                : `Fine-tune active ${composerStore.formState.kind || "standard"} hyperparameters for ${composerStore.family} while preserving recipe baseline defaults.`
             }}
           </p>
         </div>
 
-        <!-- Taller, Centered Search Input with Clear Action -->
+        <!-- Search Input with Clear Action -->
         <div class="w-72 sm:w-80 shrink-0">
           <BaseInput
             v-model="paramFilter"
@@ -216,7 +257,7 @@ const activeToggleCount = computed(() => {
                   </div>
                   <div>
                     <h3 class="text-xs font-bold uppercase tracking-wider text-base-content">
-                      Feature Toggles & Execution Flags
+                      Feature Toggles &amp; Execution Flags
                     </h3>
                   </div>
                   <span
@@ -227,12 +268,11 @@ const activeToggleCount = computed(() => {
                   </span>
                 </div>
                 <span class="text-[11px] text-muted hidden sm:inline">
-                  Shortened labels · Full descriptions & live recommendations in
+                  Shortened labels · Full descriptions &amp; live recommendations in
                   <span class="font-semibold text-primary">?</span>
                 </span>
               </div>
 
-              <!-- Compact, non-empty, beautifully balanced toggle grid -->
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 <div
                   v-for="r in toggleRows"
@@ -251,7 +291,7 @@ const activeToggleCount = computed(() => {
               </div>
             </div>
 
-            <!-- 2. Standard Hyperparameters Grid (Inputs, Selects, Sliders, Blocks) -->
+            <!-- 2. Standard Hyperparameters Grid (Inputs, Selects, Combos, Cadence, Blocks) -->
             <div
               v-if="standardRows.length > 0"
               class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5"

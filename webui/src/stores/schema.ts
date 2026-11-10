@@ -9,7 +9,7 @@ import {
 import { apiGet } from "@/api/client";
 import { parseDatasetsResponse } from "@/api/schemas";
 
-const SUPPRESSED_KEYS = new Set([
+export const SUPPRESSED_KEYS = new Set([
   "__SAMPLE_LIVE",
   "_when_read",
   "_overtrain_tip",

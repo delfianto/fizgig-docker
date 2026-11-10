@@ -14,6 +14,11 @@ export type RowKind =
   | "text"
   | null;
 
+export interface SchemaBlockGroup {
+  label: string;
+  blocks: Array<{ id: string; label: string }>;
+}
+
 export interface SchemaRow {
   key: string;
   label: string;
@@ -21,7 +26,7 @@ export interface SchemaRow {
   hint?: string;
   choices?: string[];
   labels?: Record<string, string>;
-  default?: string | number | boolean;
+  default?: string | number | boolean | Record<string, unknown>;
   suffix?: string;
   group?: string;
   group_label?: string;
@@ -31,8 +36,15 @@ export interface SchemaRow {
     label?: string;
     default?: string | number | boolean;
   }>;
+  tick_fills?: Record<string, string | number | boolean>;
+  groups?: SchemaBlockGroup[];
+  areas?: Record<string, string[]>;
+  single?: string;
+  slide?: string[];
+  slide_hint?: string;
+  sets_training_folder?: boolean;
   sets?: Record<string, Record<string, unknown>>;
-  option?: string;
+  option?: string | boolean;
   action?: string;
 }
 
