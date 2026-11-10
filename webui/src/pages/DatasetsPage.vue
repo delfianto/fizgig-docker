@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { Scissors } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { type CaptionEntry, type DatasetSummary } from "@shared/types";
@@ -13,11 +13,32 @@ import DatasetCaptionStudio from "@/components/datasets/DatasetCaptionStudio.vue
 import DatasetImagePrep from "@/components/datasets/DatasetImagePrep.vue";
 import DatasetSidebar from "@/components/datasets/DatasetSidebar.vue";
 
+const route = useRoute();
 const router = useRouter();
 const schemaStore = useSchemaStore();
 const composerStore = useComposerStore();
 
-const activeSubTab = ref<"captions" | "prep">("captions");
+const activeSubTab = ref<"captions" | "prep">(route.query.tab === "prep" ? "prep" : "captions");
+
+watch(
+  () => route.query.tab,
+  (qTab) => {
+    activeSubTab.value = qTab === "prep" ? "prep" : "captions";
+  },
+);
+
+watch(activeSubTab, (tab) => {
+  const cur = route.query.tab === "prep" ? "prep" : "captions";
+  if (cur !== tab) {
+    const nextQuery = { ...route.query };
+    if (tab === "captions") {
+      delete nextQuery.tab;
+    } else {
+      nextQuery.tab = tab;
+    }
+    void router.replace({ query: nextQuery });
+  }
+});
 const selectedFolder = ref<string>("");
 const loadingCaptions = ref(false);
 const entries = ref<CaptionEntry[]>([]);

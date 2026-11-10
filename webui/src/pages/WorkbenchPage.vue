@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 import { type CheckpointItem } from "@shared/types";
 import { apiGet } from "@/api/client";
@@ -10,10 +11,39 @@ import WorkbenchHeaderBar from "@/components/workbench/WorkbenchHeaderBar.vue";
 import WorkbenchLoraRoyale from "@/components/workbench/WorkbenchLoraRoyale.vue";
 import WorkbenchMetadataInspector from "@/components/workbench/WorkbenchMetadataInspector.vue";
 
+const route = useRoute();
+const router = useRouter();
 const runStore = useRunStore();
 
-const activeTool = ref<"studio" | "royale" | "profiler" | "metadata">("studio");
+type WorkbenchTool = "studio" | "royale" | "profiler" | "metadata";
+
+function parseWorkbenchTool(raw: unknown): WorkbenchTool {
+  if (raw === "royale" || raw === "profiler" || raw === "metadata") return raw;
+  return "studio";
+}
+
+const activeTool = ref<WorkbenchTool>(parseWorkbenchTool(route.query.tool));
 const selectedLoraPath = ref<string>("");
+
+watch(
+  () => route.query.tool,
+  (qTool) => {
+    activeTool.value = parseWorkbenchTool(qTool);
+  },
+);
+
+watch(activeTool, (tool) => {
+  const cur = parseWorkbenchTool(route.query.tool);
+  if (cur !== tool) {
+    const nextQuery = { ...route.query };
+    if (tool === "studio") {
+      delete nextQuery.tool;
+    } else {
+      nextQuery.tool = tool;
+    }
+    void router.replace({ query: nextQuery });
+  }
+});
 
 // Metadata Inspector state
 const metadataJson = ref<Record<string, unknown> | null>(null);
@@ -60,6 +90,9 @@ onMounted(async () => {
     selectedLoraPath.value = runStore.allCheckpoints[0]!.path;
   }
   await loadProfilerAndRoyale();
+  if (activeTool.value === "metadata" && selectedLoraPath.value) {
+    await inspectSafetensorsMetadata();
+  }
 });
 </script>
 

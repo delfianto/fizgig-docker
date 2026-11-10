@@ -8,9 +8,14 @@ export class ApiError extends Error {
   }
 }
 
+export interface ApiRequestOptions {
+  signal?: AbortSignal;
+}
+
 export async function apiGet<T>(
   path: string,
   params?: Record<string, string | number | boolean | undefined>,
+  options?: ApiRequestOptions,
 ): Promise<T> {
   const baseOrigin = typeof window !== "undefined" ? window.location.origin : "http://127.0.0.1";
   const url = new URL(path, baseOrigin);
@@ -24,6 +29,7 @@ export async function apiGet<T>(
   const response = await fetch(url.toString(), {
     method: "GET",
     headers: { Accept: "application/json" },
+    signal: options?.signal,
   });
   const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok || typeof data.error === "string") {
@@ -35,7 +41,11 @@ export async function apiGet<T>(
   return data as T;
 }
 
-export async function apiPost<T>(path: string, body: Record<string, unknown> = {}): Promise<T> {
+export async function apiPost<T>(
+  path: string,
+  body: Record<string, unknown> = {},
+  options?: ApiRequestOptions,
+): Promise<T> {
   const response = await fetch(path, {
     method: "POST",
     headers: {
@@ -43,6 +53,7 @@ export async function apiPost<T>(path: string, body: Record<string, unknown> = {
       Accept: "application/json",
     },
     body: JSON.stringify(body),
+    signal: options?.signal,
   });
   const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok || typeof data.error === "string") {

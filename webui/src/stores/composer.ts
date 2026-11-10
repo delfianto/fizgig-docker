@@ -124,17 +124,30 @@ export const useComposerStore = defineStore("composer", () => {
     return modified;
   });
 
+  let formStateReqSeq = 0;
+  let formStateAbort: AbortController | null = null;
+
   const refreshFormState = useDebounceFn(async () => {
     if (!family.value) return;
+    formStateAbort?.abort();
+    const controller = new AbortController();
+    formStateAbort = controller;
+    const reqId = ++formStateReqSeq;
     try {
-      const res = await apiPost<FormStateResponse>("/api/form/state", {
-        family: family.value,
-        values: draftValues.value,
-        image_folder: imageFolder.value,
-      });
-      formState.value = res;
+      const res = await apiPost<FormStateResponse>(
+        "/api/form/state",
+        {
+          family: family.value,
+          values: draftValues.value,
+          image_folder: imageFolder.value,
+        },
+        { signal: controller.signal },
+      );
+      if (reqId === formStateReqSeq) {
+        formState.value = res;
+      }
     } catch {
-      // Keep previous formState on transient error
+      // Keep previous formState on aborted or transient error
     }
   }, 220);
 

@@ -46,8 +46,16 @@ function handleGlobalKeydown(e: KeyboardEvent): void {
   }
 }
 
+function handleVisibilityChange(): void {
+  if (typeof document !== "undefined" && document.visibilityState === "visible") {
+    void runStore.pollRun();
+    void runStore.pollStats();
+  }
+}
+
 onMounted(async () => {
   window.addEventListener("keydown", handleGlobalKeydown);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
 
   await Promise.all([
     schemaStore.fetchSchema(),
@@ -70,6 +78,9 @@ onMounted(async () => {
   composerStore.ensureValidDatasetSelected();
 
   pollTimer = setInterval(() => {
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+      return;
+    }
     void runStore.pollRun();
     void runStore.pollStats();
   }, 2000);
@@ -77,6 +88,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener("keydown", handleGlobalKeydown);
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
   if (pollTimer) {
     clearInterval(pollTimer);
     pollTimer = null;

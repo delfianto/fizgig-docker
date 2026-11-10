@@ -70,21 +70,32 @@ export const useRunStore = defineStore("run", () => {
     return best;
   });
 
+  let pollingRun = false;
+  let pollingStats = false;
+
   async function pollRun(): Promise<void> {
+    if (pollingRun) return;
+    pollingRun = true;
     try {
       const data = await apiGet<LiveRunResponse>("/api/run");
       run.value = data;
       lastError.value = null;
     } catch (err) {
       lastError.value = err instanceof Error ? err.message : "Failed to poll /api/run";
+    } finally {
+      pollingRun = false;
     }
   }
 
   async function pollStats(): Promise<void> {
+    if (pollingStats) return;
+    pollingStats = true;
     try {
       stats.value = await apiGet<GpuStatsResponse>("/api/stats");
     } catch {
       // Ignore transient telemetry hiccups
+    } finally {
+      pollingStats = false;
     }
   }
 
@@ -152,12 +163,24 @@ export const useRunStore = defineStore("run", () => {
   }
 
   let logSource: EventSource | null = null;
+  let logReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let logReconnectAttempts = 0;
+  let logStreamDesired = false;
 
   function startLogStream(): void {
-    if (logSource) return;
+    logStreamDesired = true;
+    if (logSource || typeof EventSource === "undefined") return;
+    if (logReconnectTimer) {
+      clearTimeout(logReconnectTimer);
+      logReconnectTimer = null;
+    }
     try {
       logSource = new EventSource(`/api/log?since=${logBytePos.value}`);
+      logSource.addEventListener("open", () => {
+        logReconnectAttempts = 0;
+      });
       logSource.addEventListener("message", (event) => {
+        logReconnectAttempts = 0;
         try {
           const text = JSON.parse(event.data);
           if (typeof text === "string") {
@@ -173,6 +196,16 @@ export const useRunStore = defineStore("run", () => {
       logSource.addEventListener("error", () => {
         logSource?.close();
         logSource = null;
+        if (logStreamDesired && isActiveOrStarting.value) {
+          const delayMs = Math.min(10_000, 1500 * 2 ** logReconnectAttempts);
+          logReconnectAttempts = Math.min(5, logReconnectAttempts + 1);
+          logReconnectTimer = setTimeout(() => {
+            logReconnectTimer = null;
+            if (logStreamDesired) {
+              startLogStream();
+            }
+          }, delayMs);
+        }
       });
     } catch {
       // ignore
@@ -180,6 +213,12 @@ export const useRunStore = defineStore("run", () => {
   }
 
   function stopLogStream(): void {
+    logStreamDesired = false;
+    logReconnectAttempts = 0;
+    if (logReconnectTimer) {
+      clearTimeout(logReconnectTimer);
+      logReconnectTimer = null;
+    }
     if (logSource) {
       logSource.close();
       logSource = null;

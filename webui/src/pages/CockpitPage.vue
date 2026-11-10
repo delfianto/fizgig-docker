@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { Activity, Eye, History, ListOrdered, RefreshCw } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { type HistoricalRun } from "@shared/types";
@@ -18,11 +18,37 @@ import { splitSamplePrompts } from "@/utils";
 import { useComposerStore } from "@/stores/composer";
 import { useRunStore } from "@/stores/run";
 
+const route = useRoute();
 const router = useRouter();
 const runStore = useRunStore();
 const composerStore = useComposerStore();
 
-const activeSubView = ref<"live" | "queue" | "history">("live");
+function parseCockpitTab(raw: unknown): "live" | "queue" | "history" {
+  if (raw === "queue" || raw === "history") return raw;
+  return "live";
+}
+
+const activeSubView = ref<"live" | "queue" | "history">(parseCockpitTab(route.query.tab));
+
+watch(
+  () => route.query.tab,
+  (qTab) => {
+    activeSubView.value = parseCockpitTab(qTab);
+  },
+);
+
+watch(activeSubView, (tab) => {
+  const currentQ = parseCockpitTab(route.query.tab);
+  if (currentQ !== tab) {
+    const nextQuery = { ...route.query };
+    if (tab === "live") {
+      delete nextQuery.tab;
+    } else {
+      nextQuery.tab = tab;
+    }
+    void router.replace({ query: nextQuery });
+  }
+});
 const highlightedEpoch = ref<number | null>(null);
 const overrideDrawerOpen = ref(false);
 const inspectingHistoricalRun = ref<HistoricalRun | null>(null);

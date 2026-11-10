@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 import ComposerEssentialStudio from "@/components/composer/ComposerEssentialStudio.vue";
 import ComposerExpertTuning from "@/components/composer/ComposerExpertTuning.vue";
@@ -13,6 +13,7 @@ import { useSchemaStore } from "@/stores/schema";
 import { useSystemStore } from "@/stores/system";
 import { resolveAvailableGpus } from "@/utils";
 
+const route = useRoute();
 const router = useRouter();
 const schemaStore = useSchemaStore();
 const composerStore = useComposerStore();
@@ -20,9 +21,31 @@ const runStore = useRunStore();
 const systemStore = useSystemStore();
 const planOverlay = usePlanOverlayStore();
 
-const composerMode = ref<"essential" | "expert">("essential");
+const composerMode = ref<"essential" | "expert">(
+  route.query.mode === "expert" ? "expert" : "essential",
+);
 const showQueueModal = ref(false);
 const isSubmittingQueue = ref(false);
+
+watch(
+  () => route.query.mode,
+  (qMode) => {
+    composerMode.value = qMode === "expert" ? "expert" : "essential";
+  },
+);
+
+watch(composerMode, (mode) => {
+  const cur = route.query.mode === "expert" ? "expert" : "essential";
+  if (cur !== mode) {
+    const nextQuery = { ...route.query };
+    if (mode === "essential") {
+      delete nextQuery.mode;
+    } else {
+      nextQuery.mode = mode;
+    }
+    void router.replace({ query: nextQuery });
+  }
+});
 
 const selectedDatasetInfo = computed(() => {
   return schemaStore.datasets.find((d) => d.path === composerStore.imageFolder) ?? null;
