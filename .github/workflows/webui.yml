@@ -19,14 +19,14 @@ concurrency:
 jobs:
   check-and-build:
     name: Lint, Typecheck, Test & Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: webui
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -49,7 +49,7 @@ jobs:
         run: bun run build
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: webui-dist
           path: webui/dist/
