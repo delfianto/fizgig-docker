@@ -19,6 +19,17 @@ const systemStore = useSystemStore();
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 function handleGlobalKeydown(e: KeyboardEvent): void {
+  const targetEl = e.target as HTMLElement | null;
+  if (
+    targetEl &&
+    (targetEl.tagName === "INPUT" ||
+      targetEl.tagName === "TEXTAREA" ||
+      targetEl.tagName === "SELECT" ||
+      targetEl.isContentEditable)
+  ) {
+    return;
+  }
+
   if (e.altKey && !e.ctrlKey && !e.metaKey) {
     const routes: Record<string, string> = {
       "1": "/cockpit",

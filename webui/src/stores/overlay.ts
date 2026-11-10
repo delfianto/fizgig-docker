@@ -20,7 +20,11 @@ export const usePlanOverlayStore = defineStore("planOverlay", () => {
   const problems = ref<string[]>([]);
   const warnings = ref<string[]>([]);
   const duration = ref(5000);
+  const paused = ref(false);
+  const seq = ref(0);
   let dismissTimer: ReturnType<typeof setTimeout> | null = null;
+  let startedAt = 0;
+  let remainingMs = 0;
 
   function show(payload: PlanOverlayPayload): void {
     if (dismissTimer) {
@@ -34,12 +38,16 @@ export const usePlanOverlayStore = defineStore("planOverlay", () => {
     problems.value = payload.problems ? [...payload.problems] : [];
     warnings.value = payload.warnings ? [...payload.warnings] : [];
     duration.value = payload.duration ?? 5000;
+    paused.value = false;
+    seq.value += 1;
     visible.value = true;
 
     if (duration.value > 0) {
+      remainingMs = duration.value;
+      startedAt = Date.now();
       dismissTimer = setTimeout(() => {
         dismiss();
-      }, duration.value);
+      }, remainingMs);
     }
   }
 
@@ -48,6 +56,7 @@ export const usePlanOverlayStore = defineStore("planOverlay", () => {
       clearTimeout(dismissTimer);
       dismissTimer = null;
     }
+    paused.value = false;
     visible.value = false;
   }
 
@@ -55,14 +64,20 @@ export const usePlanOverlayStore = defineStore("planOverlay", () => {
     if (dismissTimer) {
       clearTimeout(dismissTimer);
       dismissTimer = null;
+      const elapsed = Date.now() - startedAt;
+      remainingMs = Math.max(1200, remainingMs - elapsed);
     }
+    paused.value = true;
   }
 
   function resumeTimer(): void {
+    paused.value = false;
     if (visible.value && duration.value > 0 && !dismissTimer) {
+      const waitMs = Math.max(1500, remainingMs || 2000);
+      startedAt = Date.now();
       dismissTimer = setTimeout(() => {
         dismiss();
-      }, 2000); // 2 second grace period after mouse leave
+      }, waitMs);
     }
   }
 
@@ -74,6 +89,8 @@ export const usePlanOverlayStore = defineStore("planOverlay", () => {
     problems,
     warnings,
     duration,
+    paused,
+    seq,
     show,
     dismiss,
     pauseTimer,

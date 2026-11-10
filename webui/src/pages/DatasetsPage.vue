@@ -115,7 +115,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="grid h-[calc(100vh-44px)] grid-cols-[280px_1fr] overflow-hidden bg-base-100">
+  <div class="grid h-full grid-cols-[280px_1fr] overflow-hidden bg-base-100">
     <!-- Left Sidebar: Dataset Browser -->
     <DatasetSidebar
       :datasets="schemaStore.datasets"

@@ -54,4 +54,20 @@ describe("usePlanOverlayStore", () => {
     store.dismiss();
     expect(store.visible).toBe(false);
   });
+
+  it("tracks pause/resume state and increments seq on repeated alerts", () => {
+    const store = usePlanOverlayStore();
+    store.show({ status: "success", title: "First", duration: 5000 });
+    const firstSeq = store.seq;
+    expect(store.paused).toBe(false);
+
+    store.pauseTimer();
+    expect(store.paused).toBe(true);
+
+    store.resumeTimer();
+    expect(store.paused).toBe(false);
+
+    store.show({ status: "warning", title: "Second", duration: 5000 });
+    expect(store.seq).toBe(firstSeq + 1);
+  });
 });

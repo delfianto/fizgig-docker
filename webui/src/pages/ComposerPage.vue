@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { toast } from "vue-sonner";
-import PlanOverlayPopup from "@/components/common/PlanOverlayPopup.vue";
 import ComposerEssentialStudio from "@/components/composer/ComposerEssentialStudio.vue";
 import ComposerExpertTuning from "@/components/composer/ComposerExpertTuning.vue";
 import ComposerHeaderBar from "@/components/composer/ComposerHeaderBar.vue";
@@ -251,9 +250,6 @@ onMounted(async () => {
 
     <!-- VIEW B: EXPERT TUNING -->
     <ComposerExpertTuning v-else />
-
-    <!-- Global Plan Validation & Alert Modal -->
-    <PlanOverlayPopup />
 
     <!-- Confirmation Dialog for Submitting Job to Queue -->
     <SubmitQueueModal
