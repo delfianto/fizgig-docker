@@ -44,6 +44,7 @@ const loadingCaptions = ref(false);
 const entries = ref<CaptionEntry[]>([]);
 const editedCaptions = ref<Record<string, string>>({});
 const dirtyPaths = ref<Set<string>>(new Set());
+const savingAll = ref(false);
 
 const selectedDataset = computed<DatasetSummary | undefined>(() =>
   schemaStore.datasets.find((d) => d.path === selectedFolder.value),
@@ -80,7 +81,7 @@ function onCaptionChange(payload: { path: string; value: string; original: strin
   dirtyPaths.value = next;
 }
 
-async function saveCaption(item: CaptionEntry): Promise<void> {
+async function saveCaption(item: CaptionEntry, silent = false): Promise<boolean> {
   const caption = editedCaptions.value[item.path] ?? "";
   try {
     await apiPost("/api/captions/save", {
@@ -93,24 +94,47 @@ async function saveCaption(item: CaptionEntry): Promise<void> {
     const next = new Set(dirtyPaths.value);
     next.delete(item.path);
     dirtyPaths.value = next;
-    toast.success(`Saved ${item.name}`);
+    if (!silent) {
+      toast.success(`Saved ${item.name}`);
+      void schemaStore.fetchDatasets();
+    }
+    return true;
   } catch (err) {
-    toast.error(err instanceof Error ? err.message : "Failed to save caption");
+    if (!silent) {
+      toast.error(err instanceof Error ? err.message : "Failed to save caption");
+    }
+    return false;
   }
 }
 
 async function saveAllDirty(): Promise<void> {
   const paths = Array.from(dirtyPaths.value);
-  if (!paths.length) return;
+  if (!paths.length || savingAll.value) return;
+  savingAll.value = true;
+
+  const itemsToSave = paths
+    .map((p) => entries.value.find((e) => e.path === p))
+    .filter((e): e is CaptionEntry => Boolean(e));
+
   let saved = 0;
-  for (const path of paths) {
-    const item = entries.value.find((e) => e.path === path);
-    if (item) {
-      await saveCaption(item);
-      saved++;
+  const batchSize = 8;
+  try {
+    for (let i = 0; i < itemsToSave.length; i += batchSize) {
+      const batch = itemsToSave.slice(i, i + batchSize);
+      const results = await Promise.all(batch.map((item) => saveCaption(item, true)));
+      for (const ok of results) {
+        if (ok) saved++;
+      }
     }
+    await schemaStore.fetchDatasets();
+    if (saved === itemsToSave.length) {
+      toast.success(`Saved all ${saved} modified caption(s)`);
+    } else {
+      toast.warning(`Saved ${saved} of ${itemsToSave.length} captions`);
+    }
+  } finally {
+    savingAll.value = false;
   }
-  toast.success(`Saved ${saved} captions`);
 }
 
 function sendToComposer(folderPath: string): void {
@@ -174,14 +198,24 @@ onMounted(async () => {
         :edited-captions="editedCaptions"
         :dirty-paths="dirtyPaths"
         :loading="loadingCaptions"
+        :saving-all="savingAll"
         @caption-change="onCaptionChange"
         @save-caption="saveCaption"
         @save-all-dirty="saveAllDirty"
-        @reload-captions="loadDatasetCaptions(selectedFolder)"
+        @reload-captions="
+          () => {
+            void loadDatasetCaptions(selectedFolder);
+            void schemaStore.fetchDatasets();
+          }
+        "
       />
 
       <!-- Sub-tab 2: Image Prep & Bucketing Inspector -->
-      <DatasetImagePrep v-else :selected-folder="selectedFolder" />
+      <DatasetImagePrep
+        v-else
+        :selected-folder="selectedFolder"
+        @refresh-datasets="schemaStore.fetchDatasets()"
+      />
     </main>
   </div>
 </template>
