@@ -10,7 +10,7 @@ This directory contains the high-density Linear-style Web UI for Fizgig, a web-b
 | :------------------------- | :------------------------------ | :--------------------------------------------------------------------------------------------------------------------------- |
 | **Package Manager**        | Bun                             | `bun@1.4.4`                                                                                                                  |
 | **Framework**              | Vue 3                           | `^3.5.45` (Composition API, `<script setup lang="ts">`)                                                                      |
-| **Build & Dev Tool**       | Vite Plus                       | `1.5.0` (`@voidzero-dev/vite-plus-core`)                                                                                     |
+| **Build & Dev Tool**       | Vite Plus                       | `1.6.0` (`@voidzero-dev/vite-plus-core`)                                                                                     |
 | **Type System**            | TypeScript                      | `^7.0.2` (Strict, project references `tsconfig.json` & `tsconfig.node.json`)                                                 |
 | **Styling**                | Tailwind CSS v4 & DaisyUI 5     | `@tailwindcss/vite` `^4.3.5`, `daisyui` `^5.7.50` (`fizgig` theme)                                                           |
 | **Design System**          | Linear Dark Architecture        | 4-step near-black elevations (`#08090a` to `#111318`), rationed indigo accent (`#5e6ad2`), zero drop-shadows, 1px hairlines  |
