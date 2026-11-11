@@ -157,6 +157,27 @@ def _append_upstream_cookies(response: Response, upstream: httpx.Response) -> No
         response.headers.append("set-cookie", cookie)
 
 
+async def _send_stateless(
+    upstream_http: httpx.AsyncClient,
+    method: str,
+    target_url: str,
+    headers: dict[str, str],
+    content: bytes | None = None,
+    stream: bool = False,
+) -> httpx.Response:
+    """Send an upstream request without reading or persisting shared client cookies."""
+    upstream_http.cookies.clear()
+    req = httpx.Request(
+        method,
+        upstream_http.base_url.join(target_url),
+        headers=headers,
+        content=content,
+    )
+    res = await upstream_http.send(req, stream=stream)
+    upstream_http.cookies.clear()
+    return res
+
+
 def create_webui_app(
     upstream_http: httpx.AsyncClient,
     dist_dir: Path,
@@ -174,8 +195,8 @@ def create_webui_app(
 
     async def local_bundles(request: Request) -> Response:
         try:
-            auth_check = await upstream_http.get(
-                "/api/state", headers=_forwarded_headers(request)
+            auth_check = await _send_stateless(
+                upstream_http, "GET", "/api/state", _forwarded_headers(request)
             )
         except httpx.HTTPError:
             return JSONResponse(
@@ -243,11 +264,14 @@ def create_webui_app(
             or "text/event-stream" in request.headers.get("accept", "")
         )
         if is_sse_request and method == "GET":
-            req = upstream_http.build_request(
-                "GET", target_url, headers=_forwarded_headers(request)
-            )
             try:
-                upstream_stream = await upstream_http.send(req, stream=True)
+                upstream_stream = await _send_stateless(
+                    upstream_http,
+                    "GET",
+                    target_url,
+                    _forwarded_headers(request),
+                    stream=True,
+                )
             except httpx.HTTPError:
                 return JSONResponse(
                     {"error": "Upstream Fizgig unavailable"}, status_code=502
@@ -288,10 +312,11 @@ def create_webui_app(
             return stream_resp
 
         try:
-            upstream_res = await upstream_http.request(
+            upstream_res = await _send_stateless(
+                upstream_http,
                 method,
                 target_url,
-                headers=_forwarded_headers(request),
+                _forwarded_headers(request),
                 content=body if body else None,
             )
         except httpx.HTTPError:
@@ -372,9 +397,11 @@ def create_webui_app(
         html = index_file.read_text(encoding="utf-8")
         upstream_root: httpx.Response | None = None
         try:
-            upstream_root = await upstream_http.get(
+            upstream_root = await _send_stateless(
+                upstream_http,
+                "GET",
                 "/",
-                headers={
+                {
                     "Accept": "text/html",
                     **(
                         {"Cookie": request.headers["cookie"]}

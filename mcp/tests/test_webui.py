@@ -155,6 +155,21 @@ class WebuiGatewayTests(unittest.TestCase):
             self.assertEqual(stats_json["cpu_util"], 12)
             self.assertEqual(len(stats_json["gpus"]), 1)
 
+            # Separate anonymous browser client MUST NOT inherit logged-in client's session cookie!
+            client.cookies.clear()
+            self.assertEqual(
+                client.get(
+                    "/api/schema", headers={"X-Fizgig-Token": "csrf-abc-123"}
+                ).status_code,
+                401,
+            )
+            self.assertEqual(
+                client.get(
+                    "/ui-api/local/bundles", headers={"X-Fizgig-Token": "csrf-abc-123"}
+                ).status_code,
+                401,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
