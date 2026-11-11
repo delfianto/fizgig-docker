@@ -9,10 +9,11 @@ mcp/
 ├── pyproject.toml         # Python project configuration (setuptools + uv)
 ├── uv.lock                # Locked dependency tree (Python >=3.12, mcp==2.3.0)
 ├── src/
-│   ├── fizgig_mcp/        # Model Context Protocol (MCP) server implementation
+│   ├── fizgig_mcp/        # Model Context Protocol (MCP) server & WebUI gateway
 │   │   ├── adapter.py     # HTTP adapter talking to Fizgig internal endpoints
 │   │   ├── server.py      # FastMCP StreamableHTTP & stdio server definition
-│   │   ├── supervise.py   # Background process supervisor
+│   │   ├── webui.py       # ASGI gateway serving compiled Vue WebUI & proxying /api/*
+│   │   ├── supervise.py   # Background process supervisor (upstream worker, WebUI, MCP)
 │   │   └── smoke_test.py  # Local integration test against running container
 │   └── fizgig_local/      # Offline manifest catalog and worker utilities
 │       ├── catalog.py     # Declarative models.json parser & manifest hydrator
@@ -21,6 +22,7 @@ mcp/
 ├── tests/
 │   ├── test_catalog.py    # Unit tests for models.json validation & path sandboxing
 │   ├── test_mcp.py        # Integration tests for MCP tools & bearer auth
+│   ├── test_webui.py      # Gateway tests for SPA CSRF injection, session auth & telemetry
 │   └── test_upstream.py   # Tests for upstream release fingerprint verification
 └── tools/
     ├── smoke.py           # Container runtime smoke test

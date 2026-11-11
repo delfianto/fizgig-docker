@@ -6,13 +6,30 @@ import {
   FlaskConical,
   HelpCircle,
   Images,
+  LogOut,
   Minimize2,
   Settings,
   SlidersHorizontal,
 } from "lucide-vue-next";
+import { apiPost, hasContainerCsrfToken } from "@/api/client";
 import { useComposerStore } from "@/stores/composer";
 import { useRunStore } from "@/stores/run";
 import { useSystemStore } from "@/stores/system";
+
+const emit = defineEmits<{
+  (e: "logged-out"): void;
+}>();
+
+const showLogout = hasContainerCsrfToken();
+
+async function handleLogout(): Promise<void> {
+  try {
+    await apiPost("/api/logout", {}, { skipAuthRedirect: true });
+  } catch {
+    // Ignore logout transport errors and lock UI
+  }
+  emit("logged-out");
+}
 
 const route = useRoute();
 const router = useRouter();
@@ -176,6 +193,16 @@ const navItems = computed(() => [
       >
         <Settings class="h-4 w-4" />
         <span class="text-[10px] font-medium tracking-tight">System</span>
+      </button>
+
+      <button
+        v-if="showLogout"
+        type="button"
+        class="flex h-8 w-10 items-center justify-center rounded-md text-muted transition-colors hover:bg-error/15 hover:text-error cursor-pointer"
+        title="Lock session & sign out"
+        @click="handleLogout"
+      >
+        <LogOut class="h-3.5 w-3.5" />
       </button>
     </div>
   </aside>

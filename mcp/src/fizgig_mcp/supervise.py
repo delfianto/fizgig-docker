@@ -1,5 +1,6 @@
-"""Tie the UI and MCP server lifetimes to the container, with signal forwarding."""
+"""Tie the upstream worker, WebUI gateway and MCP server lifetimes to the container."""
 
+import contextlib
 import os
 import signal
 import subprocess
@@ -25,34 +26,31 @@ def main() -> int:
                 "/opt/Fizgig/fizgig.py",
                 "--web",
                 "--host",
-                "0.0.0.0",
+                "127.0.0.1",
                 "--port",
-                "8081",
+                "18081",
             ],
+            ["/opt/fizgig-mcp/bin/python", "-m", "fizgig_mcp.webui"],
             ["/opt/fizgig-mcp/bin/python", "-m", "fizgig_mcp.server"],
         ):
             children.append(subprocess.Popen(command, start_new_session=True))
         while not stopping:
             if any(child.poll() is not None for child in children):
-                print("Fizgig UI or MCP exited; stopping container", flush=True)
+                print("Fizgig process exited; stopping container", flush=True)
                 result = 1
                 break
             time.sleep(0.25)
     finally:
         for child in children:
-            try:
+            with contextlib.suppress(ProcessLookupError):
                 os.killpg(child.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
         deadline = time.monotonic() + 25
         for child in children:
             try:
                 child.wait(timeout=max(0.1, deadline - time.monotonic()))
             except subprocess.TimeoutExpired:
-                try:
+                with contextlib.suppress(ProcessLookupError):
                     os.killpg(child.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
                 child.wait()
     return result
 

@@ -4,3 +4,6 @@
 **/*.egg-info
 .env*
 *.local
+webui/node_modules
+webui/dist
+webui/refactor.md

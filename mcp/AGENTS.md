@@ -29,8 +29,9 @@ mcp/
 ├── src/
 │   ├── fizgig_mcp/             # Model Context Protocol (MCP) server & adapters
 │   │   ├── server.py           # FastMCP server definition, tool exposure, Bearer token auth
+│   │   ├── webui.py            # ASGI WebUI SPA gateway, CSRF injection & async GPU/CPU telemetry
 │   │   ├── adapter.py          # HTTP client adapter connecting to internal Fizgig endpoints
-│   │   ├── supervise.py        # Background process supervisor & process management
+│   │   ├── supervise.py        # Background process supervisor (upstream worker, WebUI, MCP)
 │   │   └── smoke_test.py       # Integration smoke test against a live Fizgig container
 │   └── fizgig_local/           # Offline manifest catalog and security runtime
 │       ├── catalog.py          # Declarative models.json parser & manifest hydrator
@@ -39,6 +40,7 @@ mcp/
 ├── tests/
 │   ├── test_catalog.py         # Unit tests for manifest parsing, path sandboxing & duplicate rejection
 │   ├── test_mcp.py             # Integration tests for MCP tools, bearer auth, and queue safety
+│   ├── test_webui.py           # Gateway tests for SPA CSRF injection, session auth & telemetry
 │   └── test_upstream.py        # Tests for upstream release fingerprint and Docker digest validation
 └── tools/
     ├── smoke.py                # Container runtime health and smoke checks

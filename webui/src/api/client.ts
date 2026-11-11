@@ -8,8 +8,25 @@ export class ApiError extends Error {
   }
 }
 
+type UnauthorizedHandler = () => void;
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+
+export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): void {
+  unauthorizedHandler = handler;
+}
+
+export function getCsrfToken(): string {
+  if (typeof document === "undefined") return "";
+  return document.querySelector('meta[name="fizgig-token"]')?.getAttribute("content")?.trim() ?? "";
+}
+
+export function hasContainerCsrfToken(): boolean {
+  return getCsrfToken().length > 0;
+}
+
 export interface ApiRequestOptions {
   signal?: AbortSignal;
+  skipAuthRedirect?: boolean;
 }
 
 export async function apiGet<T>(
@@ -26,11 +43,21 @@ export async function apiGet<T>(
       }
     }
   }
+  const headers: Record<string, string> = { Accept: "application/json" };
+  const csrf = getCsrfToken();
+  if (csrf) {
+    headers["X-Fizgig-Token"] = csrf;
+  }
+
   const response = await fetch(url.toString(), {
     method: "GET",
-    headers: { Accept: "application/json" },
+    headers,
+    credentials: "same-origin",
     signal: options?.signal,
   });
+  if (response.status === 401 && !options?.skipAuthRedirect) {
+    unauthorizedHandler?.();
+  }
   const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok || typeof data.error === "string") {
     throw new ApiError(
@@ -46,15 +73,25 @@ export async function apiPost<T>(
   body: Record<string, unknown> = {},
   options?: ApiRequestOptions,
 ): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+  const csrf = getCsrfToken();
+  if (csrf) {
+    headers["X-Fizgig-Token"] = csrf;
+  }
+
   const response = await fetch(path, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers,
+    credentials: "same-origin",
     body: JSON.stringify(body),
     signal: options?.signal,
   });
+  if (response.status === 401 && !options?.skipAuthRedirect) {
+    unauthorizedHandler?.();
+  }
   const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok || typeof data.error === "string") {
     throw new ApiError(
