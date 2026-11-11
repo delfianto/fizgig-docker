@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { Activity, ExternalLink, Loader2, Play, Square } from "lucide-vue-next";
 import { toast } from "vue-sonner";
-import { apiGet, apiPost } from "@/api/client";
+import { apiGet, apiPost, profilerReportUrl } from "@/api/client";
 import { BaseBadge, BaseButton, BaseCard, BaseInput, BaseSelect } from "@/components/common";
 import { useRunStore } from "@/stores/run";
 
@@ -239,7 +239,7 @@ onUnmounted(() => {
 
             <a
               v-if="reportPath"
-              :href="`/api/profile/report?path=${encodeURIComponent(reportPath)}`"
+              :href="profilerReportUrl(reportPath)"
               target="_blank"
               rel="noopener noreferrer"
               class="inline-flex items-center gap-1 text-primary hover:underline"

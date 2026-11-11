@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from "vue";
 import { Loader2, Play, Square, Trophy } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { type CheckpointItem } from "@shared/types";
-import { apiGet, apiPost } from "@/api/client";
+import { apiGet, apiPost, royaleImageUrl } from "@/api/client";
 import { BaseBadge, BaseButton, BaseCard, BaseInput, BaseSelect } from "@/components/common";
 import { useRunStore } from "@/stores/run";
 
@@ -227,7 +227,7 @@ onUnmounted(() => {
               class="overflow-hidden rounded-lg border border-hairline bg-base-100"
             >
               <img
-                :src="`/api/royale/image?i=${idx - 1}&gen=${generationId}`"
+                :src="royaleImageUrl(idx - 1, generationId)"
                 :alt="`Royale render ${idx}`"
                 loading="lazy"
                 class="aspect-square w-full object-cover"

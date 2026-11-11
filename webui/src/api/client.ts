@@ -102,19 +102,45 @@ export async function apiPost<T>(
   return data as T;
 }
 
+function buildBrowserApiUrl(
+  basePath: string,
+  params: Record<string, string | number | undefined>,
+): string {
+  const search = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined) {
+      search.set(k, String(v));
+    }
+  }
+  const csrf = getCsrfToken();
+  if (csrf) {
+    search.set("t", csrf);
+  }
+  return `${basePath}?${search.toString()}`;
+}
+
 export function thumbUrl(filePath: string, size = 320): string {
-  const params = new URLSearchParams({ path: filePath, size: String(size) });
-  return `/api/thumb?${params.toString()}`;
+  return buildBrowserApiUrl("/api/thumb", { path: filePath, size });
 }
 
 export function mediaUrl(filePath: string): string {
-  const params = new URLSearchParams({ path: filePath });
-  return `/api/media?${params.toString()}`;
+  return buildBrowserApiUrl("/api/media", { path: filePath });
 }
 
 export function downloadUrl(filePath: string): string {
-  const params = new URLSearchParams({ path: filePath });
-  return `/api/download?${params.toString()}`;
+  return buildBrowserApiUrl("/api/download", { path: filePath });
+}
+
+export function logStreamUrl(since: number): string {
+  return buildBrowserApiUrl("/api/log", { since });
+}
+
+export function royaleImageUrl(index: number, gen: string): string {
+  return buildBrowserApiUrl("/api/royale/image", { i: index, gen });
+}
+
+export function profilerReportUrl(reportPath: string): string {
+  return buildBrowserApiUrl("/api/profile/report", { path: reportPath });
 }
 
 export function formatBytes(bytes: number): string {

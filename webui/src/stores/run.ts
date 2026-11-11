@@ -8,7 +8,7 @@ import {
   type LossDataPoint,
   type SampleItem,
 } from "@shared/types";
-import { apiGet, apiPost } from "@/api/client";
+import { apiGet, apiPost, logStreamUrl } from "@/api/client";
 import {
   parseCheckpointsResponse,
   parseHistoricalRunsResponse,
@@ -175,7 +175,7 @@ export const useRunStore = defineStore("run", () => {
       logReconnectTimer = null;
     }
     try {
-      logSource = new EventSource(`/api/log?since=${logBytePos.value}`);
+      logSource = new EventSource(logStreamUrl(logBytePos.value));
       logSource.addEventListener("open", () => {
         logReconnectAttempts = 0;
       });
