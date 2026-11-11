@@ -14,6 +14,8 @@
     "import/no-self-import": "error",
     "import/no-unassigned-import": "off",
     "import/consistent-type-specifier-style": ["error", "prefer-inline"],
+    "typescript/no-deprecated": "error",
+    "typescript/no-unsafe-type-assertion": "off",
     "unicorn/no-null": "off",
     "unicorn/consistent-function-scoping": "off",
     "unicorn/filename-case": ["error", { "cases": { "kebabCase": true, "pascalCase": true } }],

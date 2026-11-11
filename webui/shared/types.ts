@@ -51,7 +51,7 @@ export interface SchemaRow {
 export interface SchemaSection {
   id: string;
   title: string;
-  tab: "training" | "samples" | string;
+  tab: "training" | "samples" | (string & {});
   collapsible?: boolean | null;
   open?: boolean | null;
   rows: Array<SchemaRow | null>;
@@ -109,7 +109,7 @@ export interface SchemaResponse {
 }
 
 export interface FormStateResponse {
-  kind: "standard" | "slider" | "finetune" | "edit" | string;
+  kind: "standard" | "slider" | "finetune" | "edit" | (string & {});
   hidden: string[];
   disabled: string[];
   notes: Record<string, string>;
@@ -148,7 +148,7 @@ export interface WebQueueState {
 }
 
 export interface LiveRunResponse {
-  state: "idle" | "starting" | "running" | "pausing" | "paused" | "stopping" | string;
+  state: "idle" | "starting" | "running" | "pausing" | "paused" | "stopping" | (string & {});
   stage: string;
   lora: string;
   output_dir: string;

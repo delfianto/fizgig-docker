@@ -3,7 +3,7 @@ import { defineStore } from "pinia";
 import { useDebounceFn } from "@vueuse/core";
 import { type FormStateResponse, type PlanValidationResponse } from "@shared/types";
 import { apiGet, apiPost } from "@/api/client";
-import { estimateVramGb } from "@/utils";
+import { estimateVramGb, toPrimitiveString } from "@/utils";
 import { useRunStore } from "./run";
 import { useSchemaStore } from "./schema";
 import { useSystemStore } from "./system";
@@ -64,9 +64,9 @@ export function isValueEqual(a: unknown, b: unknown): boolean {
   }
 
   // Normalize numeric & scientific notation (e.g. 0.0001 <-> 1e-4, 1 <-> 1.0, 30 <-> "30")
-  const strA = String(a ?? "").trim();
-  const strB = String(b ?? "").trim();
-  if (strA === strB) return true;
+  const strA = toPrimitiveString(a).trim();
+  const strB = toPrimitiveString(b).trim();
+  if (strA === strB) return strA !== "" || (a === "" && b === "");
 
   if (strA !== "" && strB !== "") {
     const numA = Number(strA);
@@ -184,7 +184,7 @@ export const useComposerStore = defineStore("composer", () => {
       await refreshFormState();
     }
 
-    const curName = String(draftValues.value.LORA_NAME ?? "");
+    const curName = toPrimitiveString(draftValues.value.LORA_NAME);
     if (
       imageFolder.value &&
       (!curName ||
@@ -258,7 +258,7 @@ export const useComposerStore = defineStore("composer", () => {
   }
 
   async function checkTriggerWord(): Promise<void> {
-    const trigger = String(draftValues.value.CAPTION_TRIGGER_WORD ?? "").trim();
+    const trigger = toPrimitiveString(draftValues.value.CAPTION_TRIGGER_WORD).trim();
     if (!trigger) {
       triggerCheckVerdict.value = null;
       return;
@@ -276,7 +276,7 @@ export const useComposerStore = defineStore("composer", () => {
       triggerCheckVerdict.value = {
         trigger,
         tokens: res.count ?? res.tokens?.length ?? 1,
-        text: res.verdict ?? `${res.tokens?.join(" · ") ?? trigger}`,
+        text: res.verdict ?? res.tokens?.join(" · ") ?? trigger,
         ok: res.good ?? res.count === 1,
       };
     } catch {
@@ -362,7 +362,7 @@ export const useComposerStore = defineStore("composer", () => {
 
   function selectDataset(path: string, asBaseline = true): void {
     setImageFolder(path);
-    const currentName = String(draftValues.value.LORA_NAME ?? "");
+    const currentName = toPrimitiveString(draftValues.value.LORA_NAME);
     const isAutoNamed =
       !currentName || currentName.startsWith("my_lora_") || /_[a-z0-9]+_v1$/i.test(currentName);
     if (isAutoNamed) {

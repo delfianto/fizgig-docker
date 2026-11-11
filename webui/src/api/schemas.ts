@@ -9,20 +9,18 @@ import {
   type SamplesResponse,
 } from "@shared/types";
 
-const DatasetItemSchema = z
-  .object({
-    name: z.string(),
-    path: z.string(),
-    count: z.number().optional(),
-    pictures: z.number().optional(),
-    captioned: z.number().optional(),
-    mtime: z.number().optional(),
-    time: z.number().optional(),
-    size: z.number().optional(),
-    media: z.string().optional(),
-    thumbs: z.array(z.string()).optional(),
-  })
-  .passthrough();
+const DatasetItemSchema = z.looseObject({
+  name: z.string(),
+  path: z.string(),
+  count: z.number().optional(),
+  pictures: z.number().optional(),
+  captioned: z.number().optional(),
+  mtime: z.number().optional(),
+  time: z.number().optional(),
+  size: z.number().optional(),
+  media: z.string().optional(),
+  thumbs: z.array(z.string()).optional(),
+});
 
 const DatasetsEnvelopeSchema = z.object({
   datasets: z.array(DatasetItemSchema).optional().default([]),
@@ -63,16 +61,14 @@ export function extractEpochFromFilename(filename: string): number | undefined {
   return undefined;
 }
 
-const CheckpointItemSchema = z
-  .object({
-    name: z.string(),
-    path: z.string(),
-    run: z.string().optional().default(""),
-    size: z.number().optional().default(0),
-    mtime: z.number().optional().default(0),
-    epoch: z.number().nullable().optional(),
-  })
-  .passthrough();
+const CheckpointItemSchema = z.looseObject({
+  name: z.string(),
+  path: z.string(),
+  run: z.string().optional().default(""),
+  size: z.number().optional().default(0),
+  mtime: z.number().optional().default(0),
+  epoch: z.number().nullable().optional(),
+});
 
 const CheckpointsEnvelopeSchema = z.object({
   items: z.array(CheckpointItemSchema).optional().default([]),
@@ -91,21 +87,19 @@ export function parseCheckpointsResponse(raw: unknown): CheckpointItem[] {
   }));
 }
 
-const SampleItemSchema = z
-  .object({
-    name: z.string(),
-    path: z.string(),
-    epoch: z.number().optional().default(0),
-    prompt_index: z.number().optional(),
-    idx: z.number().optional(),
-    prompt: z.string().optional(),
-    seed: z.union([z.number(), z.string()]).optional(),
-    mtime: z.number().optional(),
-    time: z.number().optional(),
-    likeness: z.number().nullable().optional(),
-    style: z.number().nullable().optional(),
-  })
-  .passthrough();
+const SampleItemSchema = z.looseObject({
+  name: z.string(),
+  path: z.string(),
+  epoch: z.number().optional().default(0),
+  prompt_index: z.number().optional(),
+  idx: z.number().optional(),
+  prompt: z.string().optional(),
+  seed: z.union([z.number(), z.string()]).optional(),
+  mtime: z.number().optional(),
+  time: z.number().optional(),
+  likeness: z.number().nullable().optional(),
+  style: z.number().nullable().optional(),
+});
 
 const SamplesEnvelopeSchema = z.object({
   items: z.array(SampleItemSchema).optional().default([]),
@@ -144,30 +138,28 @@ export function parseSamplesResponse(raw: unknown): SamplesResponse {
   };
 }
 
-const HistoricalRunSchema = z
-  .object({
-    id: z.string(),
-    lora: z.string(),
-    family: z.string(),
-    family_label: z.string().optional(),
-    image_folder: z.string().optional().default(""),
-    output_dir: z.string().optional().default(""),
-    result: z.string().optional(),
-    status: z.string().optional(),
-    started_at: z.number().optional().default(0),
-    ended_at: z.number().nullable().optional(),
-    finished_at: z.number().nullable().optional(),
-    duration: z.number().optional(),
-    curve: z.array(z.tuple([z.number(), z.number()])).optional(),
-    epochs: z.number().optional(),
-    epoch: z.number().optional(),
-    lowest_loss: z.number().optional(),
-    lowest_epoch: z.number().optional(),
-    loss_spark: z.array(z.number()).optional(),
-    notes: z.string().optional(),
-    values: z.record(z.string(), z.unknown()).optional().default({}),
-  })
-  .passthrough();
+const HistoricalRunSchema = z.looseObject({
+  id: z.string(),
+  lora: z.string(),
+  family: z.string(),
+  family_label: z.string().optional(),
+  image_folder: z.string().optional().default(""),
+  output_dir: z.string().optional().default(""),
+  result: z.string().optional(),
+  status: z.string().optional(),
+  started_at: z.number().optional().default(0),
+  ended_at: z.number().nullable().optional(),
+  finished_at: z.number().nullable().optional(),
+  duration: z.number().optional(),
+  curve: z.array(z.tuple([z.number(), z.number()])).optional(),
+  epochs: z.number().optional(),
+  epoch: z.number().optional(),
+  lowest_loss: z.number().optional(),
+  lowest_epoch: z.number().optional(),
+  loss_spark: z.array(z.number()).optional(),
+  notes: z.string().optional(),
+  values: z.record(z.string(), z.unknown()).optional().default({}),
+});
 
 const RunsEnvelopeSchema = z.object({
   runs: z.array(HistoricalRunSchema).optional().default([]),
@@ -252,16 +244,14 @@ export function parseLossResponse(raw: unknown): LossDataPoint[] {
   return parsed;
 }
 
-const CaptionEntrySchema = z
-  .object({
-    name: z.string(),
-    path: z.string(),
-    caption: z.string().optional().default(""),
-    width: z.number().optional(),
-    height: z.number().optional(),
-    removed: z.boolean().optional(),
-  })
-  .passthrough();
+const CaptionEntrySchema = z.looseObject({
+  name: z.string(),
+  path: z.string(),
+  caption: z.string().optional().default(""),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  removed: z.boolean().optional(),
+});
 
 const CaptionsEnvelopeSchema = z.object({
   items: z.array(CaptionEntrySchema).optional(),

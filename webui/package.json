@@ -10,9 +10,9 @@
     "start": "bun server/prod-server.ts",
     "preview": "vp preview",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
-    "check": "vp fmt --check -c .oxfmtrc.json && vp lint -c .oxlintrc.json",
-    "check:fix": "vp fmt --write -c .oxfmtrc.json && vp lint -c .oxlintrc.json --fix",
-    "lint": "vp lint -c .oxlintrc.json src shared server",
+    "check": "vp fmt --check -c .oxfmtrc.json && vp lint --type-aware -c .oxlintrc.json",
+    "check:fix": "vp fmt --write -c .oxfmtrc.json && vp lint --type-aware -c .oxlintrc.json --fix",
+    "lint": "vp lint --type-aware -c .oxlintrc.json src shared server",
     "format": "vp fmt --write -c .oxfmtrc.json",
     "test": "vp test run"
   },

@@ -2,6 +2,14 @@
  * Common formatting utilities for numeric and scientific telemetry values.
  */
 
+export function toPrimitiveString(val: unknown): string {
+  if (typeof val === "string") return val;
+  if (typeof val === "number" || typeof val === "boolean" || typeof val === "bigint") {
+    return String(val);
+  }
+  return "";
+}
+
 /**
  * Converts numbers, decimal strings, and scientific notation (e.g. 2.00e-04, 1e-5)
  * into a standard, clean decimal string representation without exponent notation.
@@ -15,10 +23,9 @@ export function formatDecimal(val: unknown, fallback = "", maxDecimals = 8): str
     return fallback;
   }
 
-  const str = String(val).trim();
+  const str = toPrimitiveString(val).trim();
   if (str === "") return fallback;
 
-  // Check if string is scientific notation or a numeric string
   const isScientific = /^[+-]?\d+(\.\d+)?e[+-]?\d+$/i.test(str);
   const num = typeof val === "number" ? val : Number(str);
 
@@ -35,35 +42,18 @@ export function formatDecimal(val: unknown, fallback = "", maxDecimals = 8): str
   return str;
 }
 
-/**
- * Specifically formats learning rate values for telemetry strips, KPI cards,
- * parameter forms, and chart markers.
- *
- * Examples:
- * - "2.00e-04" -> "0.0002"
- * - "1e-5"     -> "0.00001"
- * - 0.0002     -> "0.0002"
- * - undefined  -> "—"
- */
 export function formatLearnRate(val: unknown, fallback = "—"): string {
   return formatDecimal(val, fallback, 8);
 }
 
-/**
- * Formats model training loss to a consistent decimal representation.
- *
- * Examples:
- * - 0.0650123 -> "0.0650"
- * - "0.04"    -> "0.0400"
- * - undefined -> "—"
- */
 export function formatLoss(val: unknown, fallback = "—", decimals = 4): string {
   if (val === undefined || val === null || val === "" || val === "—") {
     return fallback;
   }
-  const num = typeof val === "number" ? val : Number(String(val).trim());
+  const rawStr = toPrimitiveString(val).trim();
+  const num = typeof val === "number" ? val : Number(rawStr);
   if (Number.isNaN(num)) {
-    return String(val);
+    return rawStr || fallback;
   }
   return num.toFixed(decimals);
 }
@@ -73,7 +63,7 @@ export function formatLoss(val: unknown, fallback = "—", decimals = 4): string
  * each non-empty line is one sample prompt (blank lines are ignored).
  */
 export function splitSamplePrompts(raw: unknown): string[] {
-  return String(raw ?? "")
+  return toPrimitiveString(raw)
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);

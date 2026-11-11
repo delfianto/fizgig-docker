@@ -33,7 +33,7 @@ export const useRunStore = defineStore("run", () => {
   const isRunning = computed(() => Boolean(run.value?.running));
   const isActiveOrStarting = computed(() => {
     const st = run.value?.state;
-    return Boolean(run.value?.running || st === "starting" || st === "running" || st === "pausing");
+    return Boolean(run.value?.running) || st === "starting" || st === "running" || st === "pausing";
   });
   const isCompleted = computed(() => {
     if (!run.value) return false;
