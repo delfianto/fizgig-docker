@@ -406,9 +406,7 @@ const displayToggleLabel = computed(() => shortenToggleLabel(props.row));
           <div v-else-if="!dynamicNote" class="space-y-1 text-[11px] text-subtle leading-relaxed">
             <p>Standard execution flag for {{ composerStore.family }}.</p>
             <div class="font-mono text-[10px] text-muted space-y-0.5 pt-1 border-t border-hairline">
-              <div>
-                Key: <span class="text-base-content">{{ row.key }}</span>
-              </div>
+              <div>Key: <span class="text-base-content">{{ row.key }}</span></div>
               <div>
                 Default:
                 <span class="text-base-content">{{ String(row.default ?? "false") }}</span>
@@ -534,9 +532,7 @@ const displayToggleLabel = computed(() => shortenToggleLabel(props.row));
               <div
                 class="font-mono text-[10px] text-muted space-y-0.5 pt-1 border-t border-hairline"
               >
-                <div>
-                  Key: <span class="text-base-content">{{ row.key }}</span>
-                </div>
+                <div>Key: <span class="text-base-content">{{ row.key }}</span></div>
                 <div>
                   Default:
                   <span class="text-base-content">{{ String(row.default ?? "none") }}</span>

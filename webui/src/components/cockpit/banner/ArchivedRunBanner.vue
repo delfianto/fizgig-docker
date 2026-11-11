@@ -69,9 +69,7 @@ function formatTime(timestamp?: number | null): string {
 
     <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-muted font-mono">
       <div class="flex items-center gap-2 truncate">
-        <span
-          >Dataset: <span class="text-base-content">{{ run.image_folder }}</span></span
-        >
+        <span>Dataset: <span class="text-base-content">{{ run.image_folder }}</span></span>
         <span v-if="run.lowest_loss">
           · Lowest loss:
           <strong class="text-success">{{ Number(run.lowest_loss).toFixed(4) }}</strong>

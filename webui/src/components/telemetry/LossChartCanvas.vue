@@ -411,15 +411,11 @@ function onMouseLeave(): void {
         v-if="hoveredPoint"
         class="font-mono-num pointer-events-none absolute top-2 left-16 flex items-center gap-3 rounded border border-hairline-strong bg-base-300/95 px-2.5 py-1 text-[11px]"
       >
-        <span>
-          Step <strong class="text-base-content">{{ hoveredPoint.step }}</strong>
-        </span>
+        <span> Step <strong class="text-base-content">{{ hoveredPoint.step }}</strong> </span>
         <span v-if="hoveredPoint.epoch">
           Epoch <strong class="text-base-content">{{ hoveredPoint.epoch }}</strong>
         </span>
-        <span>
-          Raw <strong class="text-subtle">{{ hoveredPoint.loss.toFixed(4) }}</strong>
-        </span>
+        <span> Raw <strong class="text-subtle">{{ hoveredPoint.loss.toFixed(4) }}</strong> </span>
         <span v-if="showSmooth">
           EMA
           <strong class="text-primary">{{ hoveredPoint.smoothed.toFixed(4) }}</strong>

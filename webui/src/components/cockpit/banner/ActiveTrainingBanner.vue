@@ -172,16 +172,12 @@ async function handleAction(
             >
           </span>
           <span class="text-muted">·</span>
-          <span>
-            Loss <strong class="text-primary">{{ progress.loss }}</strong>
-          </span>
+          <span> Loss <strong class="text-primary">{{ progress.loss }}</strong> </span>
         </div>
         <div class="flex items-center gap-2 sm:gap-2.5 whitespace-nowrap shrink-0">
           <span class="hidden sm:inline">{{ progress.speed }}</span>
           <span class="hidden sm:inline text-muted">·</span>
-          <span>
-            ETA <strong class="text-base-content">{{ progress.eta }}</strong>
-          </span>
+          <span> ETA <strong class="text-base-content">{{ progress.eta }}</strong> </span>
           <span
             class="rounded bg-primary/10 border border-primary/20 px-1.5 py-0.5 font-mono font-bold text-primary text-[11px]"
           >
